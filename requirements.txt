@@ -5,6 +5,7 @@ fastapi==0.136.0
 greenlet==3.4.0
 idna==3.11
 passlib==1.7.4
+email-validator==2.3.0
 pydantic==2.13.2
 pydantic-settings==2.13.1
 pydantic_core==2.46.2
