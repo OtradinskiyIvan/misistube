@@ -90,5 +90,5 @@ service_name/
 
 ## Запуск unittest для shared
 ```bash
-.venv/bin/python -m unittest discover -s shared/tests -p 'test_*.py
+.venv/bin/python -m unittest discover -s shared/tests -p 'test_*.py'
 ```
