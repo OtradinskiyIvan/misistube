@@ -1,17 +1,21 @@
 import asyncio
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 from datetime import datetime
 
 from authorization_service.src.infrastructure.repositories import UserRepository
 from authorization_service.src.domain.entities.user import User
 from authorization_service.src.infrastructure.database.models import UserModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestUserRepository(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.mock_session = AsyncMock()
+        self.mock_session = MagicMock(spec=AsyncSession)
+        self.mock_session.execute = AsyncMock()
+        self.mock_session.commit = AsyncMock()
+        self.mock_session.refresh = AsyncMock()
         self.repo = UserRepository(self.mock_session)
 
     async def test_get_by_id_success(self):
@@ -94,9 +98,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
             updated_at=datetime.now()
         )
 
-        self.mock_session.add = AsyncMock()
-        self.mock_session.flush = AsyncMock()
-        self.mock_session.refresh = AsyncMock()
+        self.mock_session.add = MagicMock()
 
         # Mock the refresh to update the model
         def refresh_side_effect(model):
@@ -114,7 +116,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.email, user.email)
         self.assertEqual(result.hashed_password, user.hashed_password)
         self.mock_session.add.assert_called_once()
-        self.mock_session.flush.assert_called_once()
+        self.mock_session.commit.assert_called_once()
         self.mock_session.refresh.assert_called_once()
 
     async def test_exists_by_email_true(self):
