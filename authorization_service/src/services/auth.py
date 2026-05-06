@@ -42,7 +42,7 @@ class AuthService:
             algorithm=self._settings.JWT_ALGORITHM,
             expires_minutes=self._settings.JWT_REFRESH_EXPIRE_DAYS * 24 * 60
         )
-        return {"access_token": access_token, "refresh_token": refresh_token}
+        return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "Bearer"}
 
     async def get_user(self, user_id: UUID) -> User:
         user = await self._user_repo.get_by_id(user_id)
