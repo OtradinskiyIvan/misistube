@@ -1,14 +1,14 @@
 name: MISISTUBE CI
 on:
   push:                   # надо будет добавить потом ветки dev и main на CI
-    branches: [feature]   # надеюсь, никакое чудище не будет делать коммиты в main >:(
+    branches: [feature/**]   # надеюсь, никакое чудище не будет делать коммиты в main >:(
     paths:  
       - '.github/workflows/**'
       - 'player_search_service/**'
       - 'user_service/**'
 
   pull_request:
-    branches: [feature, dev, main]
+    branches: [feature/**ы, dev, main]
     paths:                           # надо обновлять пути по мере добавления сервисов
       - '.github/workflows/**'
       - 'player_search_service/**'
