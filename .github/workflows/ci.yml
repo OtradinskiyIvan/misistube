@@ -25,9 +25,6 @@ jobs:
           - user_service
           - player_search_service
 
-    # Почему-то IDE жалуется, однако такая функция есть
-    if: hashFiles('${{ matrix.service }}/pyproject.toml') != ''   
-
     defaults:
       run:
         working-directory: ./${{ matrix.service }}
