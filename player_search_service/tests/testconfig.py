@@ -13,4 +13,4 @@ def test_settings_fails_on_missing_env(monkeypatch):
     with pytest.raises(SystemExit):
         get_settings()
 
-# проверочный комментарий для CI
+# проверочный комментарий для CI 2
