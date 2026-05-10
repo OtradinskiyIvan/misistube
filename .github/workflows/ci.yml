@@ -1,19 +1,24 @@
 name: MISISTUBE CI
-on:
-  push:                      # надо будет добавить потом ветки dev и main на CI
-    branches: [feature/**]   # надеюсь, никакое чудище не будет делать коммиты в main >:(
-    paths:  
-      # - '.github/workflows/**'
-      - 'player_search_service/**'
-      # - 'user_service/**'
 
-  pull_request:
-    branches: [feature/**, dev, main]
-    paths:                               # надо обновлять пути по мере добавления сервисов
-      # - '.github/workflows/**'
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'dev'
+      - 'main'
+    paths:
+      - 'user_service/**'
       - 'player_search_service/**'
-      # - 'user_service/**'
-      
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches:
+      - 'feature/**'
+      - 'dev'
+      - 'main'
+    paths:
+      - 'user_service/**'
+      - 'player_search_service/**'
+      - '.github/workflows/ci.yml'
 
 jobs:
   test-and-lint:
@@ -24,7 +29,6 @@ jobs:
         service:
           - user_service
           - player_search_service
-
     defaults:
       run:
         working-directory: ./${{ matrix.service }}
