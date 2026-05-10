@@ -2,26 +2,43 @@ name: MISISTUBE CI
 
 on:
   push:
-    branches:
-      - 'feature/**'
-      - 'dev'
-      - 'main'
-    paths:
-      - 'user_service/**'
-      - 'player_search_service/**'
-      - '.github/workflows/ci.yml'
+    branches: ['feature/**', 'dev', 'main']
   pull_request:
-    branches:
-      - 'feature/**'
-      - 'dev'
-      - 'main'
-    paths:
-      - 'user_service/**'
-      - 'player_search_service/**'
-      - '.github/workflows/ci.yml'
+    branches: ['feature/**', 'dev', 'main']
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      user_service: ${{ steps.filter.outputs.user_service }}
+      player_search_service: ${{ steps.filter.outputs.player_search_service }}
+      authorization_service: ${{ steps.filter.outputs.authorization_service }}
+      interaction_service: ${{ steps.filter.outputs.interaction_service }}
+      creation_service: ${{ steps.filter.outputs.creation_service }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            user_service:
+              - 'user_service/**'
+            player_search_service:
+              - 'player_search_service/**'
+            authorization_service:
+              - 'authorization_service/**'
+            interaction_service:
+              - 'interaction_service/**'
+            creation_service:
+              - 'creation_service/**'
+
   test-and-lint:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.user_service == 'true' || 
+            needs.detect-changes.outputs.player_search_service == 'true' ||
+            needs.detect-changes.outputs.authorization_service == 'true' ||
+            needs.detect-changes.outputs.interaction_service == 'true'  ||
+            needs.detect-changes.outputs.creation_service == 'true' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -29,15 +46,26 @@ jobs:
         service:
           - user_service
           - player_search_service
-    defaults:
-      run:
-        working-directory: ./${{ matrix.service }}
-
+          - authorization_service
+          - interaction_service
+          - creation_service
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      
+      # проверка существования папки
+      - name: Check if service directory exists
+        id: dir-check
+        run: |
+          if [ -d "${{ matrix.service }}" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
+      # Пропускаем сервис, если папки нет
       - name: Set up Python 3.11
+        if: steps.dir-check.outputs.exists == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -45,20 +73,29 @@ jobs:
           cache-dependency-path: ./${{ matrix.service }}/pyproject.toml
 
       - name: Install dependencies
+        if: steps.dir-check.outputs.exists == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+        working-directory: ./${{ matrix.service }}
 
       - name: Ruff (lint + format)
+        if: steps.dir-check.outputs.exists == 'true'
         run: ruff check src/ tests/
+        working-directory: ./${{ matrix.service }}
 
       - name: MyPy (types)
+        if: steps.dir-check.outputs.exists == 'true'
         run: mypy src/ tests/ || true
+        working-directory: ./${{ matrix.service }}
 
       - name: Pytest + Coverage
+        if: steps.dir-check.outputs.exists == 'true'
         run: pytest --cov=src --cov-report=xml --cov-fail-under=75
+        working-directory: ./${{ matrix.service }}
 
       - name: Upload coverage
+        if: steps.dir-check.outputs.exists == 'true' && success()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ matrix.service }}
