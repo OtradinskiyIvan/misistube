@@ -1,0 +1,64 @@
+name: MISISTUBE CI
+on:
+  push:                   # надо будет добавить потом ветки dev и main на CI
+    branches: [feature]   # надеюсь, никакое чудище не будет делать коммиты в main >:(
+    paths:  
+      - '.github/workflows/**'
+      - 'player_search_service/**'
+      - 'user_service/**'
+
+  pull_request:
+    branches: [feature, dev, main]
+    paths:                           # надо обновлять пути по мере добавления сервисов
+      - '.github/workflows/**'
+      - 'player_search_service/**'
+      - 'user_service/**'
+      
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - user_service
+          - player_search_service
+
+    # Почему-то IDE жалуется, однако такая функция есть
+    if: hashFiles('${{ matrix.service }}/pyproject.toml') != ''   
+
+    defaults:
+      run:
+        working-directory: ./${{ matrix.service }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: "pip"
+          cache-dependency-path: ./${{ matrix.service }}/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Ruff (lint + format)
+        run: ruff check src/ tests/
+
+      - name: MyPy (types)
+        run: mypy src/ tests/ || true
+
+      - name: Pytest + Coverage
+        run: pytest --cov=src --cov-report=xml --cov-fail-under=75
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.service }}
+          path: ${{ matrix.service }}/coverage.xml
