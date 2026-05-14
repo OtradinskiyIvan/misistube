@@ -1,12 +1,18 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from src.api.router import router as api_router
+from src.core.logging import configure_structlog
+from src.core.settings import settings
+from src.deps import get_correlation_id
+
+configure_structlog(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
 
 app = FastAPI(
-    title="User Service",
+    title=settings.APP_NAME,
     description="User management microservice (CRUD, profiles, security)",
-    version="0.1.0",
+    version=settings.SERVICE_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
+    dependencies=[Depends(get_correlation_id)],
 )
 
 app.include_router(api_router, prefix="/api/v1")
