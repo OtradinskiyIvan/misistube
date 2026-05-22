@@ -1,7 +1,7 @@
 import uuid
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, AsyncGenerator
 
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,7 +39,7 @@ def get_logger_dep(correlation_id: str = Depends(get_correlation_id)):
     return get_logger().bind(correlation_id=correlation_id)
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """Get database session for dependency injection."""
     async for session in get_async_session():
         yield session
