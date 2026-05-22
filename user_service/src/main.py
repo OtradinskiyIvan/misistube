@@ -1,5 +1,6 @@
 from fastapi import Depends, FastAPI
 from src.api.router import router as api_router
+from src.api.error_handlers import register_exception_handlers
 from src.core.logging import configure_structlog
 from src.core.settings import settings
 from src.deps import get_correlation_id
@@ -14,6 +15,9 @@ app = FastAPI(
     redoc_url="/redoc",
     dependencies=[Depends(get_correlation_id)],
 )
+
+# Register exception handlers
+register_exception_handlers(app)
 
 app.include_router(api_router, prefix="/api/v1")
 
