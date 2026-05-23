@@ -5,6 +5,7 @@ from shared.logger import get_logger
 from shared.database.session import init_engine, Base
 from .core.settings import AuthSettings
 from .presentations.routers.auth import router as auth_router
+from .presentations.routers.health import router as health_router
 from .presentations.error_handlers import register_exception_handlers
 
 settings = AuthSettings()
@@ -41,3 +42,4 @@ app.add_middleware(
 
 register_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(health_router)
