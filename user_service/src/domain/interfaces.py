@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from uuid import UUID
 
-from src.domain.entities import User
+from ..domain.entities import User
 
 
 class UserRepository(ABC):

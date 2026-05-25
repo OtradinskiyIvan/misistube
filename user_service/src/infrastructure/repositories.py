@@ -7,10 +7,10 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.domain.entities import User
-from src.domain.exceptions import UserNotFoundError, UserAlreadyExistsError, UserDeletionError
-from src.domain.interfaces import UserRepository
-from src.infrastructure.models import UserModel
+from ..domain.entities import User
+from ..domain.exceptions import UserNotFoundError, UserAlreadyExistsError, UserDeletionError
+from ..domain.interfaces import UserRepository
+from ..infrastructure.models import UserModel
 
 ROOT_DIRECTORY = Path(__file__).resolve().parents[3]
 if str(ROOT_DIRECTORY) not in sys.path:

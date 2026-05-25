@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Column, String, Boolean, DateTime, UUID as SQLA_UUID
-from sqlalchemy.orm import DeclarativeBase
 
 from shared.database.session import Base
 

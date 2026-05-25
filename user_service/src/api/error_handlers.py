@@ -6,8 +6,8 @@ from typing import Callable
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from src.api.schemas import ErrorResponse
-from src.domain.exceptions import (
+from .schemas import ErrorResponse
+from ..domain.exceptions import (
     UserNotFoundError,
     UserAlreadyExistsError,
     InvalidUserDataError,

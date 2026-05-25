@@ -6,10 +6,10 @@ from typing import Optional, AsyncGenerator
 from fastapi import Depends, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.logging import bind_correlation_id, configure_structlog, get_logger
-from src.core.settings import settings, UserServiceSettings
-from src.infrastructure.repositories import UserRepositoryImpl
-from src.services.user_service import UserService
+from .core.logging import bind_correlation_id, configure_structlog, get_logger
+from .core.settings import settings, UserServiceSettings
+from .infrastructure.repositories import UserRepositoryImpl
+from .services.user_service import UserService
 
 ROOT_DIRECTORY = Path(__file__).resolve().parents[2]
 if str(ROOT_DIRECTORY) not in sys.path:

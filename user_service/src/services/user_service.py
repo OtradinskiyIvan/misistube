@@ -1,16 +1,10 @@
 """User Service with business logic."""
-import sys
-from pathlib import Path
 from typing import Optional
 from uuid import UUID, uuid4
 
-from src.domain.entities import User
-from src.domain.exceptions import InvalidUserDataError
-from src.domain.interfaces import UserRepository
-
-ROOT_DIRECTORY = Path(__file__).resolve().parents[3]
-if str(ROOT_DIRECTORY) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIRECTORY))
+from ..domain.entities import User
+from ..domain.exceptions import InvalidUserDataError
+from ..domain.interfaces import UserRepository
 
 
 class UserService:

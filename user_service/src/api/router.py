@@ -4,16 +4,16 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from src.api.schemas import (
+from .schemas import (
     UserCreateRequest,
     UserUpdateRequest,
     UserResponse,
     UserListResponse,
     ErrorResponse,
 )
-from src.deps import get_logger_dep, get_settings, get_user_service
-from src.domain.exceptions import UserNotFoundError
-from src.services.user_service import UserService
+from ..deps import get_logger_dep, get_settings, get_user_service
+from ..domain.exceptions import UserNotFoundError
+from ..services.user_service import UserService
 
 router = APIRouter()
 
