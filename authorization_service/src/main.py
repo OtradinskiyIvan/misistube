@@ -7,9 +7,12 @@ from .core.settings import AuthSettings
 from .presentations.routers.auth import router as auth_router
 from .presentations.routers.health import router as health_router
 from .presentations.error_handlers import register_exception_handlers
+from dotenv import load_dotenv
 
+load_dotenv()
 settings = AuthSettings()
 logger = get_logger(settings.APP_NAME, settings.LOG_LEVEL)
+
 
 
 @asynccontextmanager
