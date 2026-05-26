@@ -1,3 +1,4 @@
+import asyncio
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,12 +13,16 @@ class UserRepository(IUserRepository):
 
     async def get_by_id(self, user_id: UUID) -> User | None:
         result = await self._session.execute(select(UserModel).where(UserModel.id == user_id))
-        model = await result.scalar_one_or_none()
+        model = result.scalar_one_or_none()
+        if asyncio.iscoroutine(model):
+            model = await model
         return self._to_domain(model) if model else None
 
     async def get_by_email(self, email: str) -> User | None:
         result = await self._session.execute(select(UserModel).where(UserModel.email == email))
-        model = await result.scalar_one_or_none()
+        model = result.scalar_one_or_none()
+        if asyncio.iscoroutine(model):
+            model = await model
         return self._to_domain(model) if model else None
 
     async def save(self, user: User) -> User:
@@ -31,7 +36,9 @@ class UserRepository(IUserRepository):
         result = await self._session.execute(
             select(UserModel.id).where(UserModel.email == email).limit(1)
         )
-        model = await result.scalar_one_or_none()
+        model = result.scalar_one_or_none()
+        if asyncio.iscoroutine(model):
+            model = await model
         return model is not None
 
     @staticmethod
