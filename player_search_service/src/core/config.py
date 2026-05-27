@@ -1,4 +1,4 @@
-from pydantic import ValidationError
+from pydantic import ValidationError, Field
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 from os import getenv
@@ -8,7 +8,7 @@ load_dotenv()
 class Settings(BaseSettings):
     app_name: str = "player_search_service"
     log_level: str = getenv("LOG_LEVEL")
-    database_url: str = getenv("DATABASE_URL")
+    database_url: str = getenv("DATABASE_URL") # Потом будет замена на video-metadata
 
     redis_url: str = Field(
         default="redis://localhost:6379/0",

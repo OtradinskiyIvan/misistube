@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from src.api.routers import search, playback
+from api.routers import search, playback
 
 app = FastAPI(
     title="Player & Searching Service",

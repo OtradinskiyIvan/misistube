@@ -10,6 +10,8 @@ dependencies = [
     "pydantic[email]>=2.7.0",
     "sqlalchemy[asyncio]>=2.0.30",
     "asyncpg>=0.29.0",
+    "redis>=7.4.0",
+    "aiobotocore>=3.7.0",
 ]
 
 [project.optional-dependencies]
@@ -18,7 +20,6 @@ dev = [
     "pytest>=8.1.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.4.0",
-    "pre-commit>=3.7.0",
 ]
 
 [tool.ruff]

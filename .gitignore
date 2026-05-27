@@ -17,3 +17,6 @@ env/
 # Файлы проекта
 *.log
 .DS_Store
+
+# Файлы кеширования от установки через pip install -e ".[dev]" из pyproject.toml
+*.egg-info
