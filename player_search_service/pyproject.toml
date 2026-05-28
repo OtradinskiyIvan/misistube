@@ -12,6 +12,8 @@ dependencies = [
     "asyncpg>=0.29.0",
     "redis>=7.4.0",
     "aiobotocore>=3.7.0",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29.0",
 ]
 
 [project.optional-dependencies]
