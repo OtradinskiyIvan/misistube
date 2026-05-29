@@ -86,6 +86,16 @@ jobs:
           python -m pip install -e ".[dev]"
         working-directory: ./${{ matrix.service }}
 
+      - name: Verify shared package
+        if: steps.dir-check.outputs.exists == 'true'
+        run: |
+          pwd
+          ls -la ..
+          ls -la ../shared
+          python -m pip show shared
+          python -c "import shared; print(shared.__file__)"
+        working-directory: ./${{ matrix.service }}
+
       - name: Ruff (lint + format)
         if: steps.dir-check.outputs.exists == 'true'
         run: ruff check src/ tests/
