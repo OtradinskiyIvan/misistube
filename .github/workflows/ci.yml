@@ -86,6 +86,11 @@ jobs:
           python -m pip install -e ".[dev]"
         working-directory: ./${{ matrix.service }}
 
+      - name: Export shared path
+        if: steps.dir-check.outputs.exists == 'true'
+        run: echo "PYTHONPATH=$(pwd)/../shared${PYTHONPATH:+:$PYTHONPATH}" >> $GITHUB_ENV
+        working-directory: ./${{ matrix.service }}
+
       - name: Verify shared package
         if: steps.dir-check.outputs.exists == 'true'
         run: |
@@ -108,6 +113,8 @@ jobs:
 
       - name: Pytest + Coverage
         if: steps.dir-check.outputs.exists == 'true'
+        env:
+          PYTHONPATH: ../shared:${PYTHONPATH}
         run: pytest --cov=src --cov-report=xml --cov-fail-under=75
         working-directory: ./${{ matrix.service }}
 
