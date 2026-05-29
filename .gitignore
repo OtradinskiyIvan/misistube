@@ -6,6 +6,10 @@ __pycache__/
 .ruff_cache/
 **/.ruff_cache/
 
+# Python package artifacts
+*.egg-info/
+*.egg
+
 # Виртуальное окружение
 venv/
 env/
