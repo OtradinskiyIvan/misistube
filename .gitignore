@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *.so
 .Python
+.ruff_cache/
+**/.ruff_cache/
 
 # Виртуальное окружение
 venv/
