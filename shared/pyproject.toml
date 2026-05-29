@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shared"
+version = "0.1.0"
+description = "Shared utilities for MisisTube"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic==2.13.2",
+    "pydantic-settings==2.13.1",
+    "passlib==1.7.4",
+    "PyJWT==2.12.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["shared*"]
