@@ -1,11 +1,11 @@
 import unittest
+from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
-from datetime import datetime
 
-from authorization_service.src.infrastructure.repositories import UserRepository
 from authorization_service.src.domain.entities.user import User
 from authorization_service.src.infrastructure.database.models import UserModel
+from authorization_service.src.infrastructure.repositories import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

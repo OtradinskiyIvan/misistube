@@ -1,7 +1,9 @@
 from abc import abstractmethod
 from typing import Protocol
 from uuid import UUID
+
 from ..entities.user import User
+
 
 class IUserRepository(Protocol):
     @abstractmethod

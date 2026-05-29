@@ -1,11 +1,14 @@
 import asyncio
+from datetime import datetime
 from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from ..domain.entities.user import User
 from ..domain.interfaces.repositories import IUserRepository
 from .database.models import UserModel
-from datetime import datetime
+
 
 class UserRepository(IUserRepository):
     def __init__(self, session: AsyncSession):
@@ -51,7 +54,7 @@ class UserRepository(IUserRepository):
             created_at=model.created_at or datetime.now(),
             updated_at=model.updated_at or datetime.now()
         )
-    
+
     @staticmethod
     def _to_model(user: User) -> UserModel:
         return UserModel(

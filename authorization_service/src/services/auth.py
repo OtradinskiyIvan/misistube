@@ -1,9 +1,12 @@
 from uuid import UUID
-from shared.security import hash_password, verify_password, create_jwt_token
-from ..domain.entities.user import User
-from ..domain.interfaces.repositories import IUserRepository
-from ..domain.exceptions import UserNotFoundError, UserAlreadyExistsError, InvalidCredentialsError
+
+from shared.security import create_jwt_token, hash_password, verify_password
+
 from ..core.settings import AuthSettings
+from ..domain.entities.user import User
+from ..domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError, UserNotFoundError
+from ..domain.interfaces.repositories import IUserRepository
+
 
 class AuthService:
     def __init__(self, user_repo: IUserRepository, settings: AuthSettings):

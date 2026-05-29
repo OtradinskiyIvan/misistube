@@ -2,9 +2,10 @@
 """
 Test runner for Authorization Service
 """
-import sys
 import subprocess
+import sys
 from pathlib import Path
+
 
 def run_tests():
     """Run all authorization service tests."""

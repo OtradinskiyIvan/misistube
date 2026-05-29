@@ -2,14 +2,14 @@ import unittest
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-from authorization_service.src.services.auth import AuthService
+from authorization_service.src.core.settings import AuthSettings
 from authorization_service.src.domain.entities.user import User
 from authorization_service.src.domain.exceptions import (
-    UserNotFoundError,
+    InvalidCredentialsError,
     UserAlreadyExistsError,
-    InvalidCredentialsError
+    UserNotFoundError,
 )
-from authorization_service.src.core.settings import AuthSettings
+from authorization_service.src.services.auth import AuthService
 from pydantic import SecretStr
 
 

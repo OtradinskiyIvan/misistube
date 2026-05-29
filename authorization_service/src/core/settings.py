@@ -1,5 +1,6 @@
 from pydantic import SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
+
 from shared.config import BaseSettings
 
 

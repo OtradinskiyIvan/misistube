@@ -1,9 +1,12 @@
 from fastapi import Depends
-from shared.database.session import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from shared.database.session import get_async_session
+
 from ..core.settings import AuthSettings
-from ..services.auth import AuthService
 from ..infrastructure.repositories import UserRepository
+from ..services.auth import AuthService
+
 
 def get_settings() -> AuthSettings:
     return AuthSettings()

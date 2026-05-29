@@ -1,7 +1,10 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+
 from shared.exceptions import AppBaseError
-from ..domain.exceptions import UserNotFoundError, UserAlreadyExistsError, InvalidCredentialsError
+
+from ..domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError, UserNotFoundError
+
 
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(UserNotFoundError)

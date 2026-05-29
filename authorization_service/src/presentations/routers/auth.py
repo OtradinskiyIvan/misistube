@@ -1,7 +1,8 @@
-from fastapi import APIRouter, status, Depends
-from ..schemas.auth import RegisterRequest, LoginRequest, TokenResponse, UserOut
-from ..deps import get_auth_service
+from fastapi import APIRouter, Depends, status
+
 from ...services.auth import AuthService
+from ..deps import get_auth_service
+from ..schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
 
 router = APIRouter()
 
