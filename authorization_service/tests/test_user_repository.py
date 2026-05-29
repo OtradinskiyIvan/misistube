@@ -3,9 +3,9 @@ from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
-from authorization_service.src.domain.entities.user import User
-from authorization_service.src.infrastructure.database.models import UserModel
-from authorization_service.src.infrastructure.repositories import UserRepository
+from ..src.domain.entities.user import User
+from ..src.infrastructure.database.models import UserModel
+from ..src.infrastructure.repositories import UserRepository
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

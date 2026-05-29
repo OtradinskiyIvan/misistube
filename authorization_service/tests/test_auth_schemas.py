@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 from uuid import uuid4
 
-from authorization_service.src.presentations.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
+from ..src.presentations.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
 from pydantic import ValidationError
 
 

@@ -2,14 +2,14 @@ import unittest
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-from authorization_service.src.core.settings import AuthSettings
-from authorization_service.src.domain.entities.user import User
-from authorization_service.src.domain.exceptions import (
+from ..src.core.settings import AuthSettings
+from ..src.domain.entities.user import User
+from ..src.domain.exceptions import (
     InvalidCredentialsError,
     UserAlreadyExistsError,
     UserNotFoundError,
 )
-from authorization_service.src.services.auth import AuthService
+from ..src.services.auth import AuthService
 from pydantic import SecretStr
 
 
@@ -75,7 +75,7 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         self.mock_repo.get_by_email.return_value = user
 
         # Mock password verification to return True
-        with unittest.mock.patch('authorization_service.src.services.auth.verify_password', return_value=True):
+        with unittest.mock.patch('src.services.auth.verify_password', return_value=True):
             # Act
             result = await self.service.login(email, password)
 
@@ -110,7 +110,7 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         self.mock_repo.get_by_email.return_value = user
 
         # Mock password verification to return True
-        with unittest.mock.patch('authorization_service.src.services.auth.verify_password', return_value=True):
+        with unittest.mock.patch('src.services.auth.verify_password', return_value=True):
             # Act & Assert
             with self.assertRaises(InvalidCredentialsError):
                 await self.service.login(email, password)
