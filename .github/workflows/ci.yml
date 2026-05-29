@@ -82,8 +82,8 @@ jobs:
         if: steps.dir-check.outputs.exists == 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install -e ../shared
-          pip install -e ".[dev]"
+          python -m pip install -e ../shared
+          python -m pip install -e ".[dev]"
         working-directory: ./${{ matrix.service }}
 
       - name: Ruff (lint + format)
