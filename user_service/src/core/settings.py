@@ -23,8 +23,7 @@ class UserServiceSettings(shared_config.BaseSettings):
     LOG_LEVEL: str = "INFO"
     SERVICE_VERSION: str = "0.1.0"
 
-    # Temporary local development defaults: allow running without .env until DB and secrets are set up.
-    DATABASE_URL: Optional[shared_config.PostgresDsn] = None
+    DATABASE_URL: shared_config.PostgresDsn
     DATABASE_ECHO: bool = False
     SECRET_KEY: Optional[shared_config.SecretStr] = None
 

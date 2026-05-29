@@ -1,4 +1,5 @@
-"""User Service with business logic."""
+import hashlib
+import secrets
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -7,41 +8,48 @@ from ..domain.exceptions import InvalidUserDataError
 from ..domain.interfaces import UserRepository
 
 
-class UserService:
-    """User Service containing business logic."""
+def _hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    pwd_hash = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100_000)
+    return f"{salt}${pwd_hash.hex()}"
 
-    def __init__(self, repository: UserRepository):
+
+def _verify_password(password: str, stored: str) -> bool:
+    salt, pwd_hash = stored.split("$", 1)
+    computed = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 100_000)
+    return computed.hex() == pwd_hash
+
+
+class UserService:
+    def __init__(self, repository: UserRepository) -> None:
         self.repository = repository
 
     async def create_user(
         self,
         username: str,
         email: str,
-        display_name: Optional[str] = None,
+        password: str,
     ) -> User:
-        """Create a new user with business logic validation."""
-        # Business logic validation
         self._validate_username(username)
         self._validate_email(email)
+        self._validate_password(password)
 
         user = User(
             id=uuid4(),
             username=username,
             email=email,
-            display_name=display_name,
-            is_active=True,
+            hashed_password=_hash_password(password),
+            status="active",
         )
 
         return await self.repository.create(user)
 
     async def get_user(self, user_id: UUID) -> User:
-        """Get user by ID."""
         return await self.repository.get_by_id(user_id)
 
     async def get_all_users(self, skip: int = 0, limit: int = 100) -> list[User]:
-        """Get all users with pagination."""
         if limit > 1000:
-            limit = 1000  # Max limit
+            limit = 1000
         if skip < 0:
             skip = 0
 
@@ -52,13 +60,11 @@ class UserService:
         user_id: UUID,
         username: Optional[str] = None,
         email: Optional[str] = None,
-        display_name: Optional[str] = None,
-        is_active: Optional[bool] = None,
+        password: Optional[str] = None,
+        status: Optional[str] = None,
     ) -> User:
-        """Update user with business logic validation."""
         user = await self.repository.get_by_id(user_id)
 
-        # Validate new values if provided
         if username is not None:
             self._validate_username(username)
             user.username = username
@@ -67,21 +73,20 @@ class UserService:
             self._validate_email(email)
             user.email = email
 
-        if display_name is not None:
-            user.display_name = display_name
+        if password is not None:
+            self._validate_password(password)
+            user.hashed_password = _hash_password(password)
 
-        if is_active is not None:
-            user.is_active = is_active
+        if status is not None:
+            user.status = status
 
         return await self.repository.update(user)
 
     async def delete_user(self, user_id: UUID) -> bool:
-        """Delete user by ID."""
         return await self.repository.delete(user_id)
 
     @staticmethod
     def _validate_username(username: str) -> None:
-        """Validate username format."""
         if not username or len(username) < 3:
             raise InvalidUserDataError("Username must be at least 3 characters long")
         if len(username) > 255:
@@ -93,8 +98,14 @@ class UserService:
 
     @staticmethod
     def _validate_email(email: str) -> None:
-        """Validate email format (simple validation)."""
         if not email or "@" not in email:
             raise InvalidUserDataError("Invalid email format")
         if len(email) > 255:
             raise InvalidUserDataError("Email must not exceed 255 characters")
+
+    @staticmethod
+    def _validate_password(password: str) -> None:
+        if not password or len(password) < 8:
+            raise InvalidUserDataError("Password must be at least 8 characters long")
+        if len(password) > 128:
+            raise InvalidUserDataError("Password must not exceed 128 characters")

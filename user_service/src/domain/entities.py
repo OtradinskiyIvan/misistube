@@ -1,27 +1,24 @@
-"""Domain entities for User Service."""
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
 
 class User:
-    """Domain User entity."""
-
     def __init__(
         self,
         id: UUID,
         username: str,
         email: str,
-        display_name: Optional[str] = None,
-        is_active: bool = True,
+        hashed_password: str,
+        status: str = "active",
         created_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None,
-    ):
+    ) -> None:
         self.id = id
         self.username = username
         self.email = email
-        self.display_name = display_name
-        self.is_active = is_active
+        self.hashed_password = hashed_password
+        self.status = status
         self.created_at = created_at or datetime.utcnow()
         self.updated_at = updated_at or datetime.utcnow()
 
