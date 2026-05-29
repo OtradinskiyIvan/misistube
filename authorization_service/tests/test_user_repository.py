@@ -3,10 +3,11 @@ from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from ..src.domain.entities.user import User
 from ..src.infrastructure.database.models import UserModel
 from ..src.infrastructure.repositories import UserRepository
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class TestUserRepository(unittest.IsolatedAsyncioTestCase):

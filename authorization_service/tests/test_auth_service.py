@@ -2,6 +2,8 @@ import unittest
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
+from pydantic import SecretStr
+
 from ..src.core.settings import AuthSettings
 from ..src.domain.entities.user import User
 from ..src.domain.exceptions import (
@@ -10,7 +12,6 @@ from ..src.domain.exceptions import (
     UserNotFoundError,
 )
 from ..src.services.auth import AuthService
-from pydantic import SecretStr
 
 
 class TestAuthService(unittest.IsolatedAsyncioTestCase):

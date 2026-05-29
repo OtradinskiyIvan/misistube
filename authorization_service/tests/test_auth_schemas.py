@@ -2,8 +2,9 @@ import unittest
 from datetime import datetime
 from uuid import uuid4
 
-from ..src.presentations.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
 from pydantic import ValidationError
+
+from ..src.presentations.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
 
 
 class TestAuthSchemas(unittest.TestCase):

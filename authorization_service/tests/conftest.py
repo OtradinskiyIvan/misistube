@@ -2,11 +2,12 @@ import asyncio
 from unittest.mock import AsyncMock
 
 import pytest
+from pydantic import SecretStr
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from ..src.core.settings import AuthSettings
 from ..src.infrastructure.repositories import UserRepository
 from ..src.services.auth import AuthService
-from pydantic import SecretStr
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture
