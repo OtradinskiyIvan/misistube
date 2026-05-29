@@ -1,8 +1,6 @@
-import asyncio
 import unittest
-from unittest.mock import AsyncMock, MagicMock
-from uuid import UUID, uuid4
-from datetime import datetime
+from unittest.mock import AsyncMock
+from uuid import uuid4
 
 from authorization_service.src.services.auth import AuthService
 from authorization_service.src.domain.entities.user import User
