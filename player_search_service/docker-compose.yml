@@ -34,22 +34,22 @@ services:
       "
 
 # Тестовый контейнер postgress => скорее всего будет БД у Яры просто
-#   postgres:
-#     image: postgres:15-alpine
-#     container_name: player_search_postgres
-#     environment:
-#       POSTGRES_USER: player
-#       POSTGRES_PASSWORD: player_pass
-#       POSTGRES_DB: player_db
-#     ports:
-#       - "5432:5432"
-#     volumes:
-#       - postgres_data:/var/lib/postgresql/data  
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U player -d player_db"]
-#       interval: 5s
-#       timeout: 3s
-#       retries: 5
+  postgres:
+    image: postgres:15-alpine
+    container_name: player_search_postgres
+    environment:
+      POSTGRES_USER: player
+      POSTGRES_PASSWORD: player_pass
+      POSTGRES_DB: player_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U player -d player_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
-# volumes:
-#   postgres_data: /opt/POSTGRES
+volumes:
+  postgres_data: /opt/POSTGRES

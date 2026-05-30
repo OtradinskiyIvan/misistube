@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     - Startup: инициализация БД, создание таблиц (в dev), подключение к инфраструктуре
     - Shutdown: корректное закрытие соединений
     """
-    logger.info("Starting Player & Searching Service...", env=settings.app_env)
+    logger.info("Starting Player & Searching Service... [env=%s]", settings.app_env)
     
     engine = init_engine(
         database_url=settings.database_url,
