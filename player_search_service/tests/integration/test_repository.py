@@ -43,7 +43,7 @@ async def db_session(postgres_container):
     async with session_factory() as session:
         yield session
 
-    # 🔹 CLEANUP: Удаляем все данные после теста, но не дропаем таблицы
+
     async with engine.begin() as conn:
         await conn.execute(text("TRUNCATE TABLE videos CASCADE"))
 
@@ -74,7 +74,7 @@ class TestSQLAlchemyVideoRepository:
             Video(
                 title="Processing Video",
                 storage_key="videos/processing1/master.m3u8",
-                status=VideoStatus.PROCESSING,  # ← He должен попасть в выдачу
+                status=VideoStatus.PROCESSING,
                 tags=["test"]
             ),
             Video(
@@ -112,7 +112,7 @@ class TestSQLAlchemyVideoRepository:
 
         # Поиск c разными регистрами
         results1, total1 = await repository.search(query="кот", offset=0, limit=10)
-        _results2, total2 = await repository.search(query="KOT", offset=0, limit=10)
+        _results2, total2 = await repository.search(query="КОТ", offset=0, limit=10) # noqa: RUF001
 
         assert total1 == 1
         assert total2 == 1
