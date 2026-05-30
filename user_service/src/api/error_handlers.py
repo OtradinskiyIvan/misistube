@@ -2,7 +2,9 @@
 import sys
 from pathlib import Path
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from ..domain.exceptions import (
     UserNotFoundError,
@@ -36,6 +38,24 @@ async def app_exception_handler(request: Request, exc: AppBaseError) -> JSONResp
     )
 
 
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError | ValidationError
+) -> JSONResponse:
+    errors = exc.errors() if hasattr(exc, "errors") else []
+    first = errors[0] if errors else {}
+    field = " -> ".join(str(p) for p in first.get("loc", [])) if first else ""
+    msg = first.get("msg", str(exc)) if first else str(exc)
+    detail = f"{field}: {msg}" if field else msg
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "VALIDATION_ERROR",
+            "detail": detail,
+            "status_code": 422,
+        },
+    )
+
+
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle unexpected exceptions."""
     error_response = {
@@ -59,6 +79,10 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(UserAlreadyExistsError, app_exception_handler)
     app.add_exception_handler(InvalidUserDataError, app_exception_handler)
     app.add_exception_handler(UserDeletionError, app_exception_handler)
+
+    # Pydantic / FastAPI validation errors -> structured format
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(ValidationError, validation_exception_handler)
 
     # Catch-all for unexpected exceptions
     app.add_exception_handler(Exception, generic_exception_handler)
