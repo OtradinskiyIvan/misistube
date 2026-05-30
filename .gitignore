@@ -23,3 +23,7 @@ env/
 # Файлы проекта
 *.log
 .DS_Store
+
+# Coverage reports
+.coverage
+coverage.xml
