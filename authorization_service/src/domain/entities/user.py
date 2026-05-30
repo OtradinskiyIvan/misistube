@@ -6,6 +6,7 @@ from uuid import UUID
 @dataclass(frozen=True)
 class User:
     id: UUID
+    username: str
     email: str
     hashed_password: str
     is_active: bool = True
@@ -15,6 +16,7 @@ class User:
     def deactivate(self) -> "User":
         return User(
             id=self.id,
+            username=self.username,
             email=self.email,
             hashed_password=self.hashed_password,
             is_active=False,
