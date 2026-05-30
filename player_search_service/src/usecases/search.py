@@ -1,17 +1,30 @@
-from src.api.schemas import SearchQuery, SearchResponse, VideoResult
+from src.api.schemas import SearchQuery, SearchResponse
 from src.infrastructure.cache.protocol import CachePort
-
+from src.infrastructure.search.protocol import SearchPort
 
 class SearchVideoUseCase:
-    def __init__(self, cache: CachePort):
+    def __init__(self, cache: CachePort, search_port: SearchPort):
         self.cache = cache
+        self.search_port = search_port
 
     async def execute(self, query: SearchQuery) -> SearchResponse:
-        key = f"search:{query.q}:{query.offset}:{query.limit}"
-        if cached := await self.cache.get(key):
+        cache_key = f"search:{query.q}:{query.offset}:{query.limit}"
+        
+        if cached := await self.cache.get(cache_key):
             return SearchResponse(**cached)
 
-        # 🔸 Заглушка (позже → RepositoryPort)
-        resp = SearchResponse(items=[VideoResult(id="v1", title=f"Result for {query.q}", duration=120, tags=[])], total=1, offset=query.offset, limit=query.limit)
-        await self.cache.set(key, resp.model_dump(), ttl=300)
-        return resp
+        items, total = await self.search_port.search(
+            query=query.q,
+            tags=query.tags,
+            offset=query.offset,
+            limit=query.limit
+        )
+
+        response = SearchResponse(
+            items=items,
+            total=total,
+            offset=query.offset,
+            limit=query.limit
+        )
+        await self.cache.set(cache_key, response.model_dump(), ttl=300)
+        return response
