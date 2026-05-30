@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 
 ROOT_DIRECTORY = Path(__file__).resolve().parents[2]
 if str(ROOT_DIRECTORY) not in sys.path:
@@ -12,8 +12,9 @@ if str(ROOT_DIRECTORY) not in sys.path:
 from .api.error_handlers import register_exception_handlers
 from .api.router import router as api_router
 from .core.logging import configure_structlog
+from .core.middleware import CorrelationIDMiddleware
 from .core.settings import settings
-from .deps import get_correlation_id, init_db_manager
+from .deps import init_db_manager
 from .infrastructure.database.manager import DatabaseManager
 
 configure_structlog(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
@@ -41,9 +42,10 @@ app = FastAPI(
     version=settings.SERVICE_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
-    dependencies=[Depends(get_correlation_id)],
     lifespan=lifespan,
 )
+
+app.add_middleware(CorrelationIDMiddleware)
 
 register_exception_handlers(app)
 

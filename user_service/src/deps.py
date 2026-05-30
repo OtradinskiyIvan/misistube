@@ -1,11 +1,10 @@
-import uuid
 from collections.abc import AsyncGenerator
 from typing import Optional
 
-from fastapi import Depends, Header
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .core.logging import bind_correlation_id, configure_structlog, get_logger
+from .core.logging import configure_structlog, get_logger
 from .core.settings import settings, UserServiceSettings
 from .infrastructure.database.manager import DatabaseManager
 from .infrastructure.database.uow import UnitOfWorkImpl
@@ -36,16 +35,8 @@ def get_settings() -> UserServiceSettings:
     return settings
 
 
-async def get_correlation_id(
-    x_correlation_id: Optional[str] = Header(None, alias="X-Correlation-ID"),
-) -> str:
-    correlation_id = x_correlation_id or str(uuid.uuid4())
-    bind_correlation_id(correlation_id)
-    return correlation_id
-
-
-def get_logger_dep(correlation_id: str = Depends(get_correlation_id)):
-    return get_logger().bind(correlation_id=correlation_id)
+def get_logger_dep():
+    return get_logger()
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
