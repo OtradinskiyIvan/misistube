@@ -37,7 +37,7 @@ class RedisCacheAdapter(CachePort):
             return data
 
     async def set(self, key: str, value: Any, ttl: int | None = None) -> None:
-        """Сериализовать и сохранить с TTL"""
+        """Сохранить значение c указанием TTL"""
         ttl = ttl or self.default_ttl
         serialized = json.dumps(value) if not isinstance(value, str) else value
         await self.client.setex(key, ttl, serialized)

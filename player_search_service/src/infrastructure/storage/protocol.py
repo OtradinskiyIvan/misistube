@@ -15,12 +15,10 @@ class StoragePort(Protocol):
     ) -> tuple[str, datetime]:
         """
         Генерирует presigned URL для доступа к объекту
-        
         Args:
             object_key: Ключ объекта (путь внутри бакета)
             bucket: Имя бакета
             expires_in: Время жизни ссылки в секундах
-        
         Returns:
             Tuple[URL, expiration_datetime]
         """
