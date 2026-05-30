@@ -1,12 +1,9 @@
 """Exception handlers for API responses."""
 import sys
 from pathlib import Path
-from typing import Callable
-
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from .schemas import ErrorResponse
 from ..domain.exceptions import (
     UserNotFoundError,
     UserAlreadyExistsError,

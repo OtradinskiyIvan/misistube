@@ -2,11 +2,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
+from .mappers import (
+    map_create_dto,
+    map_update_dto,
+    map_user_to_response,
+    map_users_to_response,
+)
 from .schemas import (
-    UserCreateRequest,
+    UserCreateDTO,
     UserListResponse,
-    UserResponse,
-    UserUpdateRequest,
+    UserResponseDTO,
+    UserUpdateDTO,
 )
 from ..deps import (
     get_create_user_service,
@@ -37,25 +43,22 @@ async def health_check(
     }
 
 
-@router.post("/users", response_model=UserResponse, status_code=201)
+@router.post("/users", response_model=UserResponseDTO, status_code=201)
 async def create_user(
-    request: UserCreateRequest,
+    dto: UserCreateDTO,
     service: CreateUserService = Depends(get_create_user_service),
     logger=Depends(get_logger_dep),
 ):
-    logger.info("users.create.requested", username=request.username, email=request.email)
+    logger.info("users.create.requested", username=dto.username, email=dto.email)
 
-    user = await service.execute(
-        username=request.username,
-        email=request.email,
-        password=request.password,
-    )
+    data = map_create_dto(dto)
+    user = await service.execute(**data)
 
     logger.info("users.create.success", user_id=str(user.id))
-    return user
+    return map_user_to_response(user)
 
 
-@router.get("/users/{user_id}", response_model=UserResponse)
+@router.get("/users/{user_id}", response_model=UserResponseDTO)
 async def get_user(
     user_id: UUID,
     service: GetUserService = Depends(get_get_user_service),
@@ -66,7 +69,7 @@ async def get_user(
     user = await service.by_id(user_id)
 
     logger.info("users.get.success", user_id=str(user_id))
-    return user
+    return map_user_to_response(user)
 
 
 @router.get("/users", response_model=UserListResponse)
@@ -81,28 +84,28 @@ async def list_users(
     users = await service.all(skip=skip, limit=limit)
 
     logger.info("users.list.success", count=len(users))
-    return UserListResponse(users=users, total=len(users), skip=skip, limit=limit)
+    return UserListResponse(
+        users=map_users_to_response(users),
+        total=len(users),
+        skip=skip,
+        limit=limit,
+    )
 
 
-@router.put("/users/{user_id}", response_model=UserResponse)
+@router.put("/users/{user_id}", response_model=UserResponseDTO)
 async def update_user(
     user_id: UUID,
-    request: UserUpdateRequest,
+    dto: UserUpdateDTO,
     service: UpdateUserService = Depends(get_update_user_service),
     logger=Depends(get_logger_dep),
 ):
     logger.info("users.update.requested", user_id=str(user_id))
 
-    user = await service.execute(
-        user_id=user_id,
-        username=request.username,
-        email=request.email,
-        password=request.password,
-        status=request.status,
-    )
+    data = map_update_dto(dto)
+    user = await service.execute(user_id=user_id, **data)
 
     logger.info("users.update.success", user_id=str(user_id))
-    return user
+    return map_user_to_response(user)
 
 
 @router.delete("/users/{user_id}", status_code=204)
