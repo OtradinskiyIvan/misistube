@@ -11,7 +11,7 @@ async def register(
     payload: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    user = await auth_service.register(email=payload.email, password=payload.password)
+    user = await auth_service.register(username=payload.username, email=payload.email, password=payload.password)
     return user
 
 @router.post("/login", response_model=TokenResponse)
@@ -19,7 +19,7 @@ async def login(
     payload: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    token_data = await auth_service.login(email=payload.email, password=payload.password)
+    token_data = await auth_service.login(login=payload.login, password=payload.password)
     return TokenResponse(**token_data)
 
 @router.get("/me", response_model=UserOut)
