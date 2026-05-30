@@ -73,3 +73,7 @@ app.include_router(playback.router, prefix="/api/v1", tags=["Playback"])
 @app.get("/", include_in_schema=False)
 async def root():
     return {"message": "Player & Searching Service is running", "docs": "/docs"}
+
+@app.get("/health", tags=["Health"])
+async def health_check():
+    return {"status": "ok"}

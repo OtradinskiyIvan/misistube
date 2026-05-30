@@ -33,9 +33,14 @@ def mock_storage():
 def client():
     """
     TestClient для интеграционных тестов эндпоинтов.
-    Использует реальное приложение и зависимости.
+    Импортируем app локально, чтобы избежать ошибок при сборе тестов.
     """
+    # Локальный импорт — выполняется только при вызове фикстуры
+    from fastapi.testclient import TestClient
+    from src.main import app
+    
     # В тестах отключаем документацию, чтобы не грузить лишнее
     app.docs_url = None
     app.redoc_url = None
+    
     return TestClient(app)

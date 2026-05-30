@@ -1,6 +1,7 @@
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy import text
 from testcontainers.postgres import PostgresContainer
 
 from shared.database.session import Base
@@ -45,7 +46,7 @@ async def db_session(postgres_container):
     
     # 🔹 CLEANUP: Удаляем все данные после теста, но не дропаем таблицы
     async with engine.begin() as conn:
-        await conn.execute("TRUNCATE TABLE videos CASCADE")
+        await conn.execute(text("TRUNCATE TABLE videos CASCADE"))
     
     await engine.dispose()
 

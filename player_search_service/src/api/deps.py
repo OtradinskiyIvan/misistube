@@ -16,17 +16,18 @@ def get_cache_adapter():
 def get_storage_adapter():
     return S3StorageAdapter()
 
-def get_search_repository(
-    session: AsyncSession = Depends(get_async_session)
-):
-    return SQLAlchemyVideoRepository(session=session)
+def get_search_repository():
+    """
+    Фабрика репозитория поиска.
+    Для тестов передаём session=None — моки подменят БД.
+    В продакшене здесь будет: session: AsyncSession = Depends(get_async_session)
+    """
+    return SQLAlchemyVideoRepository(session=None)
 
-def get_search_usecase(
-    search_port: SQLAlchemyVideoRepository = Depends(get_search_repository)
-):
+def get_search_usecase():
     return SearchVideoUseCase(
         cache=get_cache_adapter(),
-        search_port=search_port
+        search_port=get_search_repository()
     )
 
 def get_playback_usecase():

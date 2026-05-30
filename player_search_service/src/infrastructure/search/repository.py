@@ -25,12 +25,14 @@ class SQLAlchemyVideoRepository(SearchPort):
         ) if query else None
         
         # Фильтр по тегам (ARRAY overlap)
-        tags_filter = Video.tags.overlap(tags) if tags else None
+        tags_filter = Video.tags.bool_op('&&')(tags) if tags else None
         
         # Собираем WHERE
         filters = [base_filter]
-        if text_filter: filters.append(text_filter)
-        if tags_filter: filters.append(tags_filter)
+        if text_filter is not None:
+            filters.append(text_filter)
+        if tags_filter is not None:
+            filters.append(tags_filter)
         
         # Запрос данных
         stmt = select(Video).where(*filters).offset(offset).limit(limit)
