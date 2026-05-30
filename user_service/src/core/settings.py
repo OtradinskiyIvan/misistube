@@ -10,9 +10,12 @@ if str(ROOT_DIRECTORY) not in sys.path:
 import shared.config as shared_config
 
 
+ENV_FILE = ROOT_DIRECTORY / ".env"
+
+
 class UserServiceSettings(shared_config.BaseSettings):
     model_config = {
-        "env_file": [".env", f".env.{os.getenv('APP_ENV', 'development')}"],
+        "env_file": str(ENV_FILE),
         "env_file_encoding": "utf-8",
         "extra": "ignore",
         "case_sensitive": True,

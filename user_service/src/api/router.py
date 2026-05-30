@@ -71,10 +71,10 @@ async def create_user(
     service: CreateUserService = Depends(get_create_user_service),
     logger=Depends(get_logger_dep),
 ):
-    logger.info("users.create.requested", username=dto.username, email=dto.email)
+    logger.info("users.create.requested", extra={"username": dto.username, "email": dto.email})
     data = map_create_dto(dto)
     user = await service.execute(**data)
-    logger.info("users.create.success", user_id=str(user.id))
+    logger.info("users.create.success", extra={"user_id": str(user.id)})
     return map_user_to_response(user)
 
 
@@ -90,9 +90,9 @@ async def get_user(
     service: GetUserService = Depends(get_get_user_service),
     logger=Depends(get_logger_dep),
 ):
-    logger.info("users.get.requested", user_id=str(user_id))
+    logger.info("users.get.requested", extra={"user_id": str(user_id)})
     user = await service.by_id(user_id)
-    logger.info("users.get.success", user_id=str(user_id))
+    logger.info("users.get.success", extra={"user_id": str(user_id)})
     return map_user_to_response(user)
 
 
@@ -109,9 +109,9 @@ async def list_users(
     service: GetUserService = Depends(get_get_user_service),
     logger=Depends(get_logger_dep),
 ):
-    logger.info("users.list.requested", skip=skip, limit=limit)
+    logger.info("users.list.requested", extra={"skip": skip, "limit": limit})
     users = await service.all(skip=skip, limit=limit)
-    logger.info("users.list.success", count=len(users))
+    logger.info("users.list.success", extra={"count": len(users)})
     return UserListResponse(
         users=map_users_to_response(users),
         total=len(users),
@@ -133,10 +133,10 @@ async def update_user(
     service: UpdateUserService = Depends(get_update_user_service),
     logger=Depends(get_logger_dep),
 ):
-    logger.info("users.update.requested", user_id=str(user_id))
+    logger.info("users.update.requested", extra={"user_id": str(user_id)})
     data = map_update_dto(dto)
     user = await service.execute(user_id=user_id, **data)
-    logger.info("users.update.success", user_id=str(user_id))
+    logger.info("users.update.success", extra={"user_id": str(user_id)})
     return map_user_to_response(user)
 
 
@@ -156,7 +156,7 @@ async def delete_user(
     service: DeleteUserService = Depends(get_delete_user_service),
     logger=Depends(get_logger_dep),
 ):
-    logger.info("users.delete.requested", user_id=str(user_id))
+    logger.info("users.delete.requested", extra={"user_id": str(user_id)})
     await service.execute(user_id)
-    logger.info("users.delete.success", user_id=str(user_id))
+    logger.info("users.delete.success", extra={"user_id": str(user_id)})
     return None

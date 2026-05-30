@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .core.logging import configure_structlog, get_logger
+from .core.logging import configure_logging, get_logger
 from .core.settings import settings, UserServiceSettings
 from .infrastructure.database.manager import DatabaseManager
 from .infrastructure.database.uow import UnitOfWorkImpl
@@ -14,7 +14,7 @@ from .services.delete_user import DeleteUserService
 from .services.get_user import GetUserService
 from .services.update_user import UpdateUserService
 
-configure_structlog(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
+configure_logging(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
 
 db_manager: Optional[DatabaseManager] = None
 
@@ -36,7 +36,7 @@ def get_settings() -> UserServiceSettings:
 
 
 def get_logger_dep():
-    return get_logger()
+    return get_logger(settings.APP_NAME, settings.LOG_LEVEL)
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
