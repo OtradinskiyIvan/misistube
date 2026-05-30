@@ -15,10 +15,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-py-modules = [
-    "config",
-    "exceptions",
-    "logger",
-    "security",
-]
-packages = []
+packages = ["shared"]
+
+[tool.setuptools.package-dir]
+shared = "."
