@@ -1,17 +1,18 @@
-from typing import Protocol, Tuple
-from datetime import datetime
 from abc import abstractmethod
+from datetime import datetime
+from typing import Protocol
+
 
 class StoragePort(Protocol):
     """Интерфейс объектного хранилища (S3/MinIO)"""
-    
+
     @abstractmethod
     async def generate_presigned_url(
         self,
         object_key: str,
         bucket: str,
         expires_in: int = 900
-    ) -> Tuple[str, datetime]:
+    ) -> tuple[str, datetime]:
         """
         Генерирует presigned URL для доступа к объекту
         
@@ -24,7 +25,7 @@ class StoragePort(Protocol):
             Tuple[URL, expiration_datetime]
         """
         pass
-    
+
     @abstractmethod
     async def upload_file(
         self,

@@ -10,14 +10,12 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from shared.database.session import Base, init_engine
 from shared.logger import get_logger
 
-from src.api.routers import search, playback
+from src.api.routers import playback, search
 from src.core.config import get_settings
 from src.core.exceptions import register_exception_handlers
-
 
 load_dotenv()
 settings = get_settings()
@@ -32,21 +30,21 @@ async def lifespan(app: FastAPI):
     - Shutdown: корректное закрытие соединений
     """
     logger.info("Starting Player & Searching Service... [env=%s]", settings.app_env)
-    
+
     engine = init_engine(
         database_url=settings.database_url,
         echo=settings.app_env == "development"  # логирование SQL-запросов в dev
     )
-    
+
     # Авто-создание таблиц (ТОЛЬКО для development!)
     if settings.app_env == "development":
         logger.info("🗄 Creating database tables (development mode)...")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("Tables created")
-    
+
     yield
-    
+
     logger.info("Shutting down Player & Searching Service...")
 
 

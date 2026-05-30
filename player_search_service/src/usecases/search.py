@@ -1,6 +1,7 @@
 from src.api.schemas import SearchQuery, SearchResponse, VideoResult
 from src.infrastructure.cache.protocol import CachePort
 
+
 class SearchVideoUseCase:
     def __init__(self, cache: CachePort):
         self.cache = cache

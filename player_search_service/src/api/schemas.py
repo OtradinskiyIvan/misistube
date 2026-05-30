@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, Field
+
 
 class SearchQuery(BaseModel):
     q: str = Field(..., min_length=1, max_length=200, description="Поисковый запрос")
-    tags: Optional[list[str]] = Field(default=None, description="Фильтр по тегам")
+    tags: list[str] | None = Field(default=None, description="Фильтр по тегам")
     offset: int = Field(default=0, ge=0, description="Смещение")
     limit: int = Field(default=20, ge=1, le=100, description="Лимит результатов")
 
@@ -12,9 +13,9 @@ class VideoResult(BaseModel):
     """Результат поиска"""
     id: str
     title: str
-    thumbnail_url: Optional[str] = None
-    duration: Optional[int] = None
-    tags: Optional[list[str]] = None
+    thumbnail_url: str | None = None
+    duration: int | None = None
+    tags: list[str] | None = None
 
 class SearchResponse(BaseModel):
     items: list[VideoResult]
@@ -31,4 +32,4 @@ class ErrorDetail(BaseModel):
     type: str
     title: str
     status: int
-    detail: Optional[str] = None
+    detail: str | None = None

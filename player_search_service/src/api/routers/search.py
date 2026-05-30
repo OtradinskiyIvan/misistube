@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
-from src.api.schemas import SearchQuery, SearchResponse, VideoResult
-from src.api.deps import get_cache_adapter
-from src.infrastructure.cache.protocol import CachePort
-from src.core.logger import get_logger
+from fastapi import APIRouter, Depends
+
 from src.api.deps import get_search_usecase
+from src.api.schemas import SearchQuery, SearchResponse
+from src.core.logger import get_logger
 
 router = APIRouter(tags=["search"])
 logger = get_logger("player_search_service", level="INFO")

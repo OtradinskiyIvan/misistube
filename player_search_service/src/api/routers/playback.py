@@ -1,9 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends
-from src.api.schemas import PlaybackUrl
-from src.api.deps import get_storage_adapter
-from src.infrastructure.storage.protocol import StoragePort
-from src.core.config import get_settings
+from fastapi import APIRouter, Depends
+
 from src.api.deps import get_playback_usecase
+from src.api.schemas import PlaybackUrl
 
 router = APIRouter(tags=["playback"])
 

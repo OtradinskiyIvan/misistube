@@ -1,6 +1,7 @@
 from src.api.schemas import PlaybackUrl
-from src.infrastructure.storage.protocol import StoragePort
 from src.core.config import get_settings
+from src.infrastructure.storage.protocol import StoragePort
+
 
 class GetPlaybackUrlUseCase:
     def __init__(self, storage: StoragePort):

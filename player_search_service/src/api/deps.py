@@ -1,10 +1,12 @@
 from functools import lru_cache
-from src.infrastructure.cache.redis import RedisCacheAdapter
+
 from src.infrastructure.cache.protocol import CachePort
-from src.infrastructure.storage.s3 import S3StorageAdapter
+from src.infrastructure.cache.redis import RedisCacheAdapter
 from src.infrastructure.storage.protocol import StoragePort
-from src.usecases.search import SearchVideoUseCase
+from src.infrastructure.storage.s3 import S3StorageAdapter
 from src.usecases.playback import GetPlaybackUrlUseCase
+from src.usecases.search import SearchVideoUseCase
+
 
 @lru_cache
 def get_cache_adapter() -> CachePort:

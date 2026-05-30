@@ -1,7 +1,8 @@
-from pydantic import ValidationError, Field
-from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
 from os import getenv
+
+from dotenv import load_dotenv
+from pydantic import Field, ValidationError
+from pydantic_settings import BaseSettings
 
 load_dotenv()
 
@@ -20,7 +21,7 @@ class Settings(BaseSettings):
         default=300,
         description="Default TTL for cache entries (seconds)"
     )
-    
+
     s3_endpoint_url: str = Field(
         default="http://localhost:9000",
         description="MinIO/S3 endpoint URL"
@@ -35,7 +36,7 @@ class Settings(BaseSettings):
     )
 
     cors_allow_origins: list[str] = Field(default_factory=lambda: ["*"])
-    
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",
