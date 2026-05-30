@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import String, DateTime, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.manager import Base
 
@@ -31,6 +32,25 @@ class UserModel(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False,
+    )
+
+    profile: Mapped[Optional["UserProfileModel"]] = relationship(
+        back_populates="user", uselist=False,
+    )
+    roles: Mapped[list["UserRoleModel"]] = relationship(
+        back_populates="user", foreign_keys="UserRoleModel.user_id",
+    )
+    preferences: Mapped[Optional["UserPreferenceModel"]] = relationship(
+        back_populates="user", uselist=False,
+    )
+    statistics: Mapped[Optional["UserStatisticModel"]] = relationship(
+        back_populates="user", uselist=False,
+    )
+    subscriptions_as_follower: Mapped[list["UserSubscriptionModel"]] = relationship(
+        back_populates="follower", foreign_keys="UserSubscriptionModel.follower_id",
+    )
+    subscriptions_as_following: Mapped[list["UserSubscriptionModel"]] = relationship(
+        back_populates="following", foreign_keys="UserSubscriptionModel.following_id",
     )
 
     def __repr__(self) -> str:
