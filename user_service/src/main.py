@@ -43,6 +43,23 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
+    contact={
+        "name": "MisiTube Team",
+        "url": "https://github.com/anomalyco/misistube",
+    },
+    license_info={
+        "name": "MIT",
+    },
+    openapi_tags=[
+        {
+            "name": "users",
+            "description": "User CRUD operations (create, read, update, delete)",
+        },
+        {
+            "name": "health",
+            "description": "Service health and readiness checks",
+        },
+    ],
 )
 
 app.add_middleware(CorrelationIDMiddleware)

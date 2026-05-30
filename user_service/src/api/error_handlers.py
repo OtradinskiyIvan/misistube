@@ -20,17 +20,19 @@ if str(ROOT_DIRECTORY) not in sys.path:
 from shared.exceptions import AppBaseError, InfrastructureError, ValidationAppError
 
 
+from ..core.logging import correlation_id_var
+
+
 def _create_error_response(error: AppBaseError) -> dict:
-    """Create error response dict from AppBaseError."""
     return {
         "error": error.code,
         "detail": error.message,
         "status_code": error.status_code,
+        "correlation_id": correlation_id_var.get(),
     }
 
 
 async def app_exception_handler(request: Request, exc: AppBaseError) -> JSONResponse:
-    """Handle AppBaseError and its subclasses."""
     error_response = _create_error_response(exc)
     return JSONResponse(
         status_code=exc.status_code,
@@ -46,26 +48,28 @@ async def validation_exception_handler(
     field = " -> ".join(str(p) for p in first.get("loc", [])) if first else ""
     msg = first.get("msg", str(exc)) if first else str(exc)
     detail = f"{field}: {msg}" if field else msg
+    correlation_id = correlation_id_var.get()
     return JSONResponse(
         status_code=422,
         content={
             "error": "VALIDATION_ERROR",
             "detail": detail,
             "status_code": 422,
+            "correlation_id": correlation_id,
         },
     )
 
 
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle unexpected exceptions."""
-    error_response = {
-        "error": "INTERNAL_ERROR",
-        "detail": "An unexpected error occurred",
-        "status_code": 500,
-    }
+    correlation_id = correlation_id_var.get()
     return JSONResponse(
         status_code=500,
-        content=error_response,
+        content={
+            "error": "INTERNAL_ERROR",
+            "detail": "An unexpected error occurred",
+            "status_code": 500,
+            "correlation_id": correlation_id,
+        },
     )
 
 

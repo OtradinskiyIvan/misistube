@@ -98,13 +98,20 @@ class ErrorResponse(BaseModel):
     error: str = Field(..., description="Error code")
     detail: str = Field(..., description="Human-readable error message")
     status_code: int = Field(..., ge=400, description="HTTP status code")
-
+    correlation_id: str = Field(default="N/A", description="Request correlation ID for tracing")
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "error": "VALIDATION_ERROR",
                 "detail": "Password must contain at least one uppercase letter",
                 "status_code": 422,
+                "correlation_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
             }
         },
     )
+
+
+class HealthResponse(BaseModel):
+    status: str = Field(default="ok", description="Service health status")
+    service: str = Field(default="user-service", description="Service name")
+    version: str = Field(default="0.1.0", description="Service version")

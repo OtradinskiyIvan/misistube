@@ -19,9 +19,14 @@ POST /api/v1/users
 {
   "username": "john_doe",
   "email": "john@example.com",
-  "display_name": "John Doe"  // optional
+  "password": "StrongPass1"
 }
 ```
+
+**Validation Rules:**
+- `username`: 3–255 chars, alphanumeric + `_` and `-`
+- `email`: valid email format
+- `password`: 8–128 chars, at least one uppercase, one lowercase, one digit
 
 **Response (201):**
 ```json
@@ -29,16 +34,15 @@ POST /api/v1/users
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "username": "john_doe",
   "email": "john@example.com",
-  "display_name": "John Doe",
-  "is_active": true,
-  "created_at": "2024-05-22T10:00:00+00:00",
-  "updated_at": "2024-05-22T10:00:00+00:00"
+  "status": "active",
+  "created_at": "2026-01-01T00:00:00",
+  "updated_at": "2026-01-01T00:00:00"
 }
 ```
 
 **Error Examples:**
-- `400 VALIDATION_ERROR`: Username already exists / Invalid email
-- `400 INVALID_USER_DATA`: Username < 3 chars
+- `422 VALIDATION_ERROR`: Invalid field format
+- `400 USER_ALREADY_EXISTS`: Username or email already taken
 
 ---
 
@@ -56,10 +60,9 @@ GET /api/v1/users/{user_id}
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "username": "john_doe",
   "email": "john@example.com",
-  "display_name": "John Doe",
-  "is_active": true,
-  "created_at": "2024-05-22T10:00:00+00:00",
-  "updated_at": "2024-05-22T10:00:00+00:00"
+  "status": "active",
+  "created_at": "2026-01-01T00:00:00",
+  "updated_at": "2026-01-01T00:00:00"
 }
 ```
 
@@ -85,10 +88,9 @@ GET /api/v1/users?skip=0&limit=100
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "username": "john_doe",
       "email": "john@example.com",
-      "display_name": "John Doe",
-      "is_active": true,
-      "created_at": "2024-05-22T10:00:00+00:00",
-      "updated_at": "2024-05-22T10:00:00+00:00"
+      "status": "active",
+      "created_at": "2026-01-01T00:00:00",
+      "updated_at": "2026-01-01T00:00:00"
     }
   ],
   "total": 1,
@@ -112,10 +114,12 @@ PUT /api/v1/users/{user_id}
 {
   "username": "john_doe_updated",
   "email": "john.new@example.com",
-  "display_name": "John Doe Updated",
-  "is_active": false
+  "password": "NewPass123",
+  "status": "inactive"
 }
 ```
+
+`status` может быть: `active`, `inactive`, `banned`, `suspended`.
 
 **Response (200):**
 ```json
@@ -123,10 +127,9 @@ PUT /api/v1/users/{user_id}
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "username": "john_doe_updated",
   "email": "john.new@example.com",
-  "display_name": "John Doe Updated",
-  "is_active": false,
-  "created_at": "2024-05-22T10:00:00+00:00",
-  "updated_at": "2024-05-22T11:00:00+00:00"
+  "status": "inactive",
+  "created_at": "2026-01-01T00:00:00",
+  "updated_at": "2026-01-01T01:00:00"
 }
 ```
 
@@ -153,23 +156,26 @@ DELETE /api/v1/users/{user_id}
 
 ### Error Response Format
 
-Все ошибки возвращаются в формате (вдохновлено RFC 7807):
+Все ошибки возвращаются в формате:
 
 ```json
 {
   "error": "ERROR_CODE",
   "detail": "Human-readable message",
-  "status_code": 400
+  "status_code": 400,
+  "correlation_id": "uuid"
 }
 ```
 
 **Common Error Codes:**
-- `VALIDATION_ERROR` (400): Validation failed
-- `USER_NOT_FOUND` (404): User doesn't exist
-- `USER_ALREADY_EXISTS` (400): User with same username/email exists
-- `INVALID_USER_DATA` (400): Invalid data format
-- `USER_DELETION_FAILED` (500): Database error during deletion
-- `INTERNAL_ERROR` (500): Unexpected server error
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `VALIDATION_ERROR` | 422 | Request body failed validation |
+| `USER_ALREADY_EXISTS` | 400 | Username or email already taken |
+| `INVALID_USER_DATA` | 400 | Business rule violation |
+| `USER_NOT_FOUND` | 404 | User doesn't exist |
+| `USER_DELETION_FAILED` | 500 | Database error during deletion |
+| `INTERNAL_ERROR` | 500 | Unexpected server error |
 
 ---
 
@@ -191,9 +197,9 @@ GET /api/v1/health
 
 ### Headers
 
-**Recommended Headers:**
-- `X-Correlation-ID`: Request tracking ID (auto-generated if not provided)
-  
+**Required Headers:**
+- `X-Correlation-ID`: Request tracking ID (UUID v4, auto-generated if not provided). Возвращается в заголовке ответа и в теле ошибки.
+
 **Example:**
 ```
 GET /api/v1/users/550e8400-e29b-41d4-a716-446655440000
@@ -205,12 +211,12 @@ X-Correlation-ID: abc-123-def-456
 ### Architecture
 
 - **Domain Layer**: Business entities and rules
-- **Infrastructure Layer**: Database operations (SQLAlchemy)
-- **Services Layer**: Business logic (validation, CRUD)
-- **API Layer**: HTTP endpoints (clean, no business logic)
+- **Infrastructure Layer**: Database operations (SQLAlchemy, asyncpg)
+- **Services Layer**: Business logic (CRUD, validation via Pydantic DTOs)
+- **API Layer**: HTTP endpoints (clean, no business logic or SQL)
 - **Dependency Injection**: Via FastAPI `Depends()`
-- **Exception Handling**: Centralized mapping to JSON responses
-- **Logging**: Structured logging with correlation IDs
+- **Exception Handling**: Centralized mapping to JSON `{error, detail, status_code, correlation_id}`
+- **Logging**: Structured JSON logging via structlog with correlation IDs
 
 ---
 
@@ -227,9 +233,15 @@ X-Correlation-ID: abc-123-def-456
 - Maximum 255 characters
 - Must be unique
 
-**Display Name:**
-- Maximum 255 characters
-- Optional
+**Password:**
+- Minimum 8 characters
+- Maximum 128 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one digit
+
+**Status:**
+- One of: `active`, `inactive`, `banned`, `suspended`
 
 ---
 
