@@ -1,21 +1,26 @@
-# src/main.py
+import sys
+from pathlib import Path
+
+ROOT_DIRECTORY = Path(__file__).resolve().parents[2]
+if str(ROOT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIRECTORY))
+
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from shared.database import Base, init_engine, dispose_engine
-from shared.logger import get_logger, configure_logging
+from shared.database.session import Base, init_engine
+from shared.logger import get_logger
 
 from src.api.routers import search, playback
-from src.core.config import settings
+from src.core.config import get_settings
 from src.core.exceptions import register_exception_handlers
 
 
 load_dotenv()
-
-configure_logging()
+settings = get_settings()
 logger = get_logger("player_search_service", level=settings.log_level)
 
 
@@ -43,8 +48,6 @@ async def lifespan(app: FastAPI):
     yield
     
     logger.info("Shutting down Player & Searching Service...")
-    await dispose_engine()
-    logger.info("Shutdown layer & Searching Service complete")
 
 
 app = FastAPI(
