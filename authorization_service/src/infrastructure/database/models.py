@@ -1,10 +1,11 @@
-from sqlalchemy import String, Boolean, DateTime, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 import uuid
 from datetime import datetime
 
-class Base(DeclarativeBase):
-    pass
+from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from shared.database.session import Base
+
 
 class UserModel(Base):
     __tablename__ = "users"

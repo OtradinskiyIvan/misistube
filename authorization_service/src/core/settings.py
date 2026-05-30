@@ -1,7 +1,15 @@
 from pydantic import SecretStr, field_validator
+from pydantic_settings import SettingsConfigDict
+
 from shared.config import BaseSettings
 
+
 class AuthSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+    )
+
     APP_NAME: str = "Authorization Service"
     JWT_SECRET: SecretStr
     JWT_ALGORITHM: str = "HS256"

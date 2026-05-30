@@ -1,14 +1,21 @@
 from contextlib import asynccontextmanager
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from shared.logger import get_logger
-from shared.database.session import init_engine, Base
-from .core.settings import AuthSettings
-from .presentations.routers.auth import router as auth_router
-from .presentations.error_handlers import register_exception_handlers
 
+from shared.database.session import Base, init_engine
+from shared.logger import get_logger
+
+from .core.settings import AuthSettings
+from .presentations.error_handlers import register_exception_handlers
+from .presentations.routers.auth import router as auth_router
+from .presentations.routers.health import router as health_router
+
+load_dotenv()
 settings = AuthSettings()
 logger = get_logger(settings.APP_NAME, settings.LOG_LEVEL)
+
 
 
 @asynccontextmanager
@@ -41,3 +48,4 @@ app.add_middleware(
 
 register_exception_handlers(app)
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(health_router)

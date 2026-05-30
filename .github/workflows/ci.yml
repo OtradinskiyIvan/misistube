@@ -76,13 +76,29 @@ jobs:
         with:
           python-version: "3.11"
           cache: "pip"
-          cache-dependency-path: ./${{ matrix.service }}/pyproject.toml
+          cache-dependency-path: ${{ matrix.service }}/pyproject.toml
 
       - name: Install dependencies
         if: steps.dir-check.outputs.exists == 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          python -m pip install -e ../shared
+          python -m pip install -e ".[dev]"
+        working-directory: ./${{ matrix.service }}
+
+      - name: Export shared path
+        if: steps.dir-check.outputs.exists == 'true'
+        run: echo "PYTHONPATH=$(pwd)/../shared${PYTHONPATH:+:$PYTHONPATH}" >> $GITHUB_ENV
+        working-directory: ./${{ matrix.service }}
+
+      - name: Verify shared package
+        if: steps.dir-check.outputs.exists == 'true'
+        run: |
+          pwd
+          ls -la ..
+          ls -la ../shared
+          python -m pip show shared
+          python -c "import shared; print(shared.__file__)"
         working-directory: ./${{ matrix.service }}
 
       - name: Ruff (lint + format)
@@ -97,6 +113,8 @@ jobs:
 
       - name: Pytest + Coverage
         if: steps.dir-check.outputs.exists == 'true'
+        env:
+          PYTHONPATH: ../shared:${PYTHONPATH}
         run: pytest --cov=src --cov-report=xml --cov-fail-under=75
         working-directory: ./${{ matrix.service }}
 

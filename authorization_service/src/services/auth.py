@@ -1,9 +1,12 @@
 from uuid import UUID
-from shared.security import hash_password, verify_password, create_jwt_token
-from ..domain.entities.user import User
-from ..domain.interfaces.repositories import IUserRepository
-from ..domain.exceptions import UserNotFoundError, UserAlreadyExistsError, InvalidCredentialsError
+
+from shared.security import create_jwt_token, hash_password, verify_password
+
 from ..core.settings import AuthSettings
+from ..domain.entities.user import User
+from ..domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError, UserNotFoundError
+from ..domain.interfaces.repositories import IUserRepository
+
 
 class AuthService:
     def __init__(self, user_repo: IUserRepository, settings: AuthSettings):
@@ -42,7 +45,7 @@ class AuthService:
             algorithm=self._settings.JWT_ALGORITHM,
             expires_minutes=self._settings.JWT_REFRESH_EXPIRE_DAYS * 24 * 60
         )
-        return {"access_token": access_token, "refresh_token": refresh_token}
+        return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "Bearer"}
 
     async def get_user(self, user_id: UUID) -> User:
         user = await self._user_repo.get_by_id(user_id)
