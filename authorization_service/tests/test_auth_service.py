@@ -14,16 +14,25 @@ from ..src.domain.exceptions import (
 from ..src.services.auth import AuthService
 
 
-class TestAuthService(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
-        self.mock_repo = AsyncMock()
-        self.settings = AuthSettings(
-            JWT_SECRET=SecretStr("x" * 32),
-            JWT_ALGORITHM="HS256",
-            JWT_ACCESS_EXPIRE_MINUTES=30,
-            JWT_REFRESH_EXPIRE_DAYS=7
-        )
-        self.service = AuthService(self.mock_repo, self.settings)
+def setUp(self):
+    self.mock_repo = AsyncMock()
+
+    self.settings = AuthSettings(
+        DATABASE_URL="postgresql://test:test@localhost/test",
+        S3_ENDPOINT="http://localhost:9000",
+        S3_ACCESS_KEY="test",
+        S3_SECRET_KEY="test",
+        S3_BUCKET_NAME="test",
+        JWT_SECRET=SecretStr("x" * 32),
+        JWT_ALGORITHM="HS256",
+        JWT_ACCESS_EXPIRE_MINUTES=30,
+        JWT_REFRESH_EXPIRE_DAYS=7
+    )
+
+    self.service = AuthService(
+        self.mock_repo,
+        self.settings
+    )
 
     async def test_register_success(self):
         # Arrange
