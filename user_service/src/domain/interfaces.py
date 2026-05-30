@@ -1,35 +1,26 @@
-from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Protocol
 from uuid import UUID
 
 from .entities import User
 
 
-class UserRepository(ABC):
-    @abstractmethod
-    async def get_by_id(self, user_id: UUID) -> Optional[User]:
-        pass
+class UserRepository(Protocol):
+    async def get_by_id(self, user_id: UUID) -> Optional[User]: ...
 
-    @abstractmethod
-    async def get_by_username(self, username: str) -> Optional[User]:
-        pass
+    async def get_by_username(self, username: str) -> Optional[User]: ...
 
-    @abstractmethod
-    async def get_by_email(self, email: str) -> Optional[User]:
-        pass
+    async def get_by_email(self, email: str) -> Optional[User]: ...
 
-    @abstractmethod
-    async def get_all(self, skip: int = 0, limit: int = 100) -> list[User]:
-        pass
+    async def get_all(self, skip: int = 0, limit: int = 100) -> list[User]: ...
 
-    @abstractmethod
-    async def create(self, user: User) -> User:
-        pass
+    async def create(self, user: User) -> User: ...
 
-    @abstractmethod
-    async def update(self, user: User) -> User:
-        pass
+    async def update(self, user: User) -> User: ...
 
-    @abstractmethod
-    async def delete(self, user_id: UUID) -> bool:
-        pass
+    async def delete(self, user_id: UUID) -> bool: ...
+
+
+class UnitOfWork(Protocol):
+    async def commit(self) -> None: ...
+
+    async def rollback(self) -> None: ...

@@ -35,9 +35,4 @@ class DatabaseManager:
 
     async def get_async_session(self) -> AsyncGenerator[AsyncSession, Any]:
         async with self._session_factory() as session:
-            try:
-                yield session
-                await session.commit()
-            except Exception:
-                await session.rollback()
-                raise
+            yield session

@@ -8,8 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .core.logging import bind_correlation_id, configure_structlog, get_logger
 from .core.settings import settings, UserServiceSettings
 from .infrastructure.database.manager import DatabaseManager
+from .infrastructure.database.uow import UnitOfWorkImpl
 from .infrastructure.repositories import UserRepositoryImpl
-from .services.user_service import UserService
+from .services.create_user import CreateUserService
+from .services.delete_user import DeleteUserService
+from .services.get_user import GetUserService
+from .services.update_user import UpdateUserService
 
 configure_structlog(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
 
@@ -50,13 +54,25 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_user_repository(
+async def get_create_user_service(
     session: AsyncSession = Depends(get_session),
-) -> UserRepositoryImpl:
-    return UserRepositoryImpl(session)
+) -> CreateUserService:
+    return CreateUserService(UserRepositoryImpl(session), UnitOfWorkImpl(session))
 
 
-async def get_user_service(
-    repository: UserRepositoryImpl = Depends(get_user_repository),
-) -> UserService:
-    return UserService(repository)
+async def get_get_user_service(
+    session: AsyncSession = Depends(get_session),
+) -> GetUserService:
+    return GetUserService(UserRepositoryImpl(session))
+
+
+async def get_update_user_service(
+    session: AsyncSession = Depends(get_session),
+) -> UpdateUserService:
+    return UpdateUserService(UserRepositoryImpl(session), UnitOfWorkImpl(session))
+
+
+async def get_delete_user_service(
+    session: AsyncSession = Depends(get_session),
+) -> DeleteUserService:
+    return DeleteUserService(UserRepositoryImpl(session), UnitOfWorkImpl(session))
