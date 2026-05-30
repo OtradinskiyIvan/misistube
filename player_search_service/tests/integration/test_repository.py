@@ -3,7 +3,7 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from testcontainers.postgres import PostgresContainer
 
-from shared.database import Base
+from shared.database.session import Base
 from src.infrastructure.database.models import Video, VideoStatus
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
 

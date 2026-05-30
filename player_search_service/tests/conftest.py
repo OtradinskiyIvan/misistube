@@ -2,6 +2,9 @@ import pytest
 import pytest_asyncio
 from unittest.mock import AsyncMock
 
+from fastapi.testclient import TestClient
+from shared.database.session import get_async_session
+
 # ─── ФИКСТУРЫ С МОКАМИ (нужны только для unit-тестов) ──────────────────
 
 @pytest.fixture
@@ -24,3 +27,15 @@ def mock_storage():
     storage = AsyncMock()
     storage.generate_presigned_url.return_value = ("https://fake-s3.url/video.m3u8", None)
     return storage
+
+# ─── НОВАЯ ФИКСТУРА: HTTP Client ─────────────────────────────────────
+@pytest.fixture
+def client():
+    """
+    TestClient для интеграционных тестов эндпоинтов.
+    Использует реальное приложение и зависимости.
+    """
+    # В тестах отключаем документацию, чтобы не грузить лишнее
+    app.docs_url = None
+    app.redoc_url = None
+    return TestClient(app)
