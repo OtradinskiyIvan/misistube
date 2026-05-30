@@ -1,13 +1,12 @@
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from shared.database.session import Base
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from shared.database.session import Base
 from src.infrastructure.database.models import Video, VideoStatus
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
-
 
 # ─── ФИКСТУРЫ ─────────────────────────────────────────────────────────────
 
@@ -28,26 +27,26 @@ async def db_session(postgres_container):
     """
     # Создаём engine для тестовой БД
     engine = create_async_engine(postgres_container, echo=False)
-    
+
     # Создаём таблицы (Base импортирован из shared)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     # Фабрика сессий
     session_factory = async_sessionmaker(
-        engine, 
-        class_=AsyncSession, 
+        engine,
+        class_=AsyncSession,
         expire_on_commit=False
     )
-    
+
     # Возвращаем сессию в тест
     async with session_factory() as session:
         yield session
-    
+
     # 🔹 CLEANUP: Удаляем все данные после теста, но не дропаем таблицы
     async with engine.begin() as conn:
         await conn.execute(text("TRUNCATE TABLE videos CASCADE"))
-    
+
     await engine.dispose()
 
 
@@ -55,12 +54,12 @@ async def db_session(postgres_container):
 
 class TestSQLAlchemyVideoRepository:
     """Интеграционные тесты репозитория с реальной PostgreSQL"""
-    
+
     @pytest_asyncio.fixture
     async def repository(self, db_session: AsyncSession):
         """Фикстура репозитория с тестовой сессией"""
         return SQLAlchemyVideoRepository(session=db_session)
-    
+
     @pytest.mark.asyncio
     async def test_search_returns_ready_videos_only(self, repository, db_session):
         """Поиск возвращает только видео со статусом 'ready'"""
@@ -85,19 +84,19 @@ class TestSQLAlchemyVideoRepository:
                 tags=["test"]
             ),
         ]
-        
+
         db_session.add_all(test_videos)
         await db_session.commit()
-        
+
         # Поиск: пустой запрос → все готовые видео
         results, total = await repository.search(query="", tags=None, offset=0, limit=10)
-        
+
         # Проверка: только 2 готовых видео
         assert total == 2
         assert len(results) == 2
         assert all("Ready Video" in r.title for r in results)
         assert "Processing Video" not in [r.title for r in results]
-    
+
     @pytest.mark.asyncio
     async def test_search_ilike_title(self, repository, db_session):
         """Поиск по заголовку (регистронезависимый, ILIKE)"""
@@ -110,15 +109,15 @@ class TestSQLAlchemyVideoRepository:
             )
         )
         await db_session.commit()
-        
+
         # Поиск с разными регистрами
         results1, total1 = await repository.search(query="кот", offset=0, limit=10)
         results2, total2 = await repository.search(query="КОТ", offset=0, limit=10)
-        
+
         assert total1 == 1
         assert total2 == 1
         assert "Кот" in results1[0].title
-    
+
     @pytest.mark.asyncio
     async def test_search_by_tags(self, repository, db_session):
         """Фильтрация по тегам (ARRAY overlap)"""
@@ -138,16 +137,16 @@ class TestSQLAlchemyVideoRepository:
         ]
         db_session.add_all(videos)
         await db_session.commit()
-        
+
         # Поиск по тегу "python"
         results, total = await repository.search(
             query="", tags=["python"], offset=0, limit=10
         )
-        
+
         assert total == 1
         assert results[0].title == "Python Tutorial"
         assert "python" in results[0].tags
-    
+
     @pytest.mark.asyncio
     async def test_search_pagination(self, repository, db_session):
         """Пагинация: offset и limit"""
@@ -162,12 +161,12 @@ class TestSQLAlchemyVideoRepository:
                 )
             )
         await db_session.commit()
-        
+
         # Первая страница
         results1, total1 = await repository.search(query="", offset=0, limit=2)
         # Вторая страница
         results2, total2 = await repository.search(query="", offset=2, limit=2)
-        
+
         assert total1 == 5
         assert total2 == 5
         assert len(results1) == 2

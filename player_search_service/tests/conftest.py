@@ -1,9 +1,7 @@
-import pytest
-import pytest_asyncio
 from unittest.mock import AsyncMock
 
+import pytest
 from fastapi.testclient import TestClient
-from shared.database.session import get_async_session
 
 # ─── ФИКСТУРЫ С МОКАМИ (нужны только для unit-тестов) ──────────────────
 
@@ -36,11 +34,10 @@ def client():
     Импортируем app локально, чтобы избежать ошибок при сборе тестов.
     """
     # Локальный импорт — выполняется только при вызове фикстуры
-    from fastapi.testclient import TestClient
     from src.main import app
-    
+
     # В тестах отключаем документацию, чтобы не грузить лишнее
     app.docs_url = None
     app.redoc_url = None
-    
+
     return TestClient(app)

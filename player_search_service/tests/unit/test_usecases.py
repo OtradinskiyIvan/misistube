@@ -1,10 +1,11 @@
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock
+
 import pytest
 
 from src.api.schemas import SearchQuery
 from src.usecases.playback import GetPlaybackUrlUseCase
 from src.usecases.search import SearchVideoUseCase
-from unittest.mock import AsyncMock
-from datetime import datetime, timedelta
 
 
 class TestSearchVideoUseCase:
@@ -49,5 +50,5 @@ class TestSearchVideoUseCase:
 
         assert "fake-s3.url" in result.hls_master_url
         assert result.expires_at is not None
-        
+
         mock_storage.generate_presigned_url.assert_called_once()
