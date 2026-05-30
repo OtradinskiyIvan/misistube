@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 
 from src.api.deps import get_playback_usecase
 from src.api.schemas import PlaybackUrl
+from src.usecases.playback import GetPlaybackUrlUseCase
 
 router = APIRouter(tags=["playback"])
 
