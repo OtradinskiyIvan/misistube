@@ -2,6 +2,7 @@ from src.api.schemas import SearchQuery, SearchResponse
 from src.infrastructure.cache.protocol import CachePort
 from src.infrastructure.search.protocol import SearchPort
 
+
 class SearchVideoUseCase:
     def __init__(self, cache: CachePort, search_port: SearchPort):
         self.cache = cache
@@ -9,7 +10,7 @@ class SearchVideoUseCase:
 
     async def execute(self, query: SearchQuery) -> SearchResponse:
         cache_key = f"search:{query.q}:{query.offset}:{query.limit}"
-        
+
         if cached := await self.cache.get(cache_key):
             return SearchResponse(**cached)
 

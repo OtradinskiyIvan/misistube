@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi.testclient import TestClient
 
-# ─── ФИКСТУРЫ С МОКАМИ (нужны только для unit-тестов) ──────────────────
+# ─── ФИКСТУРЫ C МОКАМИ (нужны только для unit-тестов) ──────────────────
 
 @pytest.fixture
 def mock_cache():
@@ -31,12 +31,12 @@ def mock_storage():
 def client():
     """
     TestClient для интеграционных тестов эндпоинтов.
-    Импортируем app локально, чтобы избежать ошибок при сборе тестов.
+    Импортируем app локально, чтобы избежать ошибок при c6ope тестов.
     """
     # Локальный импорт — выполняется только при вызове фикстуры
     from src.main import app
 
-    # В тестах отключаем документацию, чтобы не грузить лишнее
+    # B тестах отключаем документацию, чтобы не грузить лишнее
     app.docs_url = None
     app.redoc_url = None
 

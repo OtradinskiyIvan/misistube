@@ -2,10 +2,10 @@ import enum
 import uuid
 from datetime import datetime
 
+from shared.database.session import Base
 from sqlalchemy import ARRAY, DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from shared.database.session import Base
 
 class VideoStatus(str, enum.Enum):
     PROCESSING = "processing"

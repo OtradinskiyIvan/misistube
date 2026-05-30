@@ -53,16 +53,16 @@ async def db_session(postgres_container):
 # ─── ТЕСТЫ ─────────────────────────────────────────────────────────────
 
 class TestSQLAlchemyVideoRepository:
-    """Интеграционные тесты репозитория с реальной PostgreSQL"""
+    """Интеграционные тесты репозитория c реальной PostgreSQL"""
 
     @pytest_asyncio.fixture
     async def repository(self, db_session: AsyncSession):
-        """Фикстура репозитория с тестовой сессией"""
+        """Фикстура репозитория c тестовой сессией"""
         return SQLAlchemyVideoRepository(session=db_session)
 
     @pytest.mark.asyncio
     async def test_search_returns_ready_videos_only(self, repository, db_session):
-        """Поиск возвращает только видео со статусом 'ready'"""
+        """Поиск возвращает только видео co статусом 'ready'"""
         # Создаём тестовые данные
         test_videos = [
             Video(
@@ -74,7 +74,7 @@ class TestSQLAlchemyVideoRepository:
             Video(
                 title="Processing Video",
                 storage_key="videos/processing1/master.m3u8",
-                status=VideoStatus.PROCESSING,  # ← Не должен попасть в выдачу
+                status=VideoStatus.PROCESSING,  # ← He должен попасть в выдачу
                 tags=["test"]
             ),
             Video(
@@ -102,7 +102,7 @@ class TestSQLAlchemyVideoRepository:
         """Поиск по заголовку (регистронезависимый, ILIKE)"""
         db_session.add(
             Video(
-                title="Кот играет с мячом",
+                title="Кот играет c мячом",
                 storage_key="videos/cat1/master.m3u8",
                 status=VideoStatus.READY,
                 tags=["cats"]
@@ -110,9 +110,9 @@ class TestSQLAlchemyVideoRepository:
         )
         await db_session.commit()
 
-        # Поиск с разными регистрами
+        # Поиск c разными регистрами
         results1, total1 = await repository.search(query="кот", offset=0, limit=10)
-        results2, total2 = await repository.search(query="КОТ", offset=0, limit=10)
+        results2, total2 = await repository.search(query="KOT", offset=0, limit=10)
 
         assert total1 == 1
         assert total2 == 1

@@ -1,12 +1,11 @@
 from functools import lru_cache
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.infrastructure.cache.redis import RedisCacheAdapter
-from src.infrastructure.storage.s3 import S3StorageAdapter
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
-from src.usecases.search import SearchVideoUseCase
+from src.infrastructure.storage.s3 import S3StorageAdapter
 from src.usecases.playback import GetPlaybackUrlUseCase
+from src.usecases.search import SearchVideoUseCase
+
 
 @lru_cache
 def get_cache_adapter():
@@ -20,7 +19,7 @@ def get_search_repository():
     """
     Фабрика репозитория поиска.
     Для тестов передаём session=None — моки подменят БД.
-    В продакшене здесь будет: session: AsyncSession = Depends(get_async_session)
+    B продакшене здесь будет: session: AsyncSession = Depends(get_async_session)
     """
     return SQLAlchemyVideoRepository(session=None)
 
