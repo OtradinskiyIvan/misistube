@@ -47,11 +47,6 @@ curl -s "http://127.0.0.1:8000/api/v1/search?q=кот&limit=5" | jq
 curl -s "http://127.0.0.1:8000/api/v1/playback/a1b2c3d4-..." | jq
 ```
 
-# Health-check
-```bash
-curl -s http://127.0.0.1:8000/health | jq
-```
-
 ### Очистка и переустановка
 ```bash
 # Очистить кэш pip
