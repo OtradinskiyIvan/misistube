@@ -117,7 +117,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.email, user.email)
         self.assertEqual(result.hashed_password, user.hashed_password)
         self.mock_session.add.assert_called_once()
-        self.mock_session.commit.assert_called_once()
+        self.mock_session.flush.assert_called_once()
         self.mock_session.refresh.assert_called_once()
 
     async def test_exists_by_email_true(self):
