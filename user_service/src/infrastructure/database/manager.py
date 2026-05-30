@@ -14,12 +14,12 @@ class Base(DeclarativeBase):
 
 
 class DatabaseManager:
-    def __init__(self, database_url: str, echo: bool = False) -> None:
+    def __init__(self, database_url: str, echo: bool = False, pool_pre_ping: bool = True) -> None:
         url = str(database_url)
         if "postgresql+asyncpg" not in url and url.startswith("postgresql://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-        self._engine = create_async_engine(url, echo=echo, pool_pre_ping=True)
+        self._engine = create_async_engine(url, echo=echo, pool_pre_ping=pool_pre_ping)
         self._session_factory = async_sessionmaker(
             bind=self._engine,
             class_=AsyncSession,
