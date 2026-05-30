@@ -24,6 +24,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
         user_id = uuid4()
         model = UserModel(
             id=user_id,
+            username="testuser",
             email="test@example.com",
             hashed_password="hashed",
             is_active=True,
@@ -62,6 +63,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
         user_id = uuid4()
         model = UserModel(
             id=user_id,
+            username="testuser",
             email=email,
             hashed_password="hashed",
             is_active=True,
@@ -84,6 +86,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
         # Arrange
         user = User(
             id=uuid4(),
+            username="testuser",
             email="test@example.com",
             hashed_password="hashed_password",
             is_active=True
@@ -92,6 +95,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
         # Mock the model creation and database operations
         saved_model = UserModel(
             id=uuid4(),  # DB generates new ID
+            username=user.username,
             email=user.email,
             hashed_password=user.hashed_password,
             is_active=user.is_active,

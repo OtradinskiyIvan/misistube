@@ -39,42 +39,49 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
 
     async def test_register_success(self):
         # Arrange
+        username = "testuser"
         email = "test@example.com"
         password = "password123"
         expected_user = User(
             id=uuid4(),
+            username=username,
             email=email,
             hashed_password="hashed_password",
             is_active=True
         )
 
         self.mock_repo.exists_by_email.return_value = False
+        self.mock_repo.exists_by_username.return_value = False
         self.mock_repo.save.return_value = expected_user
 
         # Act
-        result = await self.service.register(email, password)
+        result = await self.service.register(username, email, password)
 
         # Assert
         self.assertEqual(result, expected_user)
         self.mock_repo.exists_by_email.assert_called_once_with(email)
+        self.mock_repo.exists_by_username.assert_called_once_with(username)
         self.mock_repo.save.assert_called_once()
 
     async def test_register_user_already_exists(self):
         # Arrange
+        username = "existinguser"
         email = "existing@example.com"
         password = "password123"
 
         self.mock_repo.exists_by_email.return_value = True
+        self.mock_repo.exists_by_username.return_value = False
 
         # Act & Assert
         with self.assertRaises(UserAlreadyExistsError):
-            await self.service.register(email, password)
+            await self.service.register(username, email, password)
 
         self.mock_repo.exists_by_email.assert_called_once_with(email)
         self.mock_repo.save.assert_not_called()
 
     async def test_login_success(self):
         # Arrange
+        username = "testuser"
         email = "test@example.com"
         password = "password123"
         user_id = uuid4()
@@ -84,6 +91,7 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
 
         user = User(
             id=user_id,
+            username=username,
             email=email,
             hashed_password=hashed,
             is_active=True
@@ -102,17 +110,19 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
 
     async def test_login_invalid_credentials(self):
         # Arrange
-        email = "test@example.com"
+        login = "test@example.com"
         password = "wrong_password"
 
         self.mock_repo.get_by_email.return_value = None
+        self.mock_repo.get_by_username.return_value = None
 
         # Act & Assert
         with self.assertRaises(InvalidCredentialsError):
-            await self.service.login(email, password)
+            await self.service.login(login, password)
 
     async def test_login_inactive_user(self):
         # Arrange
+        username = "testuser"
         email = "test@example.com"
         password = "password123"
 
@@ -121,6 +131,7 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
 
         user = User(
             id=uuid4(),
+            username=username,
             email=email,
             hashed_password=hashed,
             is_active=False
@@ -137,6 +148,7 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         user_id = uuid4()
         expected_user = User(
             id=user_id,
+            username="testuser",
             email="test@example.com",
             hashed_password="hashed",
             is_active=True
