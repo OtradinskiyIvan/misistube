@@ -1,20 +1,21 @@
-import enum
 import uuid
 from datetime import datetime
+from enum import StrEnum  # ← импортируем StrEnum
+from typing import ClassVar
 
 from shared.database.session import Base
 from sqlalchemy import ARRAY, DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 
-class VideoStatus(str, enum.Enum):
+class VideoStatus(StrEnum):
     PROCESSING = "processing"
     READY = "ready"
     FAILED = "failed"
 
 class Video(Base):
     __tablename__ = "videos"
-    __table_args__ = {"extend_existing": True}
+    __table_args__: ClassVar[dict] = {"extend_existing": True}
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     title: Mapped[str] = mapped_column(String(255), nullable=False)

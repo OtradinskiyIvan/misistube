@@ -112,7 +112,7 @@ class TestSQLAlchemyVideoRepository:
 
         # Поиск c разными регистрами
         results1, total1 = await repository.search(query="кот", offset=0, limit=10)
-        results2, total2 = await repository.search(query="KOT", offset=0, limit=10)
+        _results2, total2 = await repository.search(query="KOT", offset=0, limit=10)
 
         assert total1 == 1
         assert total2 == 1
