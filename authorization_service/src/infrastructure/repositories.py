@@ -28,6 +28,13 @@ class UserRepository(IUserRepository):
             model = await model
         return self._to_domain(model) if model else None
 
+    async def get_by_username(self, username: str) -> User | None:
+        result = await self._session.execute(select(UserModel).where(UserModel.username == username))
+        model = result.scalar_one_or_none()
+        if asyncio.iscoroutine(model):
+            model = await model
+        return self._to_domain(model) if model else None
+
     async def save(self, user: User) -> User:
         model = self._to_model(user)
         self._session.add(model)
@@ -44,10 +51,20 @@ class UserRepository(IUserRepository):
             model = await model
         return model is not None
 
+    async def exists_by_username(self, username: str) -> bool:
+        result = await self._session.execute(
+            select(UserModel.id).where(UserModel.username == username).limit(1)
+        )
+        model = result.scalar_one_or_none()
+        if asyncio.iscoroutine(model):
+            model = await model
+        return model is not None
+
     @staticmethod
     def _to_domain(model: UserModel) -> User:
         return User(
             id=model.id,
+            username=model.username,
             email=model.email,
             hashed_password=model.hashed_password,
             is_active=model.is_active,
@@ -58,6 +75,7 @@ class UserRepository(IUserRepository):
     @staticmethod
     def _to_model(user: User) -> UserModel:
         return UserModel(
+            username=user.username,
             email=user.email,
             hashed_password=user.hashed_password,
             is_active=user.is_active,
