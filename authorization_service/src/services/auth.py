@@ -16,7 +16,7 @@ class AuthService:
     async def register(self, username: str, email: str, password: str) -> User:
         if await self._user_repo.exists_by_email(email):
             raise UserAlreadyExistsError(f"User with email {email} already exists")
-        
+
         if await self._user_repo.exists_by_username(username):
             raise UserAlreadyExistsError(f"User with username {username} already exists")
 
@@ -34,7 +34,7 @@ class AuthService:
         user = await self._user_repo.get_by_email(login)
         if not user:
             user = await self._user_repo.get_by_username(login)
-        
+
         if not user or not verify_password(password, user.hashed_password):
             raise InvalidCredentialsError("Invalid username/email or password")
 
