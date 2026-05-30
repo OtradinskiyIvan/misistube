@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock
-from src.usecases.search import SearchVideoUseCase
+
+import pytest
+
 from src.api.schemas import SearchQuery
+from src.usecases.search import SearchVideoUseCase
+
 
 @pytest.fixture
 def mock_cache():

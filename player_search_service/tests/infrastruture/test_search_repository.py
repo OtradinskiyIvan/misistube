@@ -1,8 +1,10 @@
 import pytest
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
 from src.infrastructure.database.models import Base, Video, VideoStatus
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
+
 
 @pytest.fixture(scope="session")
 def db_url():
@@ -29,7 +31,7 @@ async def db_session(db_url):
 async def test_search_ilike(db_session):
     repo = SQLAlchemyVideoRepository(db_session)
     results, total = await repo.search(query="cat")
-    
+
     assert total == 1
     assert len(results) == 1
     assert "Cat" in results[0].title
@@ -38,5 +40,5 @@ async def test_search_ilike(db_session):
 async def test_search_status_filter(db_session):
     repo = SQLAlchemyVideoRepository(db_session)
     results, total = await repo.search(query="")  # пустой запрос → все готовые
-    
+
     assert total == 1  # только "Test Cat", т.к. "Processing Dog" не ready

@@ -1,5 +1,6 @@
-import pytest
 import importlib
+
+import pytest
 
 MODULES = [
     "src.core.config",

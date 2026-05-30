@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock
-from src.usecases.search import SearchVideoUseCase
+
+import pytest
+
 from src.api.schemas import SearchQuery, VideoResult
+from src.usecases.search import SearchVideoUseCase
+
 
 @pytest.fixture
 def mock_cache():
@@ -20,7 +23,7 @@ def mock_search_port():
 async def test_search_with_db_port(mock_cache, mock_search_port):
     uc = SearchVideoUseCase(cache=mock_cache, search_port=mock_search_port)
     result = await uc.execute(SearchQuery(q="test", limit=5))
-    
+
     mock_search_port.search.assert_called_once_with(query="test", tags=None, offset=0, limit=5)
     mock_cache.set.assert_called_once()  # результат сохранён в кеш
     assert result.total == 1
