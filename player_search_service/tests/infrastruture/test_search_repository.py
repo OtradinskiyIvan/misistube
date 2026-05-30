@@ -39,6 +39,6 @@ async def test_search_ilike(db_session):
 @pytest.mark.asyncio
 async def test_search_status_filter(db_session):
     repo = SQLAlchemyVideoRepository(db_session)
-    results, total = await repo.search(query="")  # пустой запрос → все готовые
+    total = await repo.search(query="")  # пустой запрос → все готовые
 
     assert total == 1  # только "Test Cat", т.к. "Processing Dog" не ready

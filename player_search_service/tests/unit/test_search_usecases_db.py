@@ -8,7 +8,9 @@ from src.usecases.search import SearchVideoUseCase
 
 @pytest.fixture
 def mock_cache():
-    c = AsyncMock(); c.get.return_value = None; return c
+    c = AsyncMock()
+    c.get.return_value = None
+    return c
 
 @pytest.fixture
 def mock_search_port():
