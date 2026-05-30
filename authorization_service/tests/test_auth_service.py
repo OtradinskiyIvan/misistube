@@ -4,6 +4,8 @@ from uuid import uuid4
 
 from pydantic import SecretStr
 
+from shared.security import hash_password
+
 from ..src.core.settings import AuthSettings
 from ..src.domain.entities.user import User
 from ..src.domain.exceptions import (
@@ -14,25 +16,26 @@ from ..src.domain.exceptions import (
 from ..src.services.auth import AuthService
 
 
-def setUp(self):
-    self.mock_repo = AsyncMock()
+class TestAuthService(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.mock_repo = AsyncMock()
 
-    self.settings = AuthSettings(
-        DATABASE_URL="postgresql://test:test@localhost/test",
-        S3_ENDPOINT="http://localhost:9000",
-        S3_ACCESS_KEY="test",
-        S3_SECRET_KEY="test",
-        S3_BUCKET_NAME="test",
-        JWT_SECRET=SecretStr("x" * 32),
-        JWT_ALGORITHM="HS256",
-        JWT_ACCESS_EXPIRE_MINUTES=30,
-        JWT_REFRESH_EXPIRE_DAYS=7
-    )
+        self.settings = AuthSettings(
+            DATABASE_URL="postgresql://test:test@localhost/test",
+            S3_ENDPOINT="http://localhost:9000",
+            S3_ACCESS_KEY="test",
+            S3_SECRET_KEY="test",
+            S3_BUCKET_NAME="test",
+            JWT_SECRET=SecretStr("x" * 32),
+            JWT_ALGORITHM="HS256",
+            JWT_ACCESS_EXPIRE_MINUTES=30,
+            JWT_REFRESH_EXPIRE_DAYS=7
+        )
 
-    self.service = AuthService(
-        self.mock_repo,
-        self.settings
-    )
+        self.service = AuthService(
+            self.mock_repo,
+            self.settings
+        )
 
     async def test_register_success(self):
         # Arrange
@@ -75,25 +78,27 @@ def setUp(self):
         email = "test@example.com"
         password = "password123"
         user_id = uuid4()
+        
+        # Создаём реальный хеш пароля
+        hashed = hash_password(password)
+        
         user = User(
             id=user_id,
             email=email,
-            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/Le0XcJjTx3cdTOBmO",  # bcrypt hash for "password123"
+            hashed_password=hashed,
             is_active=True
         )
 
         self.mock_repo.get_by_email.return_value = user
 
-        # Mock password verification to return True
-        with unittest.mock.patch('src.services.auth.verify_password', return_value=True):
-            # Act
-            result = await self.service.login(email, password)
+        # Act
+        result = await self.service.login(email, password)
 
-            # Assert
-            self.assertIn("access_token", result)
-            self.assertIn("refresh_token", result)
-            self.assertEqual(result["token_type"], "Bearer")
-            self.mock_repo.get_by_email.assert_called_once_with(email)
+        # Assert
+        self.assertIn("access_token", result)
+        self.assertIn("refresh_token", result)
+        self.assertEqual(result["token_type"], "Bearer")
+        self.mock_repo.get_by_email.assert_called_once_with(email)
 
     async def test_login_invalid_credentials(self):
         # Arrange
@@ -110,20 +115,22 @@ def setUp(self):
         # Arrange
         email = "test@example.com"
         password = "password123"
+        
+        # Создаём реальный хеш пароля
+        hashed = hash_password(password)
+        
         user = User(
             id=uuid4(),
             email=email,
-            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/Le0XcJjTx3cdTOBmO",  # bcrypt hash for "password123"
+            hashed_password=hashed,
             is_active=False
         )
 
         self.mock_repo.get_by_email.return_value = user
 
-        # Mock password verification to return True
-        with unittest.mock.patch('src.services.auth.verify_password', return_value=True):
-            # Act & Assert
-            with self.assertRaises(InvalidCredentialsError):
-                await self.service.login(email, password)
+        # Act & Assert
+        with self.assertRaises(InvalidCredentialsError):
+            await self.service.login(email, password)
 
     async def test_get_user_success(self):
         # Arrange
