@@ -1,9 +1,10 @@
-# tests/unit/test_usecases.py
 import pytest
 
 from src.api.schemas import SearchQuery
 from src.usecases.playback import GetPlaybackUrlUseCase
 from src.usecases.search import SearchVideoUseCase
+from unittest.mock import AsyncMock
+from datetime import datetime, timedelta
 
 
 class TestSearchVideoUseCase:
@@ -37,12 +38,16 @@ class TestSearchVideoUseCase:
         assert result.items[0].title == "Cached"
 
 
-class TestGetPlaybackUrlUseCase:
-
     @pytest.mark.asyncio
     async def test_generate_url(self, mock_storage):
+        mock_storage.generate_presigned_url.return_value = (
+            "https://fake-s3.url/video.m3u8",
+            datetime.utcnow() + timedelta(minutes=15)
+        )
         uc = GetPlaybackUrlUseCase(storage=mock_storage)
         result = await uc.execute("video-123")
 
+        assert "fake-s3.url" in result.hls_master_url
+        assert result.expires_at is not None
+        
         mock_storage.generate_presigned_url.assert_called_once()
-        assert "fake.url" in result.hls_master_url
