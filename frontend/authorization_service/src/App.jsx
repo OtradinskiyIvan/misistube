@@ -5,10 +5,12 @@ const AUTH_API = 'http://127.0.0.1:8000/api/v1/auth'
 
 function App() {
   const [email, setEmail] = useState('')
+  const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('')
   const [statusType, setStatusType] = useState('')
   const [showRegister, setShowRegister] = useState(false)
+  const [registerUsername, setRegisterUsername] = useState('')
   const [registerEmail, setRegisterEmail] = useState('')
   const [registerPassword, setRegisterPassword] = useState('')
   const [registerConfirm, setRegisterConfirm] = useState('')
@@ -61,7 +63,7 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ login: login || email, password }),
       })
 
       if (!response.ok) {
@@ -83,6 +85,7 @@ function App() {
   }
 
   const openRegister = () => {
+    setRegisterUsername('')
     setRegisterEmail('')
     setRegisterPassword('')
     setRegisterConfirm('')
@@ -114,9 +117,10 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: registerEmail,
-          password: registerPassword,
-        }),
+            username: registerUsername,
+            email: registerEmail,
+            password: registerPassword,
+          }),
       })
 
       if (!response.ok) {
@@ -136,7 +140,7 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: registerEmail,
+          login: registerUsername || registerEmail,
           password: registerPassword,
         }),
       })
@@ -176,16 +180,16 @@ function App() {
 
           <form onSubmit={handleLogin}>
             <div className="form-group">
-              <label className="label" htmlFor="email">
-                Email
+              <label className="label" htmlFor="login">
+                Логин (username или email)
               </label>
               <input
-                id="email"
-                type="email"
+                id="login"
+                type="text"
                 className="input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ivan@example.com"
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
+                placeholder="ivan или ivan@example.com"
                 required
               />
             </div>
@@ -231,14 +235,30 @@ function App() {
         <div className="modal-overlay">
           <div className="modal-card card shadow">
             <div className="card__content">
-              <div className="brand mb-3">
+                <div className="brand mb-3">
                 <h2>Регистрация</h2>
                 <p className="card__description">
-                  Введите email, пароль и подтвердите пароль.
+                  Введите username, email, пароль и подтвердите пароль.
                 </p>
               </div>
 
               <form onSubmit={handleRegister}>
+                <div className="form-group">
+                  <label className="label" htmlFor="registerUsername">
+                    Введите username
+                  </label>
+                  <input
+                    id="registerUsername"
+                    type="text"
+                    className="input"
+                    value={registerUsername}
+                    onChange={(e) => setRegisterUsername(e.target.value)}
+                    placeholder="ivan"
+                    minLength={3}
+                    required
+                  />
+                </div>
+
                 <div className="form-group">
                   <label className="label" htmlFor="registerEmail">
                     Введите email
