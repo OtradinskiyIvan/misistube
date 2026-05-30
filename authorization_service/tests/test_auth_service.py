@@ -78,10 +78,10 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         email = "test@example.com"
         password = "password123"
         user_id = uuid4()
-        
+
         # Создаём реальный хеш пароля
         hashed = hash_password(password)
-        
+
         user = User(
             id=user_id,
             email=email,
@@ -115,10 +115,10 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         # Arrange
         email = "test@example.com"
         password = "password123"
-        
+
         # Создаём реальный хеш пароля
         hashed = hash_password(password)
-        
+
         user = User(
             id=uuid4(),
             email=email,
