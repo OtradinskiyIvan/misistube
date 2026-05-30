@@ -15,6 +15,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
         self.mock_session = MagicMock(spec=AsyncSession)
         self.mock_session.execute = AsyncMock()
         self.mock_session.commit = AsyncMock()
+        self.mock_session.flush = AsyncMock()
         self.mock_session.refresh = AsyncMock()
         self.repo = UserRepository(self.mock_session)
 
