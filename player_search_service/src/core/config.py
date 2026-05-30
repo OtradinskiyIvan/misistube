@@ -6,8 +6,10 @@ from os import getenv
 load_dotenv()
 
 class Settings(BaseSettings):
-    app_name: str = "player_search_service"
-    log_level: str = getenv("LOG_LEVEL")
+    app_name: str = Field(default="Player & Searching Service")
+    app_env: str = Field(default="development")  # development | staging | production
+    log_level: str = Field(default="INFO")
+
     database_url: str = getenv("DATABASE_URL") # Потом будет замена на video-metadata
 
     redis_url: str = Field(
@@ -31,6 +33,8 @@ class Settings(BaseSettings):
         default=900,
         description="Presigned URL expiration time (seconds)"
     )
+
+    cors_allow_origins: list[str] = Field(default_factory=lambda: ["*"])
     
     model_config = {
         "env_file": ".env",
