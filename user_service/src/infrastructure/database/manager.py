@@ -1,4 +1,6 @@
+import sys
 from collections.abc import AsyncGenerator
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy.ext.asyncio import (
@@ -6,11 +8,12 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
 
+ROOT_DIRECTORY = Path(__file__).resolve().parents[4]
+if str(ROOT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIRECTORY))
 
-class Base(DeclarativeBase):
-    pass
+from shared.database.session import Base
 
 
 class DatabaseManager:
