@@ -1,42 +1,79 @@
+from uuid import UUID
+
+from authorization_service.src.domain.entities.user import User
+from authorization_service.src.presentations.deps import get_auth_service
+from authorization_service.src.presentations.schemas.auth import (
+    ConfirmRequest,
+    LoginRequest,
+    RegisterRequest,
+    TokenResponse,
+    UserOut,
+)
+from authorization_service.src.services import confirmation
+from authorization_service.src.services.auth import AuthService
 from fastapi import APIRouter, Depends, HTTPException, status
-from ..schemas.auth import RegisterRequest, LoginRequest, TokenResponse, UserOut
-from ...services.auth import AuthService
-from ..deps import get_auth_service
-from ...domain.exceptions import UserAlreadyExistsError, InvalidCredentialsError, UserNotFoundError
 
 router = APIRouter()
 
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_202_ACCEPTED)
 async def register(
     payload: RegisterRequest,
-    service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
+    # create pending registration and send confirmation code
     try:
-        user = await service.register(payload.email, payload.password)
-        return UserOut.model_validate(user)
-    except UserAlreadyExistsError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        await confirmation.create_pending_registration(payload.username, payload.email, payload.password, auth_service._settings)
+    except Exception as exc:
+        # propagate SMTP errors to client so they can correct settings
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return {"detail": "confirmation_sent"}
+
+
+@router.post("/confirm", status_code=status.HTTP_200_OK)
+async def confirm_email(
+    payload: ConfirmRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    ok = confirmation.verify_code(payload.email, payload.code)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Invalid or expired confirmation code")
+
+    pending = confirmation.pop_pending(payload.email)
+    if not pending:
+        raise HTTPException(status_code=400, detail="No pending registration found or it expired")
+
+    username, hashed_password = pending
+
+    # construct domain user and save
+    user = User(
+        id=UUID(int=0),
+        username=username,
+        email=payload.email,
+        hashed_password=hashed_password,
+        is_active=True,
+    )
+
+    try:
+        created = await auth_service._user_repo.save(user)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return created
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
     payload: LoginRequest,
-    service: AuthService = Depends(get_auth_service)
+    auth_service: AuthService = Depends(get_auth_service),
 ):
-    try:
-        tokens = await service.login(payload.email, payload.password)
-        return TokenResponse(**tokens)
-    except InvalidCredentialsError as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    token_data = await auth_service.login(login=payload.login, password=payload.password)
+    return TokenResponse(**token_data)
 
 @router.get("/me", response_model=UserOut)
-async def get_current_user(
-    service: AuthService = Depends(get_auth_service),
-    # В продакшене здесь будет Depends(get_current_user_id) из JWT
-    user_id: str = "00000000-0000-0000-0000-000000000000"
-):
-    from uuid import UUID
-    try:
-        user = await service.get_user(UUID(user_id))
-        return UserOut.model_validate(user)
-    except UserNotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+async def get_current_user():
+    return UserOut(
+        id="00000000-0000-0000-0000-000000000000",
+        email="stub@example.com",
+        is_active=True,
+        created_at="1970-01-01T00:00:00Z",
+    )

@@ -1,12 +1,27 @@
 from pydantic import SecretStr, field_validator
+from pydantic_settings import SettingsConfigDict
+
 from shared.config import BaseSettings
 
+
 class AuthSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+    )
+
     APP_NAME: str = "Authorization Service"
     JWT_SECRET: SecretStr
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_EXPIRE_DAYS: int = 7
+    # SMTP settings for confirmation emails
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 25
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM: str | None = None
+    SMTP_USE_TLS: bool = False
 
     @field_validator("JWT_SECRET")
     @classmethod
