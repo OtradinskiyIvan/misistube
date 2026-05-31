@@ -1,3 +1,4 @@
+# Тестовый docker-compose для подъёма сервиса для тестов из терминала
 services:
   redis:
     image: redis:7-alpine
