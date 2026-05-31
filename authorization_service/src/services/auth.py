@@ -13,7 +13,7 @@ class AuthService:
         self._user_repo = user_repo
         self._settings = settings
 
-    async def register(self, username: str, email: str, password: str) -> User:
+    async def register(self, username: str, email: str, password: str, is_active: bool = True) -> User:
         if await self._user_repo.exists_by_email(email):
             raise UserAlreadyExistsError(f"User with email {email} already exists")
 
@@ -22,12 +22,16 @@ class AuthService:
 
         hashed_pwd = hash_password(password)
         user = User(
-            id=UUID(int=0),  # Placeholder: DB сгенерирует UUID при сохранении
+            id=UUID(int=0),  # Placeholder: DB will generate UUID on save
             username=username,
             email=email,
-            hashed_password=hashed_pwd
+            hashed_password=hashed_pwd,
+            is_active=is_active,
         )
         return await self._user_repo.save(user)
+
+    async def activate_user(self, email: str) -> None:
+        await self._user_repo.activate_user_by_email(email)
 
     async def login(self, login: str, password: str) -> dict[str, str]:
         # Try to get user by email first, then by username
