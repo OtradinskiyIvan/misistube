@@ -7,6 +7,7 @@ services:
       interval: 5s
       retries: 5
   
+# Тестовый контейнер minio => БД у Яры будет просто
   minio:
     image: minio/minio:latest
     ports: ["9000:9000", "9001:9001"]
@@ -33,7 +34,7 @@ services:
       exit 0;
       "
 
-# Тестовый контейнер postgress => скорее всего будет БД у Яры просто
+# Тестовый контейнер postgress => будет БД у Яры просто
   postgres:
     image: postgres:15-alpine
     container_name: player_search_postgres
