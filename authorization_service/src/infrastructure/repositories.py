@@ -60,6 +60,16 @@ class UserRepository(IUserRepository):
             model = await model
         return model is not None
 
+    async def activate_user_by_email(self, email: str) -> None:
+        result = await self._session.execute(select(UserModel).where(UserModel.email == email).limit(1))
+        model = result.scalar_one_or_none()
+        if asyncio.iscoroutine(model):
+            model = await model
+        if not model:
+            return
+        model.is_active = True
+        await self._session.flush()
+
     @staticmethod
     def _to_domain(model: UserModel) -> User:
         return User(

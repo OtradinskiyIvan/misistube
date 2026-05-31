@@ -23,3 +23,6 @@ class IUserRepository(Protocol):
 
     @abstractmethod
     async def exists_by_username(self, username: str) -> bool: ...
+
+    @abstractmethod
+    async def activate_user_by_email(self, email: str) -> None: ...
