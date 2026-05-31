@@ -13,22 +13,34 @@ class AuthService:
         self._user_repo = user_repo
         self._settings = settings
 
-    async def register(self, email: str, password: str) -> User:
+    async def register(self, username: str, email: str, password: str, is_active: bool = True) -> User:
         if await self._user_repo.exists_by_email(email):
             raise UserAlreadyExistsError(f"User with email {email} already exists")
 
+        if await self._user_repo.exists_by_username(username):
+            raise UserAlreadyExistsError(f"User with username {username} already exists")
+
         hashed_pwd = hash_password(password)
         user = User(
-            id=UUID(int=0),  # Placeholder: DB сгенерирует UUID при сохранении
+            id=UUID(int=0),  # Placeholder: DB will generate UUID on save
+            username=username,
             email=email,
-            hashed_password=hashed_pwd
+            hashed_password=hashed_pwd,
+            is_active=is_active,
         )
         return await self._user_repo.save(user)
 
-    async def login(self, email: str, password: str) -> dict[str, str]:
-        user = await self._user_repo.get_by_email(email)
+    async def activate_user(self, email: str) -> None:
+        await self._user_repo.activate_user_by_email(email)
+
+    async def login(self, login: str, password: str) -> dict[str, str]:
+        # Try to get user by email first, then by username
+        user = await self._user_repo.get_by_email(login)
+        if not user:
+            user = await self._user_repo.get_by_username(login)
+
         if not user or not verify_password(password, user.hashed_password):
-            raise InvalidCredentialsError("Invalid email or password")
+            raise InvalidCredentialsError("Invalid username/email or password")
 
         if not user.is_active:
             raise InvalidCredentialsError("User account is deactivated")
@@ -37,13 +49,17 @@ class AuthService:
             subject=str(user.id),
             secret=self._settings.JWT_SECRET,
             algorithm=self._settings.JWT_ALGORITHM,
-            expires_minutes=self._settings.JWT_ACCESS_EXPIRE_MINUTES
+            expires_minutes=self._settings.JWT_ACCESS_EXPIRE_MINUTES,
+            username=user.username,
+            email=user.email
         )
         refresh_token = create_jwt_token(
             subject=str(user.id),
             secret=self._settings.JWT_SECRET,
             algorithm=self._settings.JWT_ALGORITHM,
-            expires_minutes=self._settings.JWT_REFRESH_EXPIRE_DAYS * 24 * 60
+            expires_minutes=self._settings.JWT_REFRESH_EXPIRE_DAYS * 24 * 60,
+            username=user.username,
+            email=user.email
         )
         return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "Bearer"}
 

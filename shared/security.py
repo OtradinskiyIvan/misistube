@@ -16,13 +16,15 @@ def create_jwt_token(
     subject: str,
     secret: SecretStr | str,
     algorithm: str = "HS256",
-    expires_minutes: int = 30
+    expires_minutes: int = 30,
+    **additional_claims
 ) -> str:
     payload = {
         "sub": subject,
         "exp": datetime.now(timezone.utc) + timedelta(minutes=expires_minutes),
         "iat": datetime.now(timezone.utc),
     }
+    payload.update(additional_claims)
     secret_value = secret.get_secret_value() if isinstance(secret, SecretStr) else secret
     return jwt.encode(payload, secret_value, algorithm=algorithm)
 

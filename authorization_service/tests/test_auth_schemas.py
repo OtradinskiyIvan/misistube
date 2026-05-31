@@ -11,6 +11,7 @@ class TestAuthSchemas(unittest.TestCase):
     def test_register_request_valid(self):
         # Arrange
         data = {
+            "username": "testuser",
             "email": "test@example.com",
             "password": "password123"
         }
@@ -19,12 +20,14 @@ class TestAuthSchemas(unittest.TestCase):
         request = RegisterRequest(**data)
 
         # Assert
+        self.assertEqual(request.username, "testuser")
         self.assertEqual(request.email, "test@example.com")
         self.assertEqual(request.password, "password123")
 
     def test_register_request_invalid_email(self):
         # Arrange
         data = {
+            "username": "testuser",
             "email": "invalid-email",
             "password": "password123"
         }
@@ -36,6 +39,7 @@ class TestAuthSchemas(unittest.TestCase):
     def test_register_request_password_too_short(self):
         # Arrange
         data = {
+            "username": "testuser",
             "email": "test@example.com",
             "password": "short"
         }
@@ -47,6 +51,7 @@ class TestAuthSchemas(unittest.TestCase):
     def test_register_request_password_too_long(self):
         # Arrange
         data = {
+            "username": "testuser",
             "email": "test@example.com",
             "password": "a" * 129  # 129 characters
         }
@@ -58,7 +63,7 @@ class TestAuthSchemas(unittest.TestCase):
     def test_login_request_valid(self):
         # Arrange
         data = {
-            "email": "test@example.com",
+            "login": "testuser",
             "password": "password123"
         }
 
@@ -66,7 +71,7 @@ class TestAuthSchemas(unittest.TestCase):
         request = LoginRequest(**data)
 
         # Assert
-        self.assertEqual(request.email, "test@example.com")
+        self.assertEqual(request.login, "testuser")
         self.assertEqual(request.password, "password123")
 
     def test_token_response_valid(self):
@@ -104,6 +109,7 @@ class TestAuthSchemas(unittest.TestCase):
         created_at = datetime.now()
         data = {
             "id": user_id,
+            "username": "testuser",
             "email": "test@example.com",
             "is_active": True,
             "created_at": created_at
@@ -114,6 +120,7 @@ class TestAuthSchemas(unittest.TestCase):
 
         # Assert
         self.assertEqual(user_out.id, user_id)
+        self.assertEqual(user_out.username, "testuser")
         self.assertEqual(user_out.email, "test@example.com")
         self.assertTrue(user_out.is_active)
         self.assertEqual(user_out.created_at, created_at)
@@ -123,6 +130,7 @@ class TestAuthSchemas(unittest.TestCase):
         class MockUser:
             def __init__(self):
                 self.id = uuid4()
+                self.username = "testuser"
                 self.email = "test@example.com"
                 self.is_active = True
                 self.created_at = datetime.now()
@@ -134,6 +142,7 @@ class TestAuthSchemas(unittest.TestCase):
 
         # Assert
         self.assertEqual(user_out.id, mock_user.id)
+        self.assertEqual(user_out.username, mock_user.username)
         self.assertEqual(user_out.email, mock_user.email)
         self.assertTrue(user_out.is_active)
 
