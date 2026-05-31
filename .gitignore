@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+.ruff_cache/
+**/.ruff_cache/
+
+# Python package artifacts
+*.egg-info/
+*.egg
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# Файлы проекта
+*.log
+.DS_Store
+
+# Coverage reports
+.coverage
+coverage.xml
