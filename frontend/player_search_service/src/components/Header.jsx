@@ -1,29 +1,16 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom'
 
-function Header() {
-  const location = useLocation();
-
+export default function Header() {
   return (
     <header className="header">
       <div className="container">
-        <Link to="/" className="logo">
-          MISISTUBE
-        </Link>
+        <Link to="/" className="logo">MISIS Tube</Link>
         <nav className="nav">
-          <Link 
-            to="/" 
-            className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
-          >
-            Поиск
-          </Link>
-          <a href="/docs" className="nav-link" target="_blank" rel="noopener noreferrer">
-            API Docs
-          </a>
+          <Link to="/search" className="nav-link">Поиск</Link>
+          <Link to="/upload" className="nav-link">Загрузить</Link>
+          <Link to="/profile" className="nav-link">Профиль</Link>
         </nav>
       </div>
     </header>
-  );
+  )
 }
-
-export default Header;

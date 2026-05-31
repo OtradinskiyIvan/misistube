@@ -1,52 +1,56 @@
-import React, { useState } from 'react';
+import { useState } from 'react'
 
-function SearchForm({ onSearch, isLoading }) {
-  const [query, setQuery] = useState('');
-  const [limit, setLimit] = useState(10);
+export default function SearchForm({ onSearch }) {
+  const [query, setQuery] = useState('')
+  const [selectedTags, setSelectedTags] = useState([])
+
+  const availableTags = ['коты', 'python', 'docker', 'tutorial', 'милота', 'devops']
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      onSearch({ query: query.trim(), limit, offset: 0 });
-    }
-  };
+    e.preventDefault()
+    onSearch({ q: query, tags: selectedTags })
+  }
+
+  const toggleTag = (tag) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    )
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="search-form mb-6">
+    <form onSubmit={handleSubmit} className="mb-6">
       <div className="form-group">
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <label className="label" htmlFor="search-input">Поиск видео</label>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
           <input
+            id="search-input"
             type="text"
+            className="input"
+            placeholder="Введите запрос..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Поиск видео по названию или тегам..."
-            className="input"
-            style={{ flex: 1 }}
-            disabled={isLoading}
           />
-          <select
-            value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
-            className="input"
-            style={{ width: '120px' }}
-            disabled={isLoading}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
-          <button 
-            type="submit" 
-            className="btn btn-primary"
-            disabled={isLoading || !query.trim()}
-          >
-            {isLoading ? <span className="loading-spinner" /> : 'Найти'}
+          <button type="submit" className="btn btn-primary">
+            Найти
           </button>
         </div>
       </div>
-    </form>
-  );
-}
 
-export default SearchForm;
+      <div className="form-group">
+        <label className="label">Фильтр по тегам</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+          {availableTags.map(tag => (
+            <button
+              key={tag}
+              type="button"
+              className={`btn btn-sm ${selectedTags.includes(tag) ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => toggleTag(tag)}
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+      </div>
+    </form>
+  )
+}

@@ -1,53 +1,66 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { memo } from 'react'
 
-function VideoCard({ video }) {
-  const formatDuration = (seconds) => {
-    if (!seconds) return 'N/A';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+const VideoCard = memo(function VideoCard({ video }) {
+  const formatDuration = (sec) => {
+    if (!sec) return '0:00'
+    const h = Math.floor(sec / 3600)
+    const m = Math.floor((sec % 3600) / 60)
+    const s = sec % 60
+    return h > 0 
+      ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+      : `${m}:${String(s).padStart(2, '0')}`
+  }
 
   return (
-    <div className="card fade-in">
-      <div className="card__image" style={{ 
-        background: 'linear-gradient(135deg, var(--misis-gray-200) 0%, var(--misis-gray-100) 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '3rem',
-        color: 'var(--misis-gray-300)'
-      }}>
-        🎬
-      </div>
+    <article className="card" style={{ animation: 'fadeIn 0.25s ease-out forwards' }}>
+      {/* Стабильный inline-SVG вместо внешнего файла, чтобы не было мигания при 404 */}
+      <img 
+        src={video.thumbnail_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect width='16' height='9' fill='%23E5E7EB'/%3E%3C/svg%3E"}
+        alt={video.title}
+        className="card__image"
+        style={{ objectFit: 'cover' }}
+      />
+      
       <div className="card__content">
         <h3 className="card__title">{video.title}</h3>
+        
         {video.description && (
-          <p className="card__description">{video.description}</p>
+          <p className="card__description" style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            marginBottom: '0.5rem'
+          }}>
+            {video.description}
+          </p>
         )}
-        <div className="card__meta">
-          <span>⏱ {formatDuration(video.duration)}</span>
-          {video.tags && video.tags.length > 0 && (
-            <div style={{ marginTop: '0.5rem' }}>
-              {video.tags.map((tag, index) => (
-                <span key={index} className="badge badge-info" style={{ marginRight: '0.25rem', fontSize: '0.7rem' }}>
-                  {tag}
-                </span>
-              ))}
-            </div>
+        
+        <div className="card__meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{formatDuration(video.duration)}</span>
+          {video.status && (
+            <span className={`badge status-${video.status.toLowerCase()}`}>{video.status}</span>
           )}
         </div>
-        <Link 
-          to={`/video/${video.id}`}
-          className="btn btn-primary mt-4"
-          style={{ width: '100%' }}
-        >
-          ▶ Воспроизвести
-        </Link>
-      </div>
-    </div>
-  );
-}
 
-export default VideoCard;
+        {video.tags?.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.5rem' }}>
+            {video.tags.slice(0, 3).map((tag, idx) => (
+              <span key={idx} className="badge badge-neutral" style={{ fontSize: '0.75rem' }}>
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: '1rem', paddingTop: 0 }}>
+        <a href={`/watch/${video.id}`} className="btn btn-outline" style={{ width: '100%' }}>
+          ▶ Смотреть
+        </a>
+      </div>
+    </article>
+  )
+})
+
+export default VideoCard
