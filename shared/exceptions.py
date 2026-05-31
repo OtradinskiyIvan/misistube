@@ -16,3 +16,7 @@ class AuthenticationError(AppBaseError):
 class ValidationAppError(AppBaseError):
     def __init__(self, message: str, code: str = "VALIDATION_ERROR"):
         super().__init__(message, code, status_code=400)
+
+class ForbiddenError(AppBaseError):
+    def __init__(self, message: str = "Forbidden", code: str = "FORBIDDEN"):
+        super().__init__(message, code, status_code=403)
