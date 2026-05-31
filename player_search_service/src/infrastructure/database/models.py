@@ -1,29 +1,40 @@
 import uuid
-from datetime import datetime
-from enum import StrEnum  # ← импортируем StrEnum
-from typing import ClassVar
+from datetime import datetime, timezone
+from enum import Enum
+from sqlalchemy import Column, String, Text, Integer, DateTime, ARRAY, Enum as SQLEnum, text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import declarative_base
 
-from shared.database.session import Base
-from sqlalchemy import ARRAY, DateTime, Enum, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+Base = declarative_base()
 
-
-class VideoStatus(StrEnum):
+class VideoStatus(str, Enum):
+    UPLOADING = "uploading"
     PROCESSING = "processing"
     READY = "ready"
     FAILED = "failed"
 
 class Video(Base):
     __tablename__ = "videos"
-    __table_args__: ClassVar[dict] = {"extend_existing": True}
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    storage_key: Mapped[str] = mapped_column(String(500), nullable=False)
-    status: Mapped[VideoStatus] = mapped_column(Enum(VideoStatus), default=VideoStatus.PROCESSING)
-    tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
-    duration: Mapped[int] = mapped_column(Integer, default=0)
-
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()"))
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    storage_key = Column(String(500), nullable=False)
+    
+    status = Column(
+        SQLEnum(
+            VideoStatus,
+            name="videostatus",         
+            native_enum=True,             
+            values_callable=lambda x: [e.value for e in x], 
+            create_type=False             
+        ),
+        nullable=False,
+        server_default=text("'uploading'")
+    )
+    
+    tags = Column(ARRAY(String), nullable=True, server_default=text("'{}'"))
+    duration = Column(Integer, nullable=True, server_default=text("0"))
+    thumbnail_url = Column(String(500), nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("NOW()"))
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=text("NOW()"))
