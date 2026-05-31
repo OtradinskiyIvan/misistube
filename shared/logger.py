@@ -30,5 +30,4 @@ def get_logger(service_name: str, level: str = "INFO") -> logging.Logger:
         logger.addHandler(handler)
         logger.setLevel(getattr(logging, level.upper()))
         logger.propagate = False
-        logger.extra = {"service_name": service_name}
-    return logger
+    return logging.LoggerAdapter(logger, {"service_name": service_name})

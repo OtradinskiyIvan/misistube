@@ -27,7 +27,7 @@ def init_engine(database_url: PostgresDsn | str, echo: bool = False):
     return _engine
 
 
-async def get_async_session() -> AsyncSession[Any,Any]:
+async def get_async_session() -> AsyncSession:
     if not _session_factory:
         raise RuntimeError("Database engine not initialized. Call init_engine() first.")
 
