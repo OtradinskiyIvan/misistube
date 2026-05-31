@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import './App.css'
+import Layout from './components/Layout.jsx'
 
 const AUTH_API = 'http://127.0.0.1:8000/api/v1/auth'
 
@@ -202,68 +202,69 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <div className="auth-card card shadow">
-        <div className="card__content">
-          <div className="brand mb-4">
-            <h1>Авторизация</h1>
-            <p className="card__description">
-              Тестовый frontend auth сервиса с импортом общего стиля.
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label className="label" htmlFor="login">
-                Логин (username или email)
-              </label>
-              <input
-                id="login"
-                type="text"
-                className="input"
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
-                placeholder="ivan или ivan@example.com"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="label" htmlFor="password">
-                Пароль
-              </label>
-              <input
-                id="password"
-                type="password"
-                className="input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <div className="auth-actions">
-              <button type="submit" className="btn btn-primary btn-lg">
-                Войти
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-lg"
-                onClick={openRegister}
-              >
-                Зарегистрироваться
-              </button>
-            </div>
-
-            {status && (
-              <p className={`status mt-4 ${statusType === 'error' ? 'status-error' : ''} ${statusType === 'success' ? 'status-success' : ''}`}>
-                {status}
+    <Layout>
+      <div className="fade-in">
+        <div className="auth-card card shadow">
+          <div className="card__content">
+            <div className="brand mb-4">
+              <h1>Авторизация</h1>
+              <p className="card__description">
+                Тестовый frontend auth сервиса с импортом общего стиля.
               </p>
-            )}
-          </form>
+            </div>
+
+            <form onSubmit={handleLogin}>
+              <div className="form-group">
+                <label className="label" htmlFor="login">
+                  Логин (username или email)
+                </label>
+                <input
+                  id="login"
+                  type="text"
+                  className="input"
+                  value={login}
+                  onChange={(e) => setLogin(e.target.value)}
+                  placeholder="ivan или ivan@example.com"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="label" htmlFor="password">
+                  Пароль
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  className="input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              <div className="auth-actions">
+                <button type="submit" className="btn btn-primary btn-lg">
+                  Войти
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-lg"
+                  onClick={openRegister}
+                >
+                  Зарегистрироваться
+                </button>
+              </div>
+
+              {status && (
+                <p className={`status mt-4 ${statusType === 'error' ? 'status-error' : ''} ${statusType === 'success' ? 'status-success' : ''}`}>
+                  {status}
+                </p>
+              )}
+            </form>
+          </div>
         </div>
-      </div>
 
       {showRegister && (
         <div className="modal-overlay">
@@ -413,7 +414,8 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   )
 }
 

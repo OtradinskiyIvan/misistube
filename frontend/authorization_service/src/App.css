@@ -25,17 +25,6 @@
   opacity: 0.85;
 }
 
-.input {
-  width: 100%;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid var(--misis-gray-200);
-  border-radius: var(--misis-radius-md);
-  transition: var(--misis-transition);
-  background-color: var(--misis-bg);
-  color: var(--misis-text-dark);
-  font-size: 1rem;
-}
-
 .status-success {
   color: #047857;
 }
@@ -44,57 +33,12 @@
   color: #b91c1c;
 }
 
-.input::placeholder {
-  color: var(--misis-gray-300);
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--misis-light);
-  box-shadow: 0 0 0 3px rgba(30, 111, 223, 0.1);
-}
-
 .auth-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   justify-content: center;
   margin-top: 1.5rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.1rem;
-  font-size: 1rem;
-  font-weight: 500;
-  border-radius: var(--misis-radius-md);
-  transition: var(--misis-transition);
-  cursor: pointer;
-  border: 1px solid transparent;
-  background-color: transparent;
-}
-
-.btn-primary {
-  background-color: var(--misis-dark);
-  color: var(--misis-text-light);
-  border-color: var(--misis-dark);
-}
-
-.btn-primary:hover {
-  background-color: var(--misis-light);
-  border-color: var(--misis-light);
-}
-
-.btn-secondary {
-  background-color: var(--misis-bg);
-  color: var(--misis-dark);
-  border-color: var(--misis-gray-200);
-}
-
-.btn-secondary:hover {
-  background-color: var(--misis-gray-100);
 }
 
 .status {
