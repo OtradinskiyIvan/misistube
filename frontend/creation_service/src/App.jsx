@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { VideoListPage } from './pages/VideoListPage';
 import { VideoDetailPage } from './pages/VideoDetailPage';
 import { UploadPage } from './pages/UploadPage';
@@ -25,6 +25,7 @@ function App() {
       <main className="container py-6">
         <Routes>
           <Route path="/" element={<VideoListPage />} />
+          <Route path="/videos/upload" element={<Navigate to="/upload" replace />} />
           <Route path="/videos/:id" element={<VideoDetailPage />} />
           <Route path="/upload" element={<UploadPage />} />
         </Routes>

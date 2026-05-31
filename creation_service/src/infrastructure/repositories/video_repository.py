@@ -16,6 +16,7 @@ class SQLAlchemyVideoRepository(VideoRepositoryProtocol):
             description=video.description,
             storage_key=video.storage_key,
             status=video.status.value,
+            duration_seconds=video.duration,
             created_at=video.created_at,
             updated_at=video.updated_at,
         )

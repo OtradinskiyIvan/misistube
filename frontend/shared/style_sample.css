@@ -183,6 +183,23 @@ a:hover {
     font-size: 0.75rem;
     color: var(--misis-gray-300);
     margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card__duration {
+    font-size: 0.75rem;
+    color: var(--misis-text-dark);
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    display: inline-block;
+}
+
+.card__time {
+    font-size: 0.75rem;
+    color: var(--misis-text-dark);
+    opacity: 0.7;
 }
 
 /* ----- 6. Формы и поля ввода ----- */

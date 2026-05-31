@@ -5,17 +5,12 @@ import logging
 
 app = FastAPI(title="Video Studio Service")
 
-origins = [
-    "http://localhost:5174",  # Твой фронтенд (Vite)
-    "http://localhost:3000",  # Если используешь Create React App
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # или ["*"] для разработки (но осторожно)
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"],  # разрешаем все методы, включая OPTIONS, POST, GET
-    allow_headers=["*"],  # разрешаем все заголовки
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 from src.api.routes import videos

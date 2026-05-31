@@ -7,24 +7,19 @@ from src.domain.exceptions import VideoNotFoundError
 
 router = APIRouter(prefix="/videos", tags=["videos"])
 
-print("ROUTER INITIALIZED")
-
-@router.options("/upload")
-async def options_upload():
-    return Response(status_code=200)
-
 @router.options("/upload")
 async def preflight_upload():
-    print("OPTIONS HANDLER CALLED")
-    return {}   # FastAPI сам добавит нужные CORS-заголовки
+    return Response(status_code=200)
 
-# 1. Сначала POST /upload (без параметров пути)
+@router.get("/upload")
+async def get_upload_info():
+    raise HTTPException(status_code=405, detail="Use POST to upload a video")
+
 @router.post("/upload", response_model=VideoUploadResponse)
 async def upload_video(
     title: str = Form(...),
-    description: str = Form(...),
+    description: str = Form(..., min_length=1),
     file: UploadFile = File(...),
-    
     service: VideoService = Depends(get_video_service),
 ):
     content = await file.read()
@@ -34,11 +29,9 @@ async def upload_video(
         title=video.title,
         description=video.description,
         status=video.status.value,
+        duration=video.duration,
         created_at=video.created_at,
     )
-
-# 2. Затем GET / (список)
-# src/api/routes/videos.py
 
 @router.get("/", response_model=VideoListResponse)
 async def list_videos(
@@ -47,22 +40,19 @@ async def list_videos(
     service: VideoService = Depends(get_video_service),
 ):
     videos = await service.get_video_list(limit, offset)
-    
-    # Правильное преобразование объектов в Pydantic-схемы
     video_items = [
         VideoUploadResponse(
             id=v.id,
             title=v.title,
             description=v.description,
             status=v.status.value,
+            duration=v.duration,
             created_at=v.created_at,
         )
         for v in videos
     ]
-    
     return VideoListResponse(items=video_items, total=len(videos))
 
-# 3. В конце GET /{video_id} (с параметром пути)
 @router.get("/{video_id}", response_model=VideoDetailResponse)
 async def get_video(
     video_id: UUID,
@@ -76,6 +66,7 @@ async def get_video(
             title=video.title,
             description=video.description,
             status=video.status.value,
+            duration=video.duration,
             created_at=video.created_at,
             storage_url=presigned_url,
         )

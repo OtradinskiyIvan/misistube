@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useVideo } from '../hooks/useVideos';
 import { VideoPlayer } from '../components/VideoPlayer';
+import { formatDistanceToNow } from 'date-fns';
 
 export const VideoDetailPage = () => {
   const { id } = useParams();
@@ -18,12 +19,21 @@ export const VideoDetailPage = () => {
       <VideoPlayer src={video.storage_url || ''} title={video.title} />
       <h1 className="text-2xl font-bold mt-4">{video.title}</h1>
       <p className="text-gray-600 mt-2">{video.description}</p>
-      <div className="mt-2 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-3 items-center">
         <span className={`badge badge-${statusClass}`}>
+          {video.status === 'uploading' && '⏳ '}
+          {video.status === 'processing' && '⚙️ '}
+          {video.status === 'ready' && '✅ '}
+          {video.status === 'failed' && '❌ '}
           {video.status}
         </span>
-        <span className="text-sm text-gray-400">
-          {new Date(video.created_at).toLocaleString()}
+        {video.duration > 0 && (
+          <span className="text-sm font-medium text-gray-700">
+            Длительность: {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
+          </span>
+        )}
+        <span className="text-sm text-gray-600">
+          Загружено {formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}
         </span>
       </div>
     </div>
