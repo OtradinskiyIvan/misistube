@@ -7,7 +7,6 @@ def map_create_dto(dto: UserCreateDTO) -> dict:
     return {
         "username": dto.username,
         "email": dto.email,
-        "password": dto.password,
     }
 
 
@@ -17,8 +16,6 @@ def map_update_dto(dto: UserUpdateDTO) -> dict:
         result["username"] = dto.username
     if dto.email is not None:
         result["email"] = dto.email
-    if dto.password is not None:
-        result["password"] = dto.password
     if dto.status is not None:
         result["status"] = dto.status
     return result

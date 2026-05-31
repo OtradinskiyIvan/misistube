@@ -2,7 +2,6 @@ from uuid import uuid4
 
 from ..domain.entities import User
 from ..domain.interfaces import UnitOfWork, UserRepository
-from ._helpers import hash_password
 
 
 class CreateUserService:
@@ -14,13 +13,11 @@ class CreateUserService:
         self,
         username: str,
         email: str,
-        password: str,
     ) -> User:
         user = User(
             id=uuid4(),
             username=username,
             email=email,
-            hashed_password=hash_password(password),
             status="active",
         )
 

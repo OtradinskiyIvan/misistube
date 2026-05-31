@@ -47,7 +47,6 @@ def sample_user(sample_user_id: UUID) -> User:
         id=sample_user_id,
         username="testuser",
         email="test@example.com",
-        hashed_password="$2b$12$abcdefghijklmnopqrstuvwxyz123456789",
         status="active",
         created_at=datetime(2026, 1, 1, 12, 0, 0),
         updated_at=datetime(2026, 1, 1, 12, 0, 0),

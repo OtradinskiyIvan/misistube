@@ -15,8 +15,7 @@ class TestUpdateUserService:
         mock_repository.get_by_id.return_value = sample_user
         updated = User(
             id=sample_user.id,
-            username="newname", email="new@example.com",
-            hashed_password="newhash", status="inactive",
+            username="newname", email="new@example.com", status="inactive",
         )
         mock_repository.update.return_value = updated
         service = UpdateUserService(mock_repository, mock_uow)
@@ -25,7 +24,6 @@ class TestUpdateUserService:
             user_id=sample_user.id,
             username="newname",
             email="new@example.com",
-            password="NewPass123",
             status="inactive",
         )
 
@@ -44,7 +42,6 @@ class TestUpdateUserService:
             id=sample_user.id,
             username=sample_user.username,
             email="changed@example.com",
-            hashed_password=sample_user.hashed_password,
             status=sample_user.status,
         )
         mock_repository.update.return_value = updated
@@ -71,18 +68,3 @@ class TestUpdateUserService:
 
         mock_repository.update.assert_not_awaited()
         mock_uow.commit.assert_not_awaited()
-
-    async def test_execute_re_hashes_password(
-        self, mock_repository: AsyncMock, mock_uow: AsyncMock, sample_user: User,
-    ) -> None:
-        original_hash = sample_user.hashed_password
-        mock_repository.get_by_id.return_value = sample_user
-        service = UpdateUserService(mock_repository, mock_uow)
-
-        await service.execute(
-            user_id=sample_user.id, password="NewStrong1",
-        )
-
-        call_args = mock_repository.update.await_args[0][0]
-        assert call_args.hashed_password.startswith("$2b$")
-        assert call_args.hashed_password != original_hash

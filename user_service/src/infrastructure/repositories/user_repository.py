@@ -80,7 +80,6 @@ class UserRepositoryImpl:
             id=user.id,
             username=user.username,
             email=user.email,
-            hashed_password=user.hashed_password,
             status=user.status,
         )
         sync_session.add(model)
@@ -99,7 +98,6 @@ class UserRepositoryImpl:
 
         model.username = user.username
         model.email = user.email
-        model.hashed_password = user.hashed_password
         model.status = user.status
         sync_session.flush()
         return self._to_domain(model)
@@ -123,7 +121,6 @@ class UserRepositoryImpl:
             id=model.id,
             username=model.username,
             email=model.email,
-            hashed_password=model.hashed_password,
             status=model.status,
             created_at=model.created_at,
             updated_at=model.updated_at,

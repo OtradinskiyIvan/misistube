@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
@@ -8,7 +8,6 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 class UserCreateDTO(BaseModel):
     username: str = Field(..., min_length=3, max_length=255)
     email: EmailStr
-    password: str = Field(..., min_length=8, max_length=128)
 
     @field_validator("username")
     @classmethod
@@ -20,22 +19,10 @@ class UserCreateDTO(BaseModel):
             )
         return v
 
-    @field_validator("password")
-    @classmethod
-    def password_strength(cls, v: str) -> str:
-        if not any(c.isupper() for c in v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not any(c.islower() for c in v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Password must contain at least one digit")
-        return v
-
 
 class UserUpdateDTO(BaseModel):
     username: Optional[str] = Field(None, min_length=3, max_length=255)
     email: Optional[EmailStr] = None
-    password: Optional[str] = Field(None, min_length=8, max_length=128)
     status: Optional[str] = Field(None, max_length=50)
 
     @field_validator("username")
@@ -50,19 +37,6 @@ class UserUpdateDTO(BaseModel):
             )
         return v
 
-    @field_validator("password")
-    @classmethod
-    def password_strength(cls, v: Optional[str]) -> Optional[str]:
-        if v is None:
-            return v
-        if not any(c.isupper() for c in v):
-            raise ValueError("Password must contain at least one uppercase letter")
-        if not any(c.islower() for c in v):
-            raise ValueError("Password must contain at least one lowercase letter")
-        if not any(c.isdigit() for c in v):
-            raise ValueError("Password must contain at least one digit")
-        return v
-
     @field_validator("status")
     @classmethod
     def status_value(cls, v: Optional[str]) -> Optional[str]:
@@ -72,6 +46,14 @@ class UserUpdateDTO(BaseModel):
         if v.lower() not in allowed:
             raise ValueError(f"Status must be one of: {', '.join(sorted(allowed))}")
         return v.lower()
+
+
+class TokenDecodeRequest(BaseModel):
+    token: str
+
+
+class TokenDecodedResponse(BaseModel):
+    payload: dict[str, Any]
 
 
 class UserResponseDTO(BaseModel):

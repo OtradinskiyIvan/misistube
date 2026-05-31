@@ -25,22 +25,23 @@ function saveUser(user) {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(loadUser);
 
-  const login = useCallback(async (username) => {
-    const data = await api.listUsers(0, 1000);
-    const found = data.users.find(
-      (u) => u.username === username || u.email === username,
-    );
-    if (!found) {
-      throw new Error("Пользователь не найден");
+  const loginWithToken = useCallback(async (token) => {
+    const decoded = await api.decodeToken(token);
+    const { sub, username, email, roles } = decoded.payload;
+
+    let userData;
+    try {
+      userData = await api.getUser(sub);
+    } catch {
+      throw new Error("Пользователь не найден. Доступ запрещён.");
     }
 
-    const detail = await api.getUser(found.id);
     const authUser = {
-      id: detail.id,
-      username: detail.username,
-      email: detail.email,
-      roles: detail.roles || [],
-      token: "demo-token",
+      id: userData.id,
+      username: userData.username,
+      email: userData.email,
+      roles: roles || [],
+      token,
     };
     saveUser(authUser);
     setUser(authUser);
@@ -52,14 +53,22 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  const hasRole = useCallback(
+    (role) => user && user.roles.includes(role),
+    [user],
+  );
+
   const value = useMemo(
     () => ({
       user,
+      isAuthenticated: !!user,
       isAdmin: user ? user.roles.includes("admin") : false,
-      login,
+      isOwner: user ? user.roles.includes("owner") : false,
+      hasRole,
+      loginWithToken,
       logout,
     }),
-    [user, login, logout],
+    [user, loginWithToken, logout, hasRole],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

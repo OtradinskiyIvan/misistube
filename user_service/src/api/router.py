@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from jwt import ExpiredSignatureError, InvalidTokenError
 
 from .mappers import (
     map_create_dto,
@@ -11,22 +12,27 @@ from .mappers import (
 from .schemas import (
     ErrorResponse,
     HealthResponse,
+    TokenDecodeRequest,
+    TokenDecodedResponse,
     UserCreateDTO,
     UserListResponse,
     UserResponseDTO,
     UserUpdateDTO,
 )
+from ..core.security import decode_jwt_token
 from ..deps import (
     get_create_user_service,
     get_delete_user_service,
     get_get_user_service,
     get_logger_dep,
     get_settings,
+    get_sync_user_service,
     get_update_user_service,
 )
 from ..services.create_user import CreateUserService
 from ..services.delete_user import DeleteUserService
 from ..services.get_user import GetUserService
+from ..services.sync_user import SyncUserService
 from ..services.update_user import UpdateUserService
 
 router = APIRouter(tags=["users"])
@@ -59,11 +65,104 @@ async def health_check(
 
 
 @router.post(
+    "/auth/decode",
+    response_model=TokenDecodedResponse,
+    tags=["auth"],
+    summary="Decode JWT token",
+    description="Decodes a JWT token and returns its payload.",
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid token"},
+        401: {"model": ErrorResponse, "description": "Token has expired"},
+    },
+)
+async def decode_token(
+    payload: TokenDecodeRequest,
+    settings=Depends(get_settings),
+    logger=Depends(get_logger_dep),
+):
+    try:
+        data = decode_jwt_token(
+            payload.token,
+            secret=settings.JWT_SECRET,
+            algorithm=settings.JWT_ALGORITHM,
+        )
+        return TokenDecodedResponse(payload=data)
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+        )
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token",
+        )
+
+
+@router.post(
+    "/auth/sync",
+    response_model=UserResponseDTO,
+    tags=["auth"],
+    summary="Sync user from JWT",
+    description="Decodes JWT, creates or updates user in DB from payload data.",
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid token or missing fields"},
+        401: {"model": ErrorResponse, "description": "Token has expired"},
+    },
+)
+async def sync_user(
+    payload: TokenDecodeRequest,
+    settings=Depends(get_settings),
+    logger=Depends(get_logger_dep),
+    service: SyncUserService = Depends(get_sync_user_service),
+):
+    try:
+        data = decode_jwt_token(
+            payload.token,
+            secret=settings.JWT_SECRET,
+            algorithm=settings.JWT_ALGORITHM,
+        )
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+        )
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token",
+        )
+
+    user_id = data.get("sub")
+    username = data.get("username")
+    email = data.get("email")
+
+    if not user_id or not username or not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token must contain sub, username, and email",
+        )
+
+    try:
+        user_id = UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user_id format in token",
+        )
+
+    logger.info("auth.sync.requested", extra={"user_id": str(user_id), "username": username})
+    user = await service.execute(user_id=user_id, username=username, email=email)
+    logger.info("auth.sync.success", extra={"user_id": str(user_id)})
+    return map_user_to_response(user)
+
+
+@router.post(
     "/users",
     response_model=UserResponseDTO,
     status_code=201,
     summary="Create a new user",
-    description="Creates a user with the given username, email, and password.",
+    description="Creates a user with the given username and email (auth handled by auth-service).",
     responses={**_error_responses},
 )
 async def create_user(
@@ -124,7 +223,7 @@ async def list_users(
     "/users/{user_id}",
     response_model=UserResponseDTO,
     summary="Update user",
-    description="Updates an existing user's fields. Only provided fields are changed.",
+    description="Updates an existing user's fields (username, email, status).",
     responses={**_error_responses},
 )
 async def update_user(

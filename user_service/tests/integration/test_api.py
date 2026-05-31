@@ -15,7 +15,7 @@ class TestCreateUser:
     async def test_create_user_success(self, client: AsyncClient) -> None:
         resp = await client.post(
             "/api/v1/users",
-            json={"username": "alice", "email": "alice@example.com", "password": "Alice1234"},
+            json={"username": "alice", "email": "alice@example.com"},
         )
         assert resp.status_code == 201
         data = resp.json()
@@ -27,11 +27,11 @@ class TestCreateUser:
     async def test_create_user_duplicate_username(self, client: AsyncClient) -> None:
         await client.post(
             "/api/v1/users",
-            json={"username": "bob", "email": "bob1@example.com", "password": "Bob12345"},
+            json={"username": "bob", "email": "bob1@example.com"},
         )
         resp = await client.post(
             "/api/v1/users",
-            json={"username": "bob", "email": "bob2@example.com", "password": "Bob12345"},
+            json={"username": "bob", "email": "bob2@example.com"},
         )
         assert resp.status_code == 400
         data = resp.json()
@@ -40,11 +40,11 @@ class TestCreateUser:
     async def test_create_user_duplicate_email(self, client: AsyncClient) -> None:
         await client.post(
             "/api/v1/users",
-            json={"username": "charlie", "email": "charlie@example.com", "password": "Char1234"},
+            json={"username": "charlie", "email": "charlie@example.com"},
         )
         resp = await client.post(
             "/api/v1/users",
-            json={"username": "charlie2", "email": "charlie@example.com", "password": "Char1234"},
+            json={"username": "charlie2", "email": "charlie@example.com"},
         )
         assert resp.status_code == 400
         data = resp.json()
@@ -53,7 +53,7 @@ class TestCreateUser:
     async def test_create_user_validation_error(self, client: AsyncClient) -> None:
         resp = await client.post(
             "/api/v1/users",
-            json={"username": "x", "email": "bad", "password": "short"},
+            json={"username": "x", "email": "bad"},
         )
         assert resp.status_code == 422
         data = resp.json()
@@ -66,7 +66,7 @@ class TestGetUser:
     async def test_get_user_by_id(self, client: AsyncClient) -> None:
         create_resp = await client.post(
             "/api/v1/users",
-            json={"username": "dave", "email": "dave@example.com", "password": "Dave1234"},
+            json={"username": "dave", "email": "dave@example.com"},
         )
         user_id = create_resp.json()["id"]
 
@@ -103,7 +103,7 @@ class TestListUsers:
                 "/api/v1/users",
                 json={
                     "username": f"user{i}", "email": f"user{i}@example.com",
-                    "password": f"User{i}123",
+
                 },
             )
         resp = await client.get("/api/v1/users?skip=1&limit=2")
@@ -118,7 +118,7 @@ class TestUpdateUser:
     async def test_update_user_success(self, client: AsyncClient) -> None:
         create_resp = await client.post(
             "/api/v1/users",
-            json={"username": "eve", "email": "eve@example.com", "password": "Eve12345"},
+            json={"username": "eve", "email": "eve@example.com"},
         )
         user_id = create_resp.json()["id"]
 
@@ -145,7 +145,7 @@ class TestDeleteUser:
     async def test_delete_user_success(self, client: AsyncClient) -> None:
         create_resp = await client.post(
             "/api/v1/users",
-            json={"username": "frank", "email": "frank@example.com", "password": "Frank1234"},
+            json={"username": "frank", "email": "frank@example.com"},
         )
         user_id = create_resp.json()["id"]
 
@@ -166,7 +166,7 @@ class TestFullCRUD:
     async def test_full_crud_chain(self, client: AsyncClient) -> None:
         create_resp = await client.post(
             "/api/v1/users",
-            json={"username": "grace", "email": "grace@example.com", "password": "Grace1234"},
+            json={"username": "grace", "email": "grace@example.com"},
         )
         assert create_resp.status_code == 201
         user_id = create_resp.json()["id"]

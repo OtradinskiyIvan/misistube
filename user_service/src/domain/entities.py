@@ -9,7 +9,6 @@ class User:
         id: UUID,
         username: str,
         email: str,
-        hashed_password: str,
         status: str = "active",
         created_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None,
@@ -17,7 +16,6 @@ class User:
         self.id = id
         self.username = username
         self.email = email
-        self.hashed_password = hashed_password
         self.status = status
         self.created_at = created_at or datetime.utcnow()
         self.updated_at = updated_at or datetime.utcnow()

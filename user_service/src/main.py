@@ -56,6 +56,10 @@ app = FastAPI(
             "description": "User CRUD operations (create, read, update, delete)",
         },
         {
+            "name": "auth",
+            "description": "JWT token decode endpoint for auth-service integration",
+        },
+        {
             "name": "health",
             "description": "Service health and readiness checks",
         },

@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from pydantic import AliasChoices, Field
+
 ROOT_DIRECTORY = Path(__file__).resolve().parents[3]
 if str(ROOT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(ROOT_DIRECTORY))
@@ -28,7 +30,9 @@ class UserServiceSettings(shared_config.BaseSettings):
 
     DATABASE_URL: shared_config.PostgresDsn
     DATABASE_ECHO: bool = False
-    SECRET_KEY: Optional[shared_config.SecretStr] = None
+
+    JWT_SECRET: shared_config.SecretStr = Field(validation_alias=AliasChoices("JWT_SECRET", "SECRET_KEY"))
+    JWT_ALGORITHM: str = Field(default="HS256", validation_alias=AliasChoices("JWT_ALGORITHM", "JWT_ALGORITHM"))
 
     S3_ENDPOINT: Optional[str] = None
     S3_ACCESS_KEY: Optional[shared_config.SecretStr] = None

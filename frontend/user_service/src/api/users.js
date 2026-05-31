@@ -44,6 +44,12 @@ async function request(path, options = {}) {
 }
 
 export const api = {
+  decodeToken: (token) =>
+    request("/auth/decode", { method: "POST", body: JSON.stringify({ token }) }),
+
+  syncUser: (token) =>
+    request("/auth/sync", { method: "POST", body: JSON.stringify({ token }) }),
+
   listUsers: (skip = 0, limit = 100) =>
     request(`/users?skip=${skip}&limit=${limit}`),
 

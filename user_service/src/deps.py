@@ -12,6 +12,7 @@ from .infrastructure.repositories import UserRepositoryImpl
 from .services.create_user import CreateUserService
 from .services.delete_user import DeleteUserService
 from .services.get_user import GetUserService
+from .services.sync_user import SyncUserService
 from .services.update_user import UpdateUserService
 
 configure_logging(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
@@ -61,6 +62,12 @@ async def get_update_user_service(
     session: AsyncSession = Depends(get_session),
 ) -> UpdateUserService:
     return UpdateUserService(UserRepositoryImpl(session), UnitOfWorkImpl(session))
+
+
+async def get_sync_user_service(
+    session: AsyncSession = Depends(get_session),
+) -> SyncUserService:
+    return SyncUserService(UserRepositoryImpl(session), UnitOfWorkImpl(session))
 
 
 async def get_delete_user_service(
