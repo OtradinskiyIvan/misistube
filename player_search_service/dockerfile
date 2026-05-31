@@ -1,0 +1,42 @@
+FROM python:3.11-slim-bookworm
+
+# Переменные окружения для оптимальной работы Python
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app/src
+
+# Рабочая директория
+WORKDIR /app
+
+# Устанавливаем системные зависимости для сборки
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копируем зависимости сначала (для кэширования слоя)
+COPY pyproject.toml ./
+
+# Устанавливаем Python-зависимости
+RUN pip install --upgrade pip && \
+    pip install . && \
+    pip install gunicorn uvicorn[standard]
+
+# Копируем исходный код
+COPY src/ ./src/
+
+# Health check для оркестратора
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Запуск через Gunicorn + Uvicorn workers (production-ready)
+CMD ["gunicorn", "src.main:app", \
+     "-w", "4", \
+     "-k", "uvicorn.workers.UvicornWorker", \
+     "--bind", "0.0.0.0:8000", \
+     "--timeout", "120", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-"]
