@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
 import { api } from "../api/users.js";
 
 const AuthContext = createContext(null);
@@ -24,29 +24,64 @@ function saveUser(user) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(loadUser);
+  const [authLoading, setAuthLoading] = useState(false);
 
   const loginWithToken = useCallback(async (token) => {
-    const decoded = await api.decodeToken(token);
-    const { sub, username, email, roles } = decoded.payload;
+    const userData = await api.syncUser(token);
 
-    let userData;
+    let roles = [];
     try {
-      userData = await api.getUser(sub);
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      roles = payload.roles || [];
     } catch {
-      throw new Error("Пользователь не найден. Доступ запрещён.");
     }
 
     const authUser = {
       id: userData.id,
       username: userData.username,
       email: userData.email,
-      roles: roles || [],
+      roles,
       token,
     };
     saveUser(authUser);
     setUser(authUser);
     return authUser;
   }, []);
+
+  useEffect(() => {
+    if (user) return;
+
+    const hash = window.location.hash;
+    if (hash && hash.includes("access_token=")) {
+      const params = new URLSearchParams(hash.slice(1));
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      if (accessToken) {
+        if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
+        setAuthLoading(true);
+        loginWithToken(accessToken)
+          .then(() => window.location.hash = "")
+          .catch(() => window.location.hash = "")
+          .finally(() => setAuthLoading(false));
+        return;
+      }
+    }
+
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) return;
+
+    setAuthLoading(true);
+    loginWithToken(accessToken)
+      .then(() => {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+      })
+      .catch(() => {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+      })
+      .finally(() => setAuthLoading(false));
+  }, [user, loginWithToken]);
 
   const logout = useCallback(() => {
     saveUser(null);
@@ -62,13 +97,14 @@ export function AuthProvider({ children }) {
     () => ({
       user,
       isAuthenticated: !!user,
+      authLoading,
       isAdmin: user ? user.roles.includes("admin") : false,
       isOwner: user ? user.roles.includes("owner") : false,
       hasRole,
       loginWithToken,
       logout,
     }),
-    [user, loginWithToken, logout, hasRole],
+    [user, authLoading, loginWithToken, logout, hasRole],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

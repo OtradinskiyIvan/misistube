@@ -88,12 +88,11 @@ async def create_pending_registration(username: str, email: str, password: str, 
     subject = "Verification Code for Your Registration"
     body = f"Your verification code: {code}\nValid for: {CODE_TTL_MINUTES} minutes."
 
-    # send synchronously in thread to avoid blocking and allow exceptions to propagate
+    # send synchronously in thread to avoid blocking
     try:
         await asyncio.to_thread(send_email_sync, email, subject, body, settings)
     except Exception as exc:
-        # print code to server logs to help debugging when SMTP is misconfigured
-        print(f"[confirmation] failed to send email to {email}: {exc}. Confirmation code: {code}")
-        raise
+        # In development, SMTP may not be configured — print code to logs instead
+        print(f"[confirmation] SMTP unavailable for {email}: {exc}. Confirmation code: {code}")
 
     return code

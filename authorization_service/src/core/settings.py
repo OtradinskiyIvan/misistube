@@ -1,16 +1,27 @@
-from pydantic import SecretStr, field_validator
+import sys
+from pathlib import Path
+
+from pydantic import AliasChoices, Field, PostgresDsn, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
 
-from shared.config import BaseSettings
+from shared.config import BaseSettings as SharedBaseSettings
+
+ROOT_DIRECTORY = Path(__file__).resolve().parents[3]
+if str(ROOT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIRECTORY))
+
+ENV_FILE = ROOT_DIRECTORY / ".env"
 
 
-class AuthSettings(BaseSettings):
+class AuthSettings(SharedBaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE),
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     APP_NAME: str = "Authorization Service"
+    DATABASE_URL: PostgresDsn = Field(validation_alias=AliasChoices("AUTH_DATABASE_URL", "DATABASE_URL"))
     JWT_SECRET: SecretStr
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_EXPIRE_MINUTES: int = 30
@@ -22,6 +33,11 @@ class AuthSettings(BaseSettings):
     SMTP_PASSWORD: str | None = None
     SMTP_FROM: str | None = None
     SMTP_USE_TLS: bool = False
+
+    S3_ENDPOINT: str | None = None
+    S3_ACCESS_KEY: SecretStr | None = None
+    S3_SECRET_KEY: SecretStr | None = None
+    S3_BUCKET_NAME: str | None = None
 
     @field_validator("JWT_SECRET")
     @classmethod

@@ -1,25 +1,17 @@
-import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
-import ErrorAlert from "../components/ErrorAlert.jsx";
+import LoadingSpinner from "../components/LoadingSpinner.jsx";
 
 export default function ProfilePage() {
-  const { user, isAdmin, isOwner, loginWithToken, logout } = useAuth();
-  const [token, setToken] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { user, isAdmin, isOwner, logout, authLoading } = useAuth();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      await loginWithToken(token.trim());
-    } catch (err) {
-      setError(err.detail || err.message || "Ошибка входа");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (authLoading) {
+    return (
+      <div className="fade-in" style={{ textAlign: "center", paddingTop: "4rem" }}>
+        <LoadingSpinner />
+        <p style={{ marginTop: "1rem", opacity: 0.7 }}>Выполняется вход...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -29,34 +21,15 @@ export default function ProfilePage() {
             MISIS Tube
           </h2>
           <p style={{ textAlign: "center", marginBottom: "1.5rem", opacity: 0.7 }}>
-            Введите JWT токен для входа
+            Для доступа к личному кабинету необходимо авторизоваться
           </p>
-
-          <ErrorAlert message={error} onClose={() => setError("")} />
-
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="label" htmlFor="token">JWT токен</label>
-              <textarea
-                id="token"
-                className="textarea"
-                rows={3}
-                required
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="Вставьте JWT токен..."
-                style={{ fontFamily: "monospace", fontSize: "0.8rem" }}
-              />
-            </div>
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg"
-              style={{ width: "100%" }}
-              disabled={loading}
-            >
-              {loading ? "Вход..." : "Войти"}
-            </button>
-          </form>
+          <a
+            href="/auth/login"
+            className="btn btn-primary btn-lg"
+            style={{ display: "block", textAlign: "center" }}
+          >
+            Войти
+          </a>
         </div>
       </div>
     );

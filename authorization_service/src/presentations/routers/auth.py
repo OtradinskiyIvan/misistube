@@ -23,13 +23,9 @@ async def register(
     payload: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    # create pending registration and send confirmation code
-    try:
-        await confirmation.create_pending_registration(payload.username, payload.email, payload.password, auth_service._settings)
-    except Exception as exc:
-        # propagate SMTP errors to client so they can correct settings
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-
+    await confirmation.create_pending_registration(
+        payload.username, payload.email, payload.password, auth_service._settings
+    )
     return {"detail": "confirmation_sent"}
 
 
