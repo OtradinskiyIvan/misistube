@@ -11,15 +11,16 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shared.database.session import Base, init_engine
-from shared.logger import get_logger
 
 from src.api.routers import playback, search
 from src.core.config import get_settings
 from src.core.exceptions import register_rfc7807_handlers
+from src.core.logger import setup_service_logger
+from src.core.middleware import CorrelationIdMiddleware
 
 load_dotenv()
 settings = get_settings()
-logger = get_logger("player_search_service", level=settings.log_level)
+logger = setup_service_logger("player_search_service", level=settings.log_level)
 
 
 @asynccontextmanager
@@ -56,6 +57,8 @@ app = FastAPI(
     redoc_url="/redoc" if settings.app_env == "development" else None,
     lifespan=lifespan,
 )
+
+app.add_middleware(CorrelationIdMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
