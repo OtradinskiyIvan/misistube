@@ -1,3 +1,4 @@
+import json
 import logging
 
 from fastapi import FastAPI, Request, status
@@ -21,17 +22,17 @@ def register_rfc7807_handlers(app: FastAPI):
         return problem_response(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             title="Validation Error",
-            detail=str(exc.errors()),
+            detail=json.dumps(exc.errors()),
             problem_type="https://misistube.dev/errors/validation",
             instance=request.url.path
         )
 
-    # Все остальные ошибки (500)
+    # Bce остальные ошибки (500)
     @app.exception_handler(Exception)
     async def global_error_handler(request: Request, exc: Exception):
         logger.exception("Unhandled exception on %s: %s", request.url.path, exc)
 
-        # В production скрываем внутренние детали для безопасности
+        # B production скрываем внутренние детали для безопасности
         detail = "Internal server error" if is_production else str(exc)
 
         return problem_response(

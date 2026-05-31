@@ -1,4 +1,4 @@
-"""RFC 7807 Problem Details для стандартизации ответов об ошибках"""
+"""RFC 7807 Problem Details для стандартизации ответов o6 ошибках"""
 
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
@@ -32,7 +32,7 @@ def problem_response(
     problem_type: str = "about:blank",
     instance: str | None = None
 ) -> JSONResponse:
-    """Возвращает ответ в формате RFC 7807 с правильным Content-Type"""
+    """Возвращает ответ в формате RFC 7807 c правильным Content-Type"""
     content = ProblemDetail(
         type=problem_type,
         title=title,
