@@ -92,15 +92,22 @@ export function AuthProvider({ children, initialHash = "" }) {
     setUser(null);
   }, []);
 
+  const hasRole = useCallback(
+    (role) => user && user.roles.includes(role),
+    [user],
+  );
+
   const value = useMemo(
     () => ({
       user,
       isAuthenticated: !!user,
       authLoading,
+      isAdmin: user ? user.roles.includes("admin") : false,
+      hasRole,
       loginWithToken,
       logout,
     }),
-    [user, authLoading, loginWithToken, logout],
+    [user, authLoading, loginWithToken, logout, hasRole],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

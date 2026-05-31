@@ -61,6 +61,7 @@ class UserResponseDTO(BaseModel):
     username: str
     email: str
     status: str
+    roles: list[str] = []
     created_at: datetime
     updated_at: datetime
 
@@ -74,6 +75,15 @@ class UserListResponse(BaseModel):
     limit: int = Field(..., ge=0)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class RoleAssignDTO(BaseModel):
+    role: str = Field(..., min_length=1, max_length=50)
+
+
+class RoleResponse(BaseModel):
+    user_id: UUID
+    roles: list[str]
 
 
 class ErrorResponse(BaseModel):

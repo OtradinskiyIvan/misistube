@@ -73,6 +73,18 @@ export const api = {
 
   deleteComment: (commentId) =>
     request(`/comments/${commentId}`, { method: "DELETE" }),
+
+  blockComment: (commentId) =>
+    request(`/admin/comments/${commentId}/block`, { method: "POST" }),
+
+  unblockComment: (commentId) =>
+    request(`/admin/comments/${commentId}/unblock`, { method: "POST" }),
+
+  deleteCommentAsAdmin: (commentId) =>
+    request(`/admin/comments/${commentId}`, { method: "DELETE" }),
+
+  getBlockedComments: (skip = 0, limit = 50) =>
+    request(`/admin/comments/blocked?skip=${skip}&limit=${limit}`),
 };
 
 export { ApiError };

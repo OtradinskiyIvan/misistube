@@ -66,6 +66,15 @@ export const api = {
 
   deleteUser: (id) =>
     request(`/users/${id}`, { method: "DELETE" }),
+
+  assignRole: (userId, role) =>
+    request(`/users/${userId}/roles`, { method: "POST", body: JSON.stringify({ role }) }),
+
+  revokeRole: (userId, role) =>
+    request(`/users/${userId}/roles/${role}`, { method: "DELETE" }),
+
+  updateUserStatus: (userId, status) =>
+    request(`/users/${userId}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
 };
 
 export { ApiError };

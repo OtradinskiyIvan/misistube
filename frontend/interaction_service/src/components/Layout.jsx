@@ -2,7 +2,7 @@ import { Outlet, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Layout() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
   return (
     <>
@@ -13,6 +13,11 @@ export default function Layout() {
             <Link to="/video/1" className="nav-link">Video #1</Link>
             {isAuthenticated ? (
               <>
+                {isAdmin && (
+                  <Link to="/admin/comments" className="nav-link">
+                    Модерация
+                  </Link>
+                )}
                 <span className="nav-link">{user?.username}</span>
                 <button className="btn btn-sm btn-outline" onClick={logout}>
                   Logout

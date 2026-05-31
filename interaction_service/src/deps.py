@@ -107,3 +107,44 @@ async def get_current_user_id(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user ID in token",
         )
+
+
+async def get_current_user_payload(
+    authorization: str = Header(..., alias="Authorization"),
+) -> dict:
+    from .core.settings import settings as s
+    from shared.security import decode_jwt_token
+
+    prefix = "Bearer "
+    if not authorization.startswith(prefix):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authorization header",
+        )
+    token = authorization[len(prefix):]
+    try:
+        return decode_jwt_token(
+            token,
+            secret=s.JWT_SECRET.get_secret_value(),
+            algorithm=s.JWT_ALGORITHM,
+        )
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+        )
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+
+
+def require_admin(payload: dict = Depends(get_current_user_payload)) -> dict:
+    roles = payload.get("roles", [])
+    if "admin" not in roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return payload

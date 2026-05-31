@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .mappers import map_comment_to_response
 from .schemas import (
+    AdminCommentActionResponse,
     CommentCreateRequest,
     CommentResponse,
     CommentUpdateRequest,
@@ -20,6 +21,7 @@ from ..deps import (
     get_like_service,
     get_logger_dep,
     get_settings,
+    require_admin,
 )
 from ..services.comment_service import CommentService
 from ..services.like_service import LikeService
@@ -208,3 +210,89 @@ async def delete_comment(
     if not deleted:
         raise HTTPException(status_code=404, detail="Comment not found or not owned by user")
     return None
+
+
+# Admin endpoints for comment moderation
+
+@router.post(
+    "/admin/comments/{comment_id}/block",
+    response_model=AdminCommentActionResponse,
+    summary="Block a comment (admin)",
+    responses={**_error_responses},
+)
+async def block_comment(
+    comment_id: UUID,
+    service: CommentService = Depends(get_comment_service),
+    logger=Depends(get_logger_dep),
+    admin_payload: dict = Depends(require_admin),
+):
+    logger.info("admin.comments.block.requested", extra={"comment_id": str(comment_id)})
+    admin_id = UUID(admin_payload["sub"])
+    comment = await service.block_comment(comment_id, admin_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    logger.info("admin.comments.block.success", extra={"comment_id": str(comment_id)})
+    return AdminCommentActionResponse(success=True, detail="Comment blocked")
+
+
+@router.post(
+    "/admin/comments/{comment_id}/unblock",
+    response_model=AdminCommentActionResponse,
+    summary="Unblock a comment (admin)",
+    responses={**_error_responses},
+)
+async def unblock_comment(
+    comment_id: UUID,
+    service: CommentService = Depends(get_comment_service),
+    logger=Depends(get_logger_dep),
+    _admin=Depends(require_admin),
+):
+    logger.info("admin.comments.unblock.requested", extra={"comment_id": str(comment_id)})
+    comment = await service.unblock_comment(comment_id)
+    if comment is None:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    logger.info("admin.comments.unblock.success", extra={"comment_id": str(comment_id)})
+    return AdminCommentActionResponse(success=True, detail="Comment unblocked")
+
+
+@router.delete(
+    "/admin/comments/{comment_id}",
+    status_code=204,
+    summary="Delete any comment (admin)",
+    responses={**_error_responses},
+)
+async def admin_delete_comment(
+    comment_id: UUID,
+    service: CommentService = Depends(get_comment_service),
+    logger=Depends(get_logger_dep),
+    _admin=Depends(require_admin),
+):
+    logger.info("admin.comments.delete.requested", extra={"comment_id": str(comment_id)})
+    deleted = await service.delete_comment_as_admin(comment_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return None
+
+
+@router.get(
+    "/admin/comments/blocked",
+    response_model=PaginatedCommentsResponse,
+    summary="List blocked comments (admin)",
+    responses={**_error_responses},
+)
+async def list_blocked_comments(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    service: CommentService = Depends(get_comment_service),
+    logger=Depends(get_logger_dep),
+    _admin=Depends(require_admin),
+):
+    logger.info("admin.comments.blocked.list.requested", extra={"skip": skip, "limit": limit})
+    comments = await service.get_blocked_comments(skip=skip, limit=limit)
+    total = len(comments)
+    return PaginatedCommentsResponse(
+        comments=[map_comment_to_response(c) for c in comments],
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
