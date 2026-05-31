@@ -116,3 +116,17 @@ cp .env.example ./.env
 # Иначе, если для докера всё-таки, то из .env.docker.example
 cp .env.docker.example ./.env
 ```
+
+### -------------------------------------------
+
+### Краткие 3 команды
+```bash
+# Локальная разработка (всё включено)
+docker compose --profile testing up -d
+
+# Продакшен (только сервис + внешние зависимости)
+docker compose up -d
+
+# Просмотр логов
+docker compose logs -f player_search_service
+```
