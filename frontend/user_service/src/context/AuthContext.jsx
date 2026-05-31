@@ -22,7 +22,7 @@ function saveUser(user) {
   }
 }
 
-export function AuthProvider({ children }) {
+export function AuthProvider({ children, initialHash = "" }) {
   const [user, setUser] = useState(loadUser);
   const [authLoading, setAuthLoading] = useState(false);
 
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (user) return;
 
-    const hash = window.location.hash;
+    const hash = initialHash || window.location.hash;
     if (hash && hash.includes("access_token=")) {
       const params = new URLSearchParams(hash.slice(1));
       const accessToken = params.get("access_token");

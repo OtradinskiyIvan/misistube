@@ -6,10 +6,12 @@ import App from "./App.jsx";
 import "../../shared/style_sample.css";
 import "./App.css";
 
+const initialHash = window.location.hash;
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <AuthProvider>
+      <AuthProvider initialHash={initialHash}>
         <App />
       </AuthProvider>
     </BrowserRouter>
