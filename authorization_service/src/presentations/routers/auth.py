@@ -1,10 +1,13 @@
 from uuid import UUID
 
 from authorization_service.src.domain.entities.user import User
+from authorization_service.src.domain.exceptions import InvalidCredentialsError
 from authorization_service.src.presentations.deps import get_auth_service
 from authorization_service.src.presentations.schemas.auth import (
+    AccessTokenResponse,
     ConfirmRequest,
     LoginRequest,
+    RefreshRequest,
     RegisterRequest,
     TokenResponse,
     UserOut,
@@ -68,6 +71,17 @@ async def login(
 ):
     token_data = await auth_service.login(login=payload.login, password=payload.password)
     return TokenResponse(**token_data)
+
+@router.post("/refresh", response_model=AccessTokenResponse)
+async def refresh(
+    payload: RefreshRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    try:
+        token_data = await auth_service.refresh_access_token(payload.refresh_token)
+    except InvalidCredentialsError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    return AccessTokenResponse(**token_data)
 
 @router.get("/me", response_model=UserOut)
 async def get_current_user():

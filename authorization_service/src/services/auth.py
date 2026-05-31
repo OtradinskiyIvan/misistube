@@ -1,6 +1,8 @@
 from uuid import UUID
 
-from shared.security import create_jwt_token, hash_password, verify_password
+from jwt import PyJWTError
+
+from shared.security import create_jwt_token, decode_jwt_token, hash_password, verify_password
 
 from ..core.settings import AuthSettings
 from ..domain.entities.user import User
@@ -51,7 +53,8 @@ class AuthService:
             algorithm=self._settings.JWT_ALGORITHM,
             expires_minutes=self._settings.JWT_ACCESS_EXPIRE_MINUTES,
             username=user.username,
-            email=user.email
+            email=user.email,
+            token_type="access"
         )
         refresh_token = create_jwt_token(
             subject=str(user.id),
@@ -59,9 +62,38 @@ class AuthService:
             algorithm=self._settings.JWT_ALGORITHM,
             expires_minutes=self._settings.JWT_REFRESH_EXPIRE_DAYS * 24 * 60,
             username=user.username,
-            email=user.email
+            email=user.email,
+            token_type="refresh"
         )
         return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "Bearer"}
+
+    async def refresh_access_token(self, refresh_token: str) -> dict[str, str]:
+        try:
+            payload = decode_jwt_token(refresh_token, self._settings.JWT_SECRET, algorithm=self._settings.JWT_ALGORITHM)
+        except PyJWTError as exc:
+            raise InvalidCredentialsError("Invalid refresh token") from exc
+
+        if payload.get("token_type") != "refresh":
+            raise InvalidCredentialsError("Invalid refresh token")
+
+        user_id = payload.get("sub")
+        if not user_id:
+            raise InvalidCredentialsError("Invalid refresh token")
+
+        user = await self._user_repo.get_by_id(UUID(user_id))
+        if not user or not user.is_active:
+            raise InvalidCredentialsError("Invalid refresh token")
+
+        access_token = create_jwt_token(
+            subject=str(user.id),
+            secret=self._settings.JWT_SECRET,
+            algorithm=self._settings.JWT_ALGORITHM,
+            expires_minutes=self._settings.JWT_ACCESS_EXPIRE_MINUTES,
+            username=user.username,
+            email=user.email,
+            token_type="access"
+        )
+        return {"access_token": access_token, "token_type": "Bearer"}
 
     async def get_user(self, user_id: UUID) -> User:
         user = await self._user_repo.get_by_id(user_id)
