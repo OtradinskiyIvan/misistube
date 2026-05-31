@@ -6,10 +6,13 @@ from authorization_service.src.presentations.schemas.auth import (
     ConfirmRequest,
     LoginRequest,
     RegisterRequest,
+    RefreshRequest,
+    AccessTokenResponse,
     TokenResponse,
     UserOut,
 )
 from authorization_service.src.services import confirmation
+from authorization_service.src.domain.exceptions import InvalidCredentialsError
 from authorization_service.src.services.auth import AuthService
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -68,6 +71,17 @@ async def login(
 ):
     token_data = await auth_service.login(login=payload.login, password=payload.password)
     return TokenResponse(**token_data)
+
+@router.post("/refresh", response_model=AccessTokenResponse)
+async def refresh(
+    payload: RefreshRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    try:
+        token_data = await auth_service.refresh_access_token(payload.refresh_token)
+    except InvalidCredentialsError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    return AccessTokenResponse(**token_data)
 
 @router.get("/me", response_model=UserOut)
 async def get_current_user():
