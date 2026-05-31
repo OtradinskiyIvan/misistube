@@ -28,5 +28,5 @@ env/
 .coverage
 coverage.xml
 
-# Файлы кеширования от установки через pip install -e ".[dev]" из pyproject.toml
-*.egg-info
+node_modules/
+.vite/
