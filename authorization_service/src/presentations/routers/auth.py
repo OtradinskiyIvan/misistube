@@ -1,11 +1,17 @@
-from fastapi import APIRouter, Depends, status, HTTPException
-
-from authorization_service.src.services.auth import AuthService
-from authorization_service.src.services import confirmation
-from authorization_service.src.presentations.deps import get_auth_service
-from authorization_service.src.presentations.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut, ConfirmRequest
-from authorization_service.src.domain.entities.user import User
 from uuid import UUID
+
+from authorization_service.src.domain.entities.user import User
+from authorization_service.src.presentations.deps import get_auth_service
+from authorization_service.src.presentations.schemas.auth import (
+    ConfirmRequest,
+    LoginRequest,
+    RegisterRequest,
+    TokenResponse,
+    UserOut,
+)
+from authorization_service.src.services import confirmation
+from authorization_service.src.services.auth import AuthService
+from fastapi import APIRouter, Depends, HTTPException, status
 
 router = APIRouter()
 
@@ -19,7 +25,7 @@ async def register(
         await confirmation.create_pending_registration(payload.username, payload.email, payload.password, auth_service._settings)
     except Exception as exc:
         # propagate SMTP errors to client so they can correct settings
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     return {"detail": "confirmation_sent"}
 
@@ -51,7 +57,7 @@ async def confirm_email(
     try:
         created = await auth_service._user_repo.save(user)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     return created
 

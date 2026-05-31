@@ -1,18 +1,18 @@
+import asyncio
+import random
 import smtplib
 import ssl
-import random
 from datetime import datetime, timedelta
-from typing import Dict, Tuple, Optional
-import asyncio
+
+from shared.security import hash_password
 
 from ..core.settings import AuthSettings
-from shared.security import hash_password
 
 # Simple in-memory stores:
 # _CODES: email -> (code, expires)
 # _PENDING: email -> (username, hashed_password, expires)
-_CODES: Dict[str, Tuple[str, datetime]] = {}
-_PENDING: Dict[str, Tuple[str, str, datetime]] = {}
+_CODES: dict[str, tuple[str, datetime]] = {}
+_PENDING: dict[str, tuple[str, str, datetime]] = {}
 
 CODE_TTL_MINUTES = 10
 
@@ -45,7 +45,7 @@ def verify_code(email: str, code: str) -> bool:
     return False
 
 
-def pop_pending(email: str) -> Optional[Tuple[str, str]]:
+def pop_pending(email: str) -> tuple[str, str] | None:
     entry = _PENDING.pop(email.lower(), None)
     if not entry:
         return None
