@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [confirmCode, setConfirmCode] = useState("");
+  const [debugCode, setDebugCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -35,8 +36,11 @@ export default function RegisterPage() {
         body: JSON.stringify({ username, email, password }),
       });
 
+      const body = await res.json();
+      if (body.debug_code) {
+        setDebugCode(body.debug_code);
+      }
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         throw new Error(body.detail || "Ошибка регистрации");
       }
 
@@ -168,8 +172,13 @@ export default function RegisterPage() {
           <form onSubmit={handleConfirm}>
             <p style={{ marginBottom: "1rem", opacity: 0.7 }}>
               На ваш email <strong>{email}</strong> отправлен 6-значный код
-              подтверждения.
+              подтверждения{debugCode ? "." : ""}
             </p>
+            {debugCode && (
+              <p style={{ marginBottom: "1rem", fontSize: "0.85rem", color: "#888" }}>
+                (dev) Код из логов: <strong>{debugCode}</strong>
+              </p>
+            )}
 
             <div className="form-group">
               <label className="label" htmlFor="code">Код подтверждения</label>

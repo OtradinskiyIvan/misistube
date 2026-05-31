@@ -19,14 +19,14 @@ def bind_correlation_id(correlation_id: str) -> None:
     correlation_id_var.set(correlation_id)
 
 
-def get_logger(name: str = "user-service", level: str = "INFO") -> logging.Logger:
+def get_logger(name: str = "user-service", level: str = "INFO") -> logging.LoggerAdapter:
     logger = shared_get_logger(name, level)
     _ensure_file_handler(logger, level)
     return logger
 
 
-def _ensure_file_handler(logger: logging.Logger, log_level: str) -> None:
-    for handler in logger.handlers:
+def _ensure_file_handler(logger: logging.LoggerAdapter, log_level: str) -> None:
+    for handler in logger.logger.handlers:
         if isinstance(handler, RotatingFileHandler):
             return
 
@@ -36,7 +36,7 @@ def _ensure_file_handler(logger: logging.Logger, log_level: str) -> None:
     )
     handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
     handler.setFormatter(JSONFormatter())
-    logger.addHandler(handler)
+    logger.logger.addHandler(handler)
 
 
 def configure_logging(log_level: str = "INFO", service_name: str = "user-service") -> None:

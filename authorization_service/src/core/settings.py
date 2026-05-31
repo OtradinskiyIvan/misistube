@@ -1,16 +1,16 @@
 import sys
 from pathlib import Path
 
-from pydantic import AliasChoices, Field, PostgresDsn, SecretStr, field_validator
+from pydantic import PostgresDsn, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
 
 from shared.config import BaseSettings as SharedBaseSettings
 
-ROOT_DIRECTORY = Path(__file__).resolve().parents[3]
-if str(ROOT_DIRECTORY) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIRECTORY))
+SERVICE_DIRECTORY = Path(__file__).resolve().parents[2]
+if str(SERVICE_DIRECTORY.parent) not in sys.path:
+    sys.path.insert(0, str(SERVICE_DIRECTORY.parent))
 
-ENV_FILE = ROOT_DIRECTORY / ".env"
+ENV_FILE = SERVICE_DIRECTORY / ".env"
 
 
 class AuthSettings(SharedBaseSettings):
@@ -21,7 +21,7 @@ class AuthSettings(SharedBaseSettings):
     )
 
     APP_NAME: str = "Authorization Service"
-    DATABASE_URL: PostgresDsn = Field(validation_alias=AliasChoices("AUTH_DATABASE_URL", "DATABASE_URL"))
+    DATABASE_URL: PostgresDsn
     JWT_SECRET: SecretStr
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_EXPIRE_MINUTES: int = 30

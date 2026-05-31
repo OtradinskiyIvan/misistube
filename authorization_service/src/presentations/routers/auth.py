@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from authorization_service.src.domain.entities.user import User
-from authorization_service.src.domain.exceptions import InvalidCredentialsError
+from authorization_service.src.domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError
 from authorization_service.src.presentations.deps import get_auth_service
 from authorization_service.src.presentations.schemas.auth import (
     AccessTokenResponse,
@@ -23,10 +23,15 @@ async def register(
     payload: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    await confirmation.create_pending_registration(
+    if await auth_service._user_repo.exists_by_email(payload.email):
+        raise HTTPException(status_code=409, detail="Email already registered")
+    if await auth_service._user_repo.exists_by_username(payload.username):
+        raise HTTPException(status_code=409, detail="Username already taken")
+
+    code = await confirmation.create_pending_registration(
         payload.username, payload.email, payload.password, auth_service._settings
     )
-    return {"detail": "confirmation_sent"}
+    return {"detail": "confirmation_sent", "debug_code": code}
 
 
 @router.post("/confirm", status_code=status.HTTP_200_OK)

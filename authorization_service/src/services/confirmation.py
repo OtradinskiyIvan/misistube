@@ -55,13 +55,16 @@ def pop_pending(email: str) -> tuple[str, str] | None:
     return username, hashed_password
 
 
+SMTP_TIMEOUT = 5
+
+
 def send_email_sync(to_addr: str, subject: str, body: str, settings: AuthSettings) -> None:
     from_addr = settings.SMTP_FROM or f"no-reply@{settings.SMTP_HOST}"
     message = f"From: {from_addr}\r\nTo: {to_addr}\r\nSubject: {subject}\r\n\r\n{body}"
 
     if settings.SMTP_USE_TLS:
         context = ssl.create_default_context()
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=SMTP_TIMEOUT) as server:
             server.ehlo()
             server.starttls(context=context)
             server.ehlo()
@@ -69,7 +72,7 @@ def send_email_sync(to_addr: str, subject: str, body: str, settings: AuthSetting
                 server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             server.sendmail(from_addr, [to_addr], message)
     else:
-        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
+        with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=SMTP_TIMEOUT) as server:
             if settings.SMTP_USER and settings.SMTP_PASSWORD:
                 server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
             server.sendmail(from_addr, [to_addr], message)

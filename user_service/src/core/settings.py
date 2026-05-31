@@ -12,7 +12,8 @@ if str(ROOT_DIRECTORY) not in sys.path:
 import shared.config as shared_config
 
 
-ENV_FILE = ROOT_DIRECTORY / ".env"
+SERVICE_DIRECTORY = Path(__file__).resolve().parents[2]
+ENV_FILE = SERVICE_DIRECTORY / ".env"
 
 
 class UserServiceSettings(shared_config.BaseSettings):
