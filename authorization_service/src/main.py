@@ -1,16 +1,15 @@
 import time
-from fastapi import Request
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from shared.database.session import Base, init_engine
 
-from .core.settings import AuthSettings
 from .core.logger_setup import get_logger_with_file
+from .core.settings import AuthSettings
 from .presentations.error_handlers import register_exception_handlers
 from .presentations.routers.auth import router as auth_router
 from .presentations.routers.health import router as health_router
@@ -46,12 +45,12 @@ app = FastAPI(
 async def log_requests(request: Request, call_next):
     start_time = time.time()
     logger.info(f"→ {request.method} {request.url.path}")
-    
+
     response = await call_next(request)
-    
+
     duration = time.time() - start_time
     logger.info(f"← {request.method} {request.url.path} - {response.status_code} ({duration:.3f}s)")
-    
+
     return response
 
 app.add_middleware(

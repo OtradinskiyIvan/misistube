@@ -1,8 +1,8 @@
-import logging
 import json
+import logging
 import sys
-from datetime import datetime, timezone
 from contextvars import ContextVar
+from datetime import datetime, timezone
 from pathlib import Path
 
 correlation_id_var: ContextVar[str] = ContextVar("correlation_id", default="N/A")

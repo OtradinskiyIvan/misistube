@@ -1,22 +1,21 @@
-import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import SecretStr
 
 from ..src.core.settings import AuthSettings
 from ..src.services.confirmation import (
-    generate_code,
-    verify_code,
-    pop_pending,
-    send_email_sync,
-    create_pending_registration,
-    _store_code,
-    _store_pending,
     _CODES,
     _PENDING,
     CODE_TTL_MINUTES,
+    _store_code,
+    _store_pending,
+    create_pending_registration,
+    generate_code,
+    pop_pending,
+    send_email_sync,
+    verify_code,
 )
 
 
@@ -76,9 +75,9 @@ class TestStoreCode:
         """Test that _store_code stores code with expiry."""
         email = "test@example.com"
         code = "123456"
-        
+
         _store_code(email, code)
-        
+
         assert email.lower() in _CODES
         stored_code, expires = _CODES[email.lower()]
         assert stored_code == code
@@ -89,15 +88,15 @@ class TestStoreCode:
         email = "test@example.com"
         code = "123456"
         before = datetime.utcnow()
-        
+
         _store_code(email, code)
-        
+
         _, expires = _CODES[email.lower()]
         after = datetime.utcnow()
-        
+
         expected_expires_min = before + timedelta(minutes=CODE_TTL_MINUTES)
         expected_expires_max = after + timedelta(minutes=CODE_TTL_MINUTES)
-        
+
         assert expected_expires_min <= expires <= expected_expires_max
 
     def test_store_code_email_case_insensitive(self):
@@ -105,9 +104,9 @@ class TestStoreCode:
         email1 = "Test@Example.com"
         email2 = "test@example.com"
         code = "123456"
-        
+
         _store_code(email1, code)
-        
+
         assert email2.lower() in _CODES
 
 
@@ -117,9 +116,9 @@ class TestStorePending:
         email = "test@example.com"
         username = "testuser"
         hashed_password = "hashed_pwd_123"
-        
+
         _store_pending(email, username, hashed_password)
-        
+
         assert email.lower() in _PENDING
         stored_username, stored_password, expires = _PENDING[email.lower()]
         assert stored_username == username
@@ -129,15 +128,15 @@ class TestStorePending:
         """Test that expiry time is set correctly."""
         email = "test@example.com"
         before = datetime.utcnow()
-        
+
         _store_pending(email, "user", "pwd")
-        
+
         _, _, expires = _PENDING[email.lower()]
         after = datetime.utcnow()
-        
+
         expected_expires_min = before + timedelta(minutes=CODE_TTL_MINUTES)
         expected_expires_max = after + timedelta(minutes=CODE_TTL_MINUTES)
-        
+
         assert expected_expires_min <= expires <= expected_expires_max
 
 
@@ -147,9 +146,9 @@ class TestVerifyCode:
         email = "test@example.com"
         code = "123456"
         _store_code(email, code)
-        
+
         result = verify_code(email, code)
-        
+
         assert result is True
         assert email.lower() not in _CODES  # Code should be removed after verification
 
@@ -158,16 +157,16 @@ class TestVerifyCode:
         email = "test@example.com"
         code = "123456"
         _store_code(email, code)
-        
+
         result = verify_code(email, "999999")
-        
+
         assert result is False
         assert email.lower() in _CODES  # Code should still exist
 
     def test_verify_code_nonexistent_email(self):
         """Test verifying code for email with no code."""
         result = verify_code("nonexistent@example.com", "123456")
-        
+
         assert result is False
 
     def test_verify_code_expired_code(self):
@@ -176,9 +175,9 @@ class TestVerifyCode:
         code = "123456"
         # Manually store with already expired time
         _CODES[email.lower()] = (code, datetime.utcnow() - timedelta(seconds=1))
-        
+
         result = verify_code(email, code)
-        
+
         assert result is False
         assert email.lower() not in _CODES  # Expired code should be removed
 
@@ -188,9 +187,9 @@ class TestVerifyCode:
         email2 = "test@example.com"
         code = "123456"
         _store_code(email1, code)
-        
+
         result = verify_code(email2, code)
-        
+
         assert result is True
 
     def test_verify_code_removes_expired_pending(self):
@@ -199,9 +198,9 @@ class TestVerifyCode:
         code = "123456"
         _CODES[email.lower()] = (code, datetime.utcnow() - timedelta(seconds=1))
         _PENDING[email.lower()] = ("user", "pwd", datetime.utcnow() - timedelta(seconds=1))
-        
+
         verify_code(email, code)
-        
+
         assert email.lower() not in _PENDING
 
 
@@ -212,25 +211,25 @@ class TestPopPending:
         username = "testuser"
         hashed_password = "hashed_pwd_123"
         _store_pending(email, username, hashed_password)
-        
+
         result = pop_pending(email)
-        
+
         assert result == (username, hashed_password)
         assert email.lower() not in _PENDING  # Should be removed
 
     def test_pop_pending_nonexistent_email(self):
         """Test pop_pending with nonexistent email."""
         result = pop_pending("nonexistent@example.com")
-        
+
         assert result is None
 
     def test_pop_pending_expired_data(self):
         """Test that expired pending data is not returned."""
         email = "test@example.com"
         _PENDING[email.lower()] = ("user", "pwd", datetime.utcnow() - timedelta(seconds=1))
-        
+
         result = pop_pending(email)
-        
+
         assert result is None
 
     def test_pop_pending_case_insensitive_email(self):
@@ -240,9 +239,9 @@ class TestPopPending:
         username = "testuser"
         hashed_password = "hashed_pwd_123"
         _store_pending(email1, username, hashed_password)
-        
+
         result = pop_pending(email2)
-        
+
         assert result == (username, hashed_password)
 
 
@@ -250,18 +249,18 @@ class TestSendEmailSync:
     def test_send_email_sync_with_tls(self, mock_settings):
         """Test sending email with TLS enabled."""
         mock_settings.SMTP_USE_TLS = True
-        
+
         with patch("smtplib.SMTP") as mock_smtp:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
-            
+
             send_email_sync(
                 "recipient@example.com",
                 "Test Subject",
                 "Test Body",
                 mock_settings
             )
-            
+
             mock_server.starttls.assert_called_once()
             mock_server.login.assert_called_once_with(
                 mock_settings.SMTP_USER,
@@ -272,18 +271,18 @@ class TestSendEmailSync:
     def test_send_email_sync_without_tls(self, mock_settings):
         """Test sending email without TLS."""
         mock_settings.SMTP_USE_TLS = False
-        
+
         with patch("smtplib.SMTP") as mock_smtp:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
-            
+
             send_email_sync(
                 "recipient@example.com",
                 "Test Subject",
                 "Test Body",
                 mock_settings
             )
-            
+
             mock_server.starttls.assert_not_called()
             mock_server.login.assert_called_once()
             mock_server.sendmail.assert_called_once()
@@ -293,54 +292,54 @@ class TestSendEmailSync:
         mock_settings.SMTP_USER = None
         mock_settings.SMTP_PASSWORD = None
         mock_settings.SMTP_USE_TLS = False
-        
+
         with patch("smtplib.SMTP") as mock_smtp:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
-            
+
             send_email_sync(
                 "recipient@example.com",
                 "Test Subject",
                 "Test Body",
                 mock_settings
             )
-            
+
             mock_server.login.assert_not_called()
             mock_server.sendmail.assert_called_once()
 
     def test_send_email_sync_uses_custom_from_address(self, mock_settings):
         """Test that custom SMTP_FROM is used."""
         mock_settings.SMTP_FROM = "custom@example.com"
-        
+
         with patch("smtplib.SMTP") as mock_smtp:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
-            
+
             send_email_sync(
                 "recipient@example.com",
                 "Test Subject",
                 "Test Body",
                 mock_settings
             )
-            
+
             call_args = mock_server.sendmail.call_args
             assert call_args[0][0] == "custom@example.com"
 
     def test_send_email_sync_default_from_address(self, mock_settings):
         """Test default SMTP_FROM when not set."""
         mock_settings.SMTP_FROM = None
-        
+
         with patch("smtplib.SMTP") as mock_smtp:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
-            
+
             send_email_sync(
                 "recipient@example.com",
                 "Test Subject",
                 "Test Body",
                 mock_settings
             )
-            
+
             call_args = mock_server.sendmail.call_args
             assert f"no-reply@{mock_settings.SMTP_HOST}" in call_args[0][0]
 
@@ -351,20 +350,20 @@ class TestCreatePendingRegistration:
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.return_value = None
-                
+
                 code = await create_pending_registration(
                     "testuser",
                     "test@example.com",
                     "password123",
                     mock_settings
                 )
-                
+
                 assert isinstance(code, str)
                 assert len(code) == 6
                 assert code.isdigit()
                 assert "test@example.com" in _CODES
                 assert "test@example.com" in _PENDING
-        
+
         event_loop.run_until_complete(test())
 
     def test_create_pending_registration_stores_hashed_password(self, mock_settings, event_loop):
@@ -372,19 +371,21 @@ class TestCreatePendingRegistration:
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.return_value = None
-                
+
                 code = await create_pending_registration(
                     "testuser",
                     "test@example.com",
                     "password123",
                     mock_settings
                 )
-                
+
+                assert code is not None
+
                 stored_username, stored_password, _ = _PENDING["test@example.com"]
                 assert stored_username == "testuser"
                 # Password should be hashed (not equal to original)
                 assert stored_password != "password123"
-        
+
         event_loop.run_until_complete(test())
 
     def test_create_pending_registration_email_sending_failure(self, mock_settings, event_loop):
@@ -392,7 +393,7 @@ class TestCreatePendingRegistration:
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.side_effect = Exception("SMTP error")
-                
+
                 with pytest.raises(Exception, match="SMTP error"):
                     await create_pending_registration(
                         "testuser",
@@ -400,7 +401,7 @@ class TestCreatePendingRegistration:
                         "password123",
                         mock_settings
                     )
-        
+
         event_loop.run_until_complete(test())
 
     def test_create_pending_registration_calls_send_email(self, mock_settings, event_loop):
@@ -408,19 +409,19 @@ class TestCreatePendingRegistration:
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.return_value = None
-                
+
                 await create_pending_registration(
                     "testuser",
                     "test@example.com",
                     "password123",
                     mock_settings
                 )
-                
+
                 mock_thread.assert_called_once()
                 call_args = mock_thread.call_args[0]
                 # First arg should be send_email_sync function
                 assert call_args[0].__name__ == "send_email_sync"
-        
+
         event_loop.run_until_complete(test())
 
     def test_create_pending_registration_code_format(self, mock_settings, event_loop):
@@ -428,16 +429,16 @@ class TestCreatePendingRegistration:
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.return_value = None
-                
+
                 code = await create_pending_registration(
                     "testuser",
                     "test@example.com",
                     "password123",
                     mock_settings
                 )
-                
+
                 assert len(code) == 6
                 assert code.isdigit()
                 assert 0 <= int(code) <= 999999
-        
+
         event_loop.run_until_complete(test())

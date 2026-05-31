@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from jwt import PyJWTError
+
 from shared.security import create_jwt_token, decode_jwt_token, hash_password, verify_password
 
 from ..core.settings import AuthSettings

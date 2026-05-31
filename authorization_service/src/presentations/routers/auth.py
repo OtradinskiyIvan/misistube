@@ -1,18 +1,18 @@
 from uuid import UUID
 
 from authorization_service.src.domain.entities.user import User
+from authorization_service.src.domain.exceptions import InvalidCredentialsError
 from authorization_service.src.presentations.deps import get_auth_service
 from authorization_service.src.presentations.schemas.auth import (
+    AccessTokenResponse,
     ConfirmRequest,
     LoginRequest,
-    RegisterRequest,
     RefreshRequest,
-    AccessTokenResponse,
+    RegisterRequest,
     TokenResponse,
     UserOut,
 )
 from authorization_service.src.services import confirmation
-from authorization_service.src.domain.exceptions import InvalidCredentialsError
 from authorization_service.src.services.auth import AuthService
 from fastapi import APIRouter, Depends, HTTPException, status
 
