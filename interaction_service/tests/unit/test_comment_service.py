@@ -20,13 +20,8 @@ def uow():
 
 
 @pytest.fixture
-def user_service_client():
-    return AsyncMock()
-
-
-@pytest.fixture
-def service(comment_repo, uow, user_service_client):
-    return CommentService(comment_repo, uow, user_service_client)
+def service(comment_repo, uow):
+    return CommentService(comment_repo, uow)
 
 
 def make_comment(**kwargs):

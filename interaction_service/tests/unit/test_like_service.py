@@ -20,13 +20,8 @@ def uow():
 
 
 @pytest.fixture
-def user_service_client():
-    return AsyncMock()
-
-
-@pytest.fixture
-def service(like_repo, uow, user_service_client):
-    return LikeService(like_repo, uow, user_service_client)
+def service(like_repo, uow):
+    return LikeService(like_repo, uow)
 
 
 @pytest.mark.asyncio
