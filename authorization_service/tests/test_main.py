@@ -1,6 +1,9 @@
-# tests/test_main.py
+import sys
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 class TestMainApp(unittest.TestCase):
@@ -9,7 +12,7 @@ class TestMainApp(unittest.TestCase):
     @patch('shared.database.session.Base', new_callable=MagicMock)
     def test_app_imports_and_routes(self, mock_base, mock_init_engine):
         """Тест без реального подключения к БД"""
-        from authorization_service.src.main import app
+        from src.main import app
 
         self.assertTrue(hasattr(app, "title"))
         routes = [route.path for route in app.routes]
