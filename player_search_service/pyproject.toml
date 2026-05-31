@@ -48,6 +48,7 @@ known-first-party = ["src"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/main.py" = ["E402"]
+"src/core/logger.py" = ["E402"]
 "src/api/routers/*.py" = ["B008"]
 
 [tool.pytest.ini_options]

@@ -8,7 +8,7 @@ if str(ROOT_DIRECTORY) not in sys.path:
 import logging
 from logging.handlers import RotatingFileHandler
 
-from shared.logger import JSONFormatter, correlation_id_var
+from shared.logger import JSONFormatter
 
 
 def setup_service_logger(service_name: str, level: str = "INFO") -> logging.LoggerAdapter:
@@ -17,7 +17,7 @@ def setup_service_logger(service_name: str, level: str = "INFO") -> logging.Logg
     Использует JSON-форматтер и correlation_id из shared.
     """
     logger = logging.getLogger(service_name)
-    
+
     if logger.handlers:
         return logging.LoggerAdapter(logger, {"service_name": service_name})
 
@@ -44,7 +44,7 @@ def setup_service_logger(service_name: str, level: str = "INFO") -> logging.Logg
         delay=True                  # Создаём файл только при первой записи
     )
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.DEBUG)  # В файл пишем всё (включая DEBUG)
+    file_handler.setLevel(logging.DEBUG)  # B файл пишем всё (включая DEBUG)
     logger.addHandler(file_handler)
 
     return logging.LoggerAdapter(logger, {"service_name": service_name})
