@@ -15,7 +15,7 @@ from shared.logger import get_logger
 
 from src.api.routers import playback, search
 from src.core.config import get_settings
-from src.core.exceptions import register_exception_handlers
+from src.core.exceptions import register_rfc7807_handlers
 
 load_dotenv()
 settings = get_settings()
@@ -65,7 +65,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-register_exception_handlers(app)
+register_rfc7807_handlers(app)
 
 app.include_router(search.router, prefix="/api/v1", tags=["Search"])
 app.include_router(playback.router, prefix="/api/v1", tags=["Playback"])

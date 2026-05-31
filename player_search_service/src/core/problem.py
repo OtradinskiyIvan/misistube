@@ -1,7 +1,7 @@
 """RFC 7807 Problem Details для стандартизации ответов об ошибках"""
-from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProblemDetail(BaseModel):
@@ -21,8 +21,8 @@ class ProblemDetail(BaseModel):
     type: str = Field(default="about:blank", description="URI-тип ошибки")
     title: str = Field(..., description="Краткое название проблемы")
     status: int = Field(..., description="HTTP-статус код")
-    detail: Optional[str] = Field(None, description="Подробное описание (может содержать JSON-строку)")
-    instance: Optional[str] = Field(None, description="URI конкретного запроса, вызвавшего ошибку")
+    detail: str | None = Field(None, description="Подробное описание (может содержать JSON-строку)")
+    instance: str | None = Field(None, description="URI конкретного запроса, вызвавшего ошибку")
 
 
 def problem_response(
@@ -40,7 +40,7 @@ def problem_response(
         detail=detail,
         instance=instance
     ).model_dump(exclude_none=True)
-    
+
     return JSONResponse(
         status_code=status_code,
         content=content,
