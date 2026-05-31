@@ -107,3 +107,12 @@ docker compose logs -f player_search_service
 # Только ошибки
 docker compose logs --tail=50 player_search_service | grep -i error
 ```
+
+### Тестирование без docker
+```bash
+# Копируем (по аналогии) депаем переменные окружения из .env.example в .env
+cp .env.example ./.env
+
+# Иначе, если для докера всё-таки, то из .env.docker.example
+cp .env.docker.example ./.env
+```
