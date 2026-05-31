@@ -1,18 +1,59 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 
-from ...services.auth import AuthService
-from ..deps import get_auth_service
-from ..schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut
+from authorization_service.src.services.auth import AuthService
+from authorization_service.src.services import confirmation
+from authorization_service.src.presentations.deps import get_auth_service
+from authorization_service.src.presentations.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserOut, ConfirmRequest
+from authorization_service.src.domain.entities.user import User
+from uuid import UUID
 
 router = APIRouter()
 
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_202_ACCEPTED)
 async def register(
     payload: RegisterRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    user = await auth_service.register(username=payload.username, email=payload.email, password=payload.password)
-    return user
+    # create pending registration and send confirmation code
+    try:
+        await confirmation.create_pending_registration(payload.username, payload.email, payload.password, auth_service._settings)
+    except Exception as exc:
+        # propagate SMTP errors to client so they can correct settings
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return {"detail": "confirmation_sent"}
+
+
+@router.post("/confirm", status_code=status.HTTP_200_OK)
+async def confirm_email(
+    payload: ConfirmRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    ok = confirmation.verify_code(payload.email, payload.code)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Invalid or expired confirmation code")
+
+    pending = confirmation.pop_pending(payload.email)
+    if not pending:
+        raise HTTPException(status_code=400, detail="No pending registration found or it expired")
+
+    username, hashed_password = pending
+
+    # construct domain user and save
+    user = User(
+        id=UUID(int=0),
+        username=username,
+        email=payload.email,
+        hashed_password=hashed_password,
+        is_active=True,
+    )
+
+    try:
+        created = await auth_service._user_repo.save(user)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    return created
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
