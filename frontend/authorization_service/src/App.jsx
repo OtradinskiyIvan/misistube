@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Layout from './components/Layout.jsx'
 
-const AUTH_API = 'http://127.0.0.1:8000/api/v1/auth'
+const AUTH_API = '/api/v1/auth'
 
 function App() {
   const [email, setEmail] = useState('')
