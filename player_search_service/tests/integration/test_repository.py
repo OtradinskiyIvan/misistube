@@ -5,7 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from src.infrastructure.database.models import Video, VideoStatus
+from src.infrastructure.database.models import Video, VideoStatus, Base
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
 
 # ─── ФИКСТУРЫ ─────────────────────────────────────────────────────────────
