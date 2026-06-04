@@ -45,10 +45,19 @@ class TestSearchVideoUseCase:
             "https://fake-s3.url/video.m3u8",
             datetime.utcnow() + timedelta(minutes=15)
         )
-        uc = GetPlaybackUrlUseCase(storage=mock_storage)
+
+        uc = GetPlaybackUrlUseCase(
+            storage=mock_storage,
+            bucket_name="test-videos",
+            expires_in=900
+        )
+
         result = await uc.execute("video-123")
 
-        assert "fake-s3.url" in result.hls_master_url
-        assert result.expires_at is not None
+        assert result.hls_master_url == "https://fake-s3.url/video.m3u8"
 
-        mock_storage.generate_presigned_url.assert_called_once()
+        mock_storage.generate_presigned_url.assert_called_once_with(
+            object_key="video-123/master.m3u8",
+            bucket="test-videos",
+            expires_in=900
+        )
