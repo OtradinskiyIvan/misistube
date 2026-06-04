@@ -28,3 +28,6 @@ logs/
 # Coverage reports
 .coverage
 coverage.xml
+
+node_modules/
+.vite/
