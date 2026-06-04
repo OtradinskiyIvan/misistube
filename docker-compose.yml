@@ -1,26 +1,7 @@
 services:
-
-  # ── Databases ──────────────────────────────────────────────
-
-  auth-db:
+  postgres:
     image: postgres:16-alpine
-    container_name: misistube-auth-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: misistube
-      POSTGRES_PASSWORD: misistube_secret
-      POSTGRES_DB: misistube_auth
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_auth"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  user-db:
-    image: postgres:16-alpine
-    container_name: misistube-user-db
+    container_name: misistube-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: misistube
@@ -28,118 +9,66 @@ services:
       POSTGRES_DB: misistube_users
     ports:
       - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_users"]
+      test: ["CMD-SHELL", "pg_isready -U misistube"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-  interaction-db:
-    image: postgres:16-alpine
-    container_name: misistube-interaction-db
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: misistube
-      POSTGRES_PASSWORD: misistube_secret
-      POSTGRES_DB: misistube_interactions
-    ports:
-      - "5434:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_interactions"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # ── Backend services ──────────────────────────────────────
 
   auth-service:
     build:
       context: .
-      dockerfile: auth_service.dockerfile
+      dockerfile: authorization_service/Dockerfile
     container_name: misistube-auth
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8001:8001"
+    env_file:
+      - authorization_service/.env
     environment:
+      DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@postgres:5432/misistube_auth
+      APP_NAME: "Authorization Service"
       APP_ENV: development
-      DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@auth-db:5432/misistube_auth
-      JWT_SECRET: S3kHqVopMSog8ayFoHNpsaSGAiQOVV+8G3A0ZvjMIZg=
-      USER_SERVICE_URL: http://user-service:8001
+      USER_SERVICE_URL: http://user-service:8000
     depends_on:
-      auth-db:
+      postgres:
         condition: service_healthy
 
   user-service:
     build:
       context: .
-      dockerfile: user_service.dockerfile
+      dockerfile: user_service/Dockerfile
     container_name: misistube-user
     restart: unless-stopped
     ports:
-      - "8001:8001"
+      - "8000:8000"
+    env_file:
+      - user_service/.env
     environment:
-      APP_ENV: development
-      DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@user-db:5432/misistube_users
-      DATABASE_ECHO: "false"
-      JWT_SECRET: S3kHqVopMSog8ayFoHNpsaSGAiQOVV+8G3A0ZvjMIZg=
-      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@postgres:5432/misistube_users
     depends_on:
-      user-db:
+      postgres:
         condition: service_healthy
 
   interaction-service:
     build:
       context: .
-      dockerfile: interaction_service.dockerfile
+      dockerfile: interaction_service/Dockerfile
     container_name: misistube-interaction
     restart: unless-stopped
     ports:
       - "8002:8002"
+    env_file:
+      - interaction_service/.env
     environment:
-      APP_ENV: development
-      DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@interaction-db:5432/misistube_interactions
-      DATABASE_ECHO: "false"
-      JWT_SECRET: S3kHqVopMSog8ayFoHNpsaSGAiQOVV+8G3A0ZvjMIZg=
-      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@postgres:5432/misistube_interactions
+      USER_SERVICE_URL: http://user-service:8000
     depends_on:
-      interaction-db:
+      postgres:
         condition: service_healthy
 
-  # ── Frontend services ─────────────────────────────────────
-
-  frontend-auth:
-    image: node:20-alpine
-    container_name: misistube-frontend-auth
-    working_dir: /app
-    volumes:
-      - ./frontend/authorization_service:/app
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
-    ports:
-      - "5174:5174"
-    environment:
-      VITE_AUTH_PROXY_TARGET: http://auth-service:8000
-
-  frontend-user:
-    image: node:20-alpine
-    container_name: misistube-frontend-user
-    working_dir: /app
-    volumes:
-      - ./frontend/user_service:/app
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
-    ports:
-      - "5173:5173"
-    environment:
-      VITE_AUTH_PROXY_TARGET: http://auth-service:8000
-      VITE_USER_PROXY_TARGET: http://user-service:8001
-
-  frontend-interaction:
-    image: node:20-alpine
-    container_name: misistube-frontend-interaction
-    working_dir: /app
-    volumes:
-      - ./frontend/interaction_service:/app
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
-    ports:
-      - "5175:5175"
-    environment:
-      VITE_INTERACTION_PROXY_TARGET: http://interaction-service:8002
+volumes:
+  pgdata:
