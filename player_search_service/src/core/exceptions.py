@@ -14,6 +14,16 @@ def register_rfc7807_handlers(app: FastAPI):
     settings = get_settings()
     is_production = settings.APP_ENV == "production"
 
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        return problem_response(
+            status_code=exc.status_code,
+            title=exc.detail or "HTTP Error",
+            detail=exc.detail,
+            problem_type=f"https://misistube.dev/errors/http-{exc.status_code}",
+            instance=request.url.path
+        )
+
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError):
         logger.warning("Validation error on %s: %s", request.url.path, exc.errors())
