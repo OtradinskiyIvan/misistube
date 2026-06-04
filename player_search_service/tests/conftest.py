@@ -41,3 +41,13 @@ def client():
     app.redoc_url = None
 
     return TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def reset_adapters():
+    """Сбрасывает lru_cache адаптеров между тестами"""
+    yield
+    # После каждого теста очищаем кэш
+    from src.api.deps import get_cache_adapter, get_storage_adapter
+    get_cache_adapter.cache_clear()
+    get_storage_adapter.cache_clear()
