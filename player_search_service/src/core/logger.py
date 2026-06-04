@@ -53,33 +53,28 @@ class ServiceFilter(logging.Filter):
         record.service = self.service_name
         return True
 
-
 def setup_service_logger(service_name: str, level: str = "INFO") -> logging.LoggerAdapter:
-    """
-    Создаёт логгер с московским временем и корректным service.
-    Логи пишутся в misistube/logs/player_search_service.log
-    """
     src_level = getattr(logging, level.upper(), logging.INFO)
     
-    src_logger = logging.getLogger("src")
+    service_logger = logging.getLogger(service_name)
     
-    if not src_logger.handlers:
-        src_logger.setLevel(src_level)
-        src_logger.propagate = False
-
+    if not service_logger.handlers:
+        service_logger.setLevel(src_level)
+        service_logger.propagate = False
+        
         service_filter = ServiceFilter(service_name)
-        src_logger.addFilter(service_filter)
-
+        service_logger.addFilter(service_filter)
+        
         formatter = JSONFormatter()
         
         # Консоль
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         console_handler.setLevel(src_level)
-        src_logger.addHandler(console_handler)
+        service_logger.addHandler(console_handler)
         
+        # Файл
         log_file = ROOT_DIRECTORY / "logs/player_search_service.log"
-        
         file_handler = RotatingFileHandler(
             log_file,
             maxBytes=10 * 1024 * 1024,
@@ -89,14 +84,6 @@ def setup_service_logger(service_name: str, level: str = "INFO") -> logging.Logg
         )
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
-        src_logger.addHandler(file_handler)
-    
-
-    service_logger = logging.getLogger(service_name)
-    if not service_logger.handlers:
-        service_logger.setLevel(src_level)
-        service_logger.propagate = False
-        service_logger.parent = src_logger
-        service_logger.addFilter(ServiceFilter(service_name))
+        service_logger.addHandler(file_handler)
     
     return logging.LoggerAdapter(service_logger, {"service": service_name})

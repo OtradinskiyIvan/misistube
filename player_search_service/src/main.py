@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from shared.database.session import Base, init_engine 
+from core.logger import correlation_id_var
 
 from src.api.routers import playback, search
 from src.core.config import get_settings
@@ -33,6 +34,7 @@ async def lifespan(app: FastAPI):
     """
     global _db_engine 
     
+    correlation_id_var.set("startup")
     logger.info("Starting Player & Searching Service... [env=%s]", settings.APP_ENV)
 
     _db_engine = init_engine( 
@@ -47,6 +49,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    correlation_id_var.set("shutdown")
     logger.info("Shutting down Player & Searching Service...")
     if _db_engine is not None:
         logger.info("Closing database connections...")
