@@ -8,10 +8,10 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 class VideoStatus(str, Enum):
-    UPLOADING = "uploading"
-    PROCESSING = "processing"
-    READY = "ready"
-    FAILED = "failed"
+    UPLOADING = "UPLOADING"
+    PROCESSING = "PROCESSING"
+    READY = "READY"
+    FAILED = "FAILED"
 
 class Video(Base):
     __tablename__ = "videos"

@@ -1,5 +1,6 @@
 from typing import Optional
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import select, func, and_, or_, cast, String
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.infrastructure.database.models import Video, VideoStatus
@@ -16,15 +17,15 @@ class SQLAlchemyVideoRepository(SearchPort):
     async def search(
         self,
         query: Optional[str],
-        tags: Optional[list[str]],
-        offset: int,
-        limit: int
+        tags: Optional[list[str]] = None,
+        offset: int = 0,
+        limit: int = 20
     ) -> tuple[list[VideoResult], int]:
         """
         Поиск видео с фильтрацией по тексту и тегам.
         
         - query: поиск по title/description (ILIKE, регистронезависимый)
-        - tags: фильтрация по массиву тегов (логическое ИЛИ через ARRAY overlap)
+        - tags: фильтрация по массиву тегов
         """
         # Основной запрос
         stmt = select(Video).where(Video.status == VideoStatus.READY)
@@ -40,9 +41,11 @@ class SQLAlchemyVideoRepository(SearchPort):
         
         # Фильтр по тегам — только если tags переданы
         if tags:
-            # PostgreSQL ARRAY overlap: video.tags && %tags%
-            stmt = stmt.where(Video.tags.overlap(tags))
-        
+            tags_list = tags if isinstance(tags, list) else [tags]
+            stmt = stmt.where(
+                Video.tags.op('&&')(cast(tags_list, ARRAY(String)))
+            )
+
         # Пагинация
         stmt = stmt.order_by(Video.created_at.desc()).offset(offset).limit(limit)
         
@@ -61,7 +64,10 @@ class SQLAlchemyVideoRepository(SearchPort):
                 )
             )
         if tags:
-            count_stmt = count_stmt.where(Video.tags.overlap(tags))
+            tags_list = tags if isinstance(tags, list) else [tags]
+            count_stmt = count_stmt.where(
+                Video.tags.op('&&')(cast(tags_list, ARRAY(String)))
+            )
         
         total_result = await self.session.execute(count_stmt)
         total = total_result.scalar() or 0

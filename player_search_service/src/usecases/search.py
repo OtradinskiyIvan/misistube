@@ -9,8 +9,9 @@ class SearchVideoUseCase:
         self.search_port = search_port
 
     async def execute(self, query: SearchQuery) -> SearchResponse:
-        cache_key = f"search:{query.q}:{query.offset}:{query.limit}"
-
+        tags_str = ','.join(sorted(query.tags)) if query.tags else 'none'
+        cache_key = f"search:{query.q or 'none'}:{tags_str}:{query.offset}:{query.limit}"
+        
         if cached := await self.cache.get(cache_key):
             return SearchResponse(**cached)
 

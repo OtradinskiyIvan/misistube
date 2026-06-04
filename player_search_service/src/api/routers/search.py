@@ -1,14 +1,23 @@
-from fastapi import APIRouter, Depends
-
 from src.api.deps import get_search_usecase
 from src.api.schemas import SearchQuery, SearchResponse
 from src.usecases.search import SearchVideoUseCase
+from fastapi import APIRouter, Depends, Query
+from typing import Optional, List 
 
 router = APIRouter(tags=["search"])
 
 @router.get("/search", response_model=SearchResponse)
 async def search_videos(
-    query: SearchQuery = Depends(),
+    q: Optional[str] = Query(None, max_length=255),
+    tags: List[str] = Query(default=[], alias="tags"),
+    offset: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     usecase: SearchVideoUseCase = Depends(get_search_usecase)
 ):
-    return await usecase.execute(query)
+    query_obj = SearchQuery(
+        q=q,
+        tags=tags if tags else None,
+        offset=offset,
+        limit=limit
+    )
+    return await usecase.execute(query_obj)
