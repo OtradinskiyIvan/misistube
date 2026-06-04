@@ -1,51 +1,42 @@
-from os import getenv
+from pydantic import SecretStr, field_validator
+from pydantic_settings import SettingsConfigDict
 
-from dotenv import load_dotenv
-from pydantic import Field, ValidationError
-from pydantic_settings import BaseSettings
+from shared.config import BaseSettings
 
-load_dotenv()
 
-class Settings(BaseSettings):
-    app_name: str = Field(default="Player & Searching Service")
-    app_env: str = Field(default="development")  # development | staging | production
-    log_level: str = Field(default="INFO")
-
-    database_url: str = getenv("DATABASE_URL") # Потом будет замена на video-metadata
-
-    redis_url: str = Field(
-        default="redis://localhost:6379/0",
-        description="Redis connection URL"
-    )
-    redis_cache_ttl: int = Field(
-        default=300,
-        description="Default TTL for cache entries (seconds)"
+class PlayerSearchSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
     )
 
-    s3_endpoint_url: str = Field(
-        default="http://localhost:9000",
-        description="MinIO/S3 endpoint URL"
-    )
-    s3_access_key: str = Field(default="minioadmin")
-    s3_secret_key: str = Field(default="minioadmin")
-    s3_bucket_videos: str = Field(default="videos")
-    s3_bucket_thumbnails: str = Field(default="thumbnails")
-    s3_presigned_url_expires: int = Field(
-        default=900,
-        description="Presigned URL expiration time (seconds)"
-    )
+    APP_NAME: str = "Player & Searching Service"
+    APP_ENV: str = "development"  # development | staging | production
+    LOG_LEVEL: str = "INFO"
 
-    cors_allow_origins: list[str] = Field(default_factory=lambda: ["*"])
+    DATABASE_URL: str
 
-    model_config = {
-        "env_file": ".env",
-        "env_file_encoding": "utf-8",
-        "extra": "ignore",
-    }
+    REDIS_URL: str = "redis://localhost:6379/0"
+    REDIS_CACHE_TTL: int = 300
+
+    S3_ENDPOINT_URL: str = "http://localhost:9000"
+    S3_ACCESS_KEY: str = "minioadmin"
+    S3_SECRET_KEY: SecretStr = SecretStr("minioadmin")
+    S3_BUCKET_NAME: str = "videos"
+    S3_BUCKET_THUMBNAILS: str = "thumbnails"
+    S3_PRESIGNED_URL_EXPIRES: int = 900
+
+    CORS_ALLOW_ORIGINS: list[str] = ["*"]
+
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
+        if not v.startswith(("postgresql://", "postgresql+asyncpg://")):
+            raise ValueError("DATABASE_URL must be a PostgreSQL connection string")
+        return v
 
 
 def get_settings() -> Settings:
-    try:
-        return Settings()
-    except ValidationError as e:
-        raise SystemExit(f"Configuration error: missing or invalid environment variables.\n{e}") from e
+    """Возвращает экземпляр PlayerSearchSettings с валидацией"""
+    return PlayerSearchSettings()

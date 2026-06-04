@@ -17,7 +17,7 @@ class BaseSettings(BaseSettings):
     DATABASE_URL: PostgresDsn
     DATABASE_ECHO: bool = False
 
-    S3_ENDPOINT: str
+    S3_ENDPOINT_URL: str
     S3_ACCESS_KEY: SecretStr
     S3_SECRET_KEY: SecretStr
-    S3_BUCKET_NAME: str
+    S3_BUCKET_VIDEOS: str

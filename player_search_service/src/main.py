@@ -20,7 +20,7 @@ from src.core.middleware import CorrelationIdMiddleware
 
 load_dotenv()
 settings = get_settings()
-logger = setup_service_logger("player_search_service", level=settings.log_level)
+logger = setup_service_logger("player_search_service", level=settings.LOG_LEVEL)
 
 
 @asynccontextmanager
@@ -30,15 +30,15 @@ async def lifespan(app: FastAPI):
     - Startup: инициализация БД, создание таблиц (в dev), подключение к инфраструктуре
     - Shutdown: корректное закрытие соединений
     """
-    logger.info("Starting Player & Searching Service... [env=%s]", settings.app_env)
+    logger.info("Starting Player & Searching Service... [env=%s]", settings.APP_ENV)
 
     engine = init_engine(
-        database_url=settings.database_url,
-        echo=settings.app_env == "development"  # логирование SQL-запросов в dev
+        database_url=settings.DATABASE_URL,
+        echo=settings.APP_ENV == "development"  # логирование SQL-запросов в dev
     )
 
     # Авто-создание таблиц (ТОЛЬКО для development!)
-    if settings.app_env == "development":
+    if settings.APP_ENV == "development":
         logger.info("🗄 Creating database tables (development mode)...")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
@@ -50,11 +50,11 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title=settings.app_name,
+    title=settings.APP_NAME,
     version="0.1.0",
     description="Player & Searching Service for MISISTUBE",
-    docs_url="/docs" if settings.app_env == "development" else None,  # отключаем Swagger в prod
-    redoc_url="/redoc" if settings.app_env == "development" else None,
+    docs_url="/docs" if settings.APP_ENV == "development" else None,  # отключаем Swagger в prod
+    redoc_url="/redoc" if settings.APP_ENV == "development" else None,
     lifespan=lifespan,
 )
 
@@ -62,7 +62,7 @@ app.add_middleware(CorrelationIdMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_allow_origins,
+    allow_origins=settings.CORS_ALLOW_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -81,6 +81,6 @@ async def root():
 async def health_check():
     return {
         "status": "ok",
-        "service": f"{settings.app_name}",
-        "env": f"{settings.app_env}",
+        "service": f"{settings.APP_NAME}",
+        "env": f"{settings.APP_ENV}",
     }

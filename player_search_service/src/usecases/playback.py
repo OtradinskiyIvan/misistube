@@ -8,5 +8,6 @@ class GetPlaybackUrlUseCase:
         self.storage = storage
 
     async def execute(self, video_id: str) -> PlaybackUrl:
-        url, exp = await self.storage.generate_presigned_url(f"{video_id}/master.m3u8", get_settings().s3_bucket_videos, get_settings().s3_presigned_url_expires)
+        settings = get_settings()
+        url, exp = await self.storage.generate_presigned_url(f"{video_id}/master.m3u8", settings.S3_BUCKET_NAME, settings.S3_PRESIGNED_URL_EXPIRES)
         return PlaybackUrl(hls_master_url=url, expires_at=exp)

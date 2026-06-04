@@ -17,9 +17,10 @@ class S3StorageAdapter(StoragePort):
         access_key: str | None = None,
         secret_key: str | None = None,
     ):
-        self.endpoint_url = endpoint_url or get_settings().s3_endpoint_url
-        self.access_key = access_key or get_settings().s3_access_key
-        self.secret_key = secret_key or get_settings().s3_secret_key
+        settings = get_settings()
+        self.endpoint_url = endpoint_url or settings.S3_ENDPOINT_URL
+        self.access_key = access_key or settings.S3_ACCESS_KEY
+        self.secret_key = secret_key or settings.S3_SECRET_KEY
         self.session: AioSession = aiobotocore.session.get_session()
 
     async def generate_presigned_url(

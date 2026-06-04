@@ -16,8 +16,9 @@ class RedisCacheAdapter(CachePort):
     """Redis-адаптер с graceful degradation и circuit breaker"""
 
     def __init__(self, redis_url: str | None = None):
-        self.redis_url = redis_url or get_settings().redis_url
-        self.default_ttl = get_settings().redis_cache_ttl
+        settings = get_settings()
+        self.redis_url = redis_url or settings.REDIS_URL
+        self.default_ttl = settings.REDIS_CACHE_TTL
         self._client: redis.Redis | None = None
         
         self._failures = 0

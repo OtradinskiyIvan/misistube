@@ -12,7 +12,7 @@ logger = logging.getLogger("player_search_service")
 def register_rfc7807_handlers(app: FastAPI):
     """Регистрирует обработчики ошибок в FastAPI-приложении"""
     settings = get_settings()
-    is_production = settings.app_env == "production"
+    is_production = settings.APP_ENV == "production"
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(request: Request, exc: RequestValidationError):
