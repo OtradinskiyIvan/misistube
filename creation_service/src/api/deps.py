@@ -15,6 +15,7 @@ async def get_video_service(
     # S3-клиент (MinIO / AWS)
     s3_client = S3Client(
         endpoint_url=settings.S3_ENDPOINT_URL,
+        public_endpoint_url=settings.S3_PUBLIC_ENDPOINT_URL,
         access_key=settings.S3_ACCESS_KEY,
         secret_key=settings.S3_SECRET_KEY,
         bucket_name=settings.S3_BUCKET_NAME,

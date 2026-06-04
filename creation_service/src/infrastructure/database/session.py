@@ -17,5 +17,11 @@ AsyncSessionLocal = async_sessionmaker(
 
 # Dependency для FastAPI
 async def get_async_session() -> AsyncSession:
-    async with AsyncSessionLocal() as session:
+    session = AsyncSessionLocal()
+    try:
         yield session
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()

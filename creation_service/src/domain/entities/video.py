@@ -1,6 +1,6 @@
 # domain/entities/video.py
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from uuid import UUID, uuid4
 
@@ -23,7 +23,7 @@ class Video:
 
     @staticmethod
     def create(title: str, description: str, storage_key: str, duration: int) -> "Video":
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return Video(
             id=uuid4(),
             title=title,

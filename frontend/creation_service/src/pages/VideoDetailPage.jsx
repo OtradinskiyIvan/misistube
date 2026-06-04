@@ -3,6 +3,18 @@ import { useVideo } from '../hooks/useVideos';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
 
+const STATUS_ICONS = {
+  uploading: '⏳ ',
+  processing: '⚙️ ',
+  ready: '✅ ',
+  failed: '❌ ',
+};
+
+const STATUS_CLASSES = {
+  ready: 'success',
+  failed: 'error',
+};
+
 export const VideoDetailPage = () => {
   const { id } = useParams();
   const { video, loading, error } = useVideo(id);
@@ -10,31 +22,35 @@ export const VideoDetailPage = () => {
   if (loading) return <div className="text-center p-10">Загрузка...</div>;
   if (error || !video) return <div className="text-red-600 p-10">Видео не найдено</div>;
 
-  const statusClass = 
-    video.status === 'ready' ? 'success' :
-    video.status === 'failed' ? 'error' : 'warning';
+  const statusClass = STATUS_CLASSES[video.status] || 'warning';
+  const statusIcon = STATUS_ICONS[video.status] || '';
+  const timeAgo = video.created_at
+    ? formatDistanceToNow(new Date(video.created_at), { addSuffix: true })
+    : '';
+  const streamUrl = video.storage_url?.startsWith('/')
+    ? `http://localhost:8000${video.storage_url}`
+    : video.storage_url;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <VideoPlayer src={video.storage_url || ''} title={video.title} />
-      <h1 className="text-2xl font-bold mt-4">{video.title}</h1>
-      <p className="text-gray-600 mt-2">{video.description}</p>
-      <div className="mt-3 flex flex-wrap gap-3 items-center">
+    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <VideoPlayer src={streamUrl} title={video.title} />
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: '16px 0 8px', color: '#1E2A3A' }}>{video.title || ''}</h1>
+      {timeAgo && (
+        <div style={{ fontSize: '0.8rem', color: '#6b6375' }}>
+          Загружено {timeAgo}
+        </div>
+      )}
+      <hr style={{ border: 'none', borderTop: '1px solid #e5e4e7', margin: '16px 0' }} />
+      <p style={{ color: '#1E2A3A', margin: '0 0 16px', lineHeight: 1.5, border: '1px solid #e5e4e7', borderRadius: '8px', padding: '12px' }}>{video.description || ''}</p>
+      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
         <span className={`badge badge-${statusClass}`}>
-          {video.status === 'uploading' && '⏳ '}
-          {video.status === 'processing' && '⚙️ '}
-          {video.status === 'ready' && '✅ '}
-          {video.status === 'failed' && '❌ '}
-          {video.status}
+          {statusIcon}{video.status}
         </span>
         {video.duration > 0 && (
-          <span className="text-sm font-medium text-gray-700">
+          <span style={{ fontSize: '0.875rem', color: '#1E2A3A', fontWeight: 500 }}>
             Длительность: {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
           </span>
         )}
-        <span className="text-sm text-gray-600">
-          Загружено {formatDistanceToNow(new Date(video.created_at), { addSuffix: true })}
-        </span>
       </div>
     </div>
   );

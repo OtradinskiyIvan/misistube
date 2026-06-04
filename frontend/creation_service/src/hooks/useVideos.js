@@ -7,15 +7,22 @@ export const useVideos = (limit = 10, offset = 0) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchVideos(limit, offset)
+    const abort = new AbortController();
+    setLoading(true);
+    fetchVideos(limit, offset, abort.signal)
       .then((data) => {
-        setVideos(data.items);
-        setLoading(false);
+        if (!abort.signal.aborted) {
+          setVideos(data.items);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
+        if (!abort.signal.aborted) {
+          setError(err.message);
+          setLoading(false);
+        }
       });
+    return () => abort.abort();
   }, [limit, offset]);
 
   return { videos, loading, error };
@@ -27,16 +34,28 @@ export const useVideo = (id) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!id) return;
-    fetchVideoById(id)
+    if (!id) {
+      setLoading(false);
+      setError('ID видео не указан');
+      return;
+    }
+    const abort = new AbortController();
+    setLoading(true);
+    setError(null);
+    fetchVideoById(id, abort.signal)
       .then((data) => {
-        setVideo(data);
-        setLoading(false);
+        if (!abort.signal.aborted) {
+          setVideo(data);
+          setLoading(false);
+        }
       })
       .catch((err) => {
-        setError(err.message);
-        setLoading(false);
+        if (!abort.signal.aborted) {
+          setError(err.message);
+          setLoading(false);
+        }
       });
+    return () => abort.abort();
   }, [id]);
 
   return { video, loading, error };

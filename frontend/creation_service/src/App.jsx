@@ -28,6 +28,13 @@ function App() {
           <Route path="/videos/upload" element={<Navigate to="/upload" replace />} />
           <Route path="/videos/:id" element={<VideoDetailPage />} />
           <Route path="/upload" element={<UploadPage />} />
+          <Route path="*" element={
+            <div className="text-center py-20">
+              <h1 className="text-4xl font-bold text-gray-300">404</h1>
+              <p className="text-gray-500 mt-2">Страница не найдена</p>
+              <Link to="/" className="btn btn-primary mt-4 inline-block">На главную</Link>
+            </div>
+          } />
         </Routes>
       </main>
     </BrowserRouter>

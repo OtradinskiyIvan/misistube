@@ -124,9 +124,19 @@ a:hover {
     color: var(--misis-text-light);
 }
 
+.btn:focus-visible {
+    outline: 2px solid var(--misis-accent);
+    outline-offset: 2px;
+}
+
 .btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+a:focus-visible {
+    outline: 2px solid var(--misis-accent);
+    outline-offset: 2px;
 }
 
 /* Размеры кнопок */
@@ -146,7 +156,6 @@ a:hover {
     border: 1px solid var(--misis-gray-200);
     border-radius: var(--misis-radius-lg);
     box-shadow: var(--misis-shadow-sm);
-    overflow: hidden;
     transition: var(--misis-transition);
 }
 
@@ -351,7 +360,7 @@ select:focus {
 .shadow { box-shadow: var(--misis-shadow-md); }
 
 /* ----- 11. Адаптивность (mobile-first) ----- */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     :root {
         --misis-font-size-base: 14px;
     }

@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  timeout: 60000,
 });
 
 export const uploadVideo = async (title, description, file) => {
@@ -13,12 +14,12 @@ export const uploadVideo = async (title, description, file) => {
   return response.data;
 };
 
-export const fetchVideos = async (limit = 10, offset = 0) => {
-  const response = await api.get(`/videos/?limit=${limit}&offset=${offset}`);
-  return response.data; // { items: [], total: number }
+export const fetchVideos = async (limit = 10, offset = 0, signal) => {
+  const response = await api.get(`/videos/?limit=${limit}&offset=${offset}`, { signal });
+  return response.data;
 };
 
-export const fetchVideoById = async (id) => {
-  const response = await api.get(`/videos/${id}`);
+export const fetchVideoById = async (id, signal) => {
+  const response = await api.get(`/videos/${id}`, { signal });
   return response.data;
 };
