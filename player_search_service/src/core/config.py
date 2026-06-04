@@ -21,7 +21,7 @@ class PlayerSearchSettings(BaseSettings):
     REDIS_CACHE_TTL: int = 300
 
     S3_ENDPOINT_URL: str = "http://localhost:9000"
-    S3_ACCESS_KEY: str = "minioadmin"
+    S3_ACCESS_KEY: SecretStr = SecretStr("minioadmin")
     S3_SECRET_KEY: SecretStr = SecretStr("minioadmin")
     S3_BUCKET_NAME: str = "videos"
     S3_BUCKET_THUMBNAILS: str = "thumbnails"
