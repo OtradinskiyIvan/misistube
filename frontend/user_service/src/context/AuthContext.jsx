@@ -85,7 +85,10 @@ export function AuthProvider({ children, initialHash = "" }) {
 
   const logout = useCallback(() => {
     saveUser(null);
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     setUser(null);
+    window.location.href = "/auth/login";
   }, []);
 
   const hasRole = useCallback(

@@ -58,6 +58,9 @@ class CommentResponse(BaseModel):
     parent_id: Optional[UUID] = None
     content: str
     is_edited: bool
+    is_blocked: bool = False
+    blocked_by: Optional[UUID] = None
+    blocked_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
@@ -69,3 +72,8 @@ class PaginatedCommentsResponse(BaseModel):
     total: int = Field(..., ge=0)
     skip: int = Field(..., ge=0)
     limit: int = Field(..., ge=0)
+
+
+class AdminCommentActionResponse(BaseModel):
+    success: bool
+    detail: str = ""

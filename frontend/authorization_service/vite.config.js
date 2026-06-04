@@ -5,5 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5174,
+    proxy: {
+      "/api/v1/auth": {
+        target: process.env.VITE_AUTH_PROXY_TARGET || "http://127.0.0.1:8000",
+        changeOrigin: true,
+      },
+    },
   },
 });

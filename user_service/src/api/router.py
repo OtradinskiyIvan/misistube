@@ -12,6 +12,8 @@ from .mappers import (
 from .schemas import (
     ErrorResponse,
     HealthResponse,
+    RoleAssignDTO,
+    RoleResponse,
     TokenDecodeRequest,
     TokenDecodedResponse,
     UserCreateDTO,
@@ -21,6 +23,7 @@ from .schemas import (
 )
 from ..core.security import decode_jwt_token
 from ..deps import (
+    get_assign_role_service,
     get_create_user_service,
     get_delete_user_service,
     get_get_user_service,
@@ -28,10 +31,17 @@ from ..deps import (
     get_settings,
     get_sync_user_service,
     get_update_user_service,
+    get_user_roles_service,
+    get_revoke_role_service,
+    require_admin,
+    get_current_user_payload,
 )
+from ..services.assign_role import AssignRoleService
 from ..services.create_user import CreateUserService
 from ..services.delete_user import DeleteUserService
 from ..services.get_user import GetUserService
+from ..services.get_user_roles import GetUserRolesService
+from ..services.revoke_role import RevokeRoleService
 from ..services.sync_user import SyncUserService
 from ..services.update_user import UpdateUserService
 
@@ -209,11 +219,13 @@ async def list_users(
     logger=Depends(get_logger_dep),
 ):
     logger.info("users.list.requested", extra={"skip": skip, "limit": limit})
-    users = await service.all(skip=skip, limit=limit)
-    logger.info("users.list.success", extra={"count": len(users)})
+    users = await service.all_with_roles(skip=skip, limit=limit)
+    from ..api.schemas import UserResponseDTO
+    user_dtos = [UserResponseDTO(**u) for u in users]
+    logger.info("users.list.success", extra={"count": len(user_dtos)})
     return UserListResponse(
-        users=map_users_to_response(users),
-        total=len(users),
+        users=user_dtos,
+        total=len(user_dtos),
         skip=skip,
         limit=limit,
     )
@@ -223,7 +235,7 @@ async def list_users(
     "/users/{user_id}",
     response_model=UserResponseDTO,
     summary="Update user",
-    description="Updates an existing user's fields (username, email, status).",
+    description="Updates an existing user's fields (username, email, status). Admin only.",
     responses={**_error_responses},
 )
 async def update_user(
@@ -231,11 +243,36 @@ async def update_user(
     dto: UserUpdateDTO,
     service: UpdateUserService = Depends(get_update_user_service),
     logger=Depends(get_logger_dep),
+    _admin=Depends(require_admin),
 ):
     logger.info("users.update.requested", extra={"user_id": str(user_id)})
     data = map_update_dto(dto)
     user = await service.execute(user_id=user_id, **data)
     logger.info("users.update.success", extra={"user_id": str(user_id)})
+    return map_user_to_response(user)
+
+
+
+@router.patch(
+    "/users/{user_id}/status",
+    response_model=UserResponseDTO,
+    summary="Update user status",
+    description="Updates user status (active, inactive, banned, suspended). Admin only.",
+    responses={**_error_responses},
+)
+async def update_user_status(
+    user_id: UUID,
+    dto: UserUpdateDTO,
+    service: UpdateUserService = Depends(get_update_user_service),
+    logger=Depends(get_logger_dep),
+    _admin=Depends(require_admin),
+):
+    logger.info("users.status.update.requested", extra={"user_id": str(user_id), "status": dto.status})
+    if not dto.status:
+        raise HTTPException(status_code=400, detail="Status is required")
+    data = map_update_dto(dto)
+    user = await service.execute(user_id=user_id, **data)
+    logger.info("users.status.update.success", extra={"user_id": str(user_id), "status": user.status})
     return map_user_to_response(user)
 
 
@@ -259,3 +296,81 @@ async def delete_user(
     await service.execute(user_id)
     logger.info("users.delete.success", extra={"user_id": str(user_id)})
     return None
+
+
+@router.get(
+    "/users/{user_id}/status",
+    response_model=dict,
+    summary="Get user status",
+    description="Returns the user's current status. Used by auth_service during login.",
+    responses={**_error_responses},
+)
+async def get_user_status(
+    user_id: UUID,
+    service: GetUserService = Depends(get_get_user_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.status.get.requested", extra={"user_id": str(user_id)})
+    user = await service.by_id(user_id)
+    logger.info("users.status.get.success", extra={"user_id": str(user_id), "status": user.status})
+    return {"user_id": str(user.id), "status": user.status}
+
+
+@router.get(
+    "/users/{user_id}/roles",
+    response_model=RoleResponse,
+    summary="Get user roles",
+    description="Returns a list of roles assigned to a user.",
+    responses={**_error_responses},
+)
+async def get_user_roles(
+    user_id: UUID,
+    service: GetUserRolesService = Depends(get_user_roles_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.roles.get.requested", extra={"user_id": str(user_id)})
+    roles = await service.execute(user_id)
+    logger.info("users.roles.get.success", extra={"user_id": str(user_id), "roles": roles})
+    return RoleResponse(user_id=user_id, roles=roles)
+
+
+@router.post(
+    "/users/{user_id}/roles",
+    response_model=RoleResponse,
+    status_code=201,
+    summary="Assign role to user",
+    description="Assigns a role to a user. Admin only.",
+    responses={**_error_responses},
+)
+async def assign_role(
+    user_id: UUID,
+    dto: RoleAssignDTO,
+    service: AssignRoleService = Depends(get_assign_role_service),
+    logger=Depends(get_logger_dep),
+    admin_payload: dict = Depends(require_admin),
+):
+    logger.info("users.roles.assign.requested", extra={"user_id": str(user_id), "role": dto.role})
+    admin_id = UUID(admin_payload["sub"])
+    roles = await service.execute(user_id=user_id, role=dto.role, assigned_by=admin_id)
+    logger.info("users.roles.assign.success", extra={"user_id": str(user_id), "role": dto.role})
+    return RoleResponse(user_id=user_id, roles=roles)
+
+
+@router.delete(
+    "/users/{user_id}/roles/{role}",
+    response_model=RoleResponse,
+    summary="Revoke role from user",
+    description="Revokes a role from a user. Admin only.",
+    responses={**_error_responses},
+)
+async def revoke_role(
+    user_id: UUID,
+    role: str,
+    service: RevokeRoleService = Depends(get_revoke_role_service),
+    logger=Depends(get_logger_dep),
+    _admin=Depends(require_admin),
+):
+    logger.info("users.roles.revoke.requested", extra={"user_id": str(user_id), "role": role})
+    roles = await service.execute(user_id=user_id, role=role)
+    logger.info("users.roles.revoke.success", extra={"user_id": str(user_id), "role": role})
+    return RoleResponse(user_id=user_id, roles=roles)

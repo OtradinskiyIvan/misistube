@@ -1,5 +1,6 @@
 from uuid import UUID
 
+import httpx
 from jwt import PyJWTError
 
 from shared.security import create_jwt_token, decode_jwt_token, hash_password, verify_password
@@ -14,6 +15,30 @@ class AuthService:
     def __init__(self, user_repo: IUserRepository, settings: AuthSettings):
         self._user_repo = user_repo
         self._settings = settings
+
+    async def _fetch_user_roles(self, user_id: UUID) -> list[str]:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(
+                    f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/roles"
+                )
+                if resp.status_code == 200:
+                    return resp.json().get("roles", [])
+        except (httpx.RequestError, httpx.HTTPStatusError, ValueError):
+            pass
+        return []
+
+    async def _check_user_banned(self, user_id: UUID) -> bool:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                resp = await client.get(
+                    f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/status"
+                )
+                if resp.status_code == 200:
+                    return resp.json().get("status") == "banned"
+        except (httpx.RequestError, httpx.HTTPStatusError, ValueError):
+            pass
+        return False
 
     async def register(self, username: str, email: str, password: str, is_active: bool = True) -> User:
         if await self._user_repo.exists_by_email(email):
@@ -47,6 +72,11 @@ class AuthService:
         if not user.is_active:
             raise InvalidCredentialsError("User account is deactivated")
 
+        if await self._check_user_banned(user.id):
+            raise InvalidCredentialsError("User account is banned")
+
+        roles = await self._fetch_user_roles(user.id)
+
         access_token = create_jwt_token(
             subject=str(user.id),
             secret=self._settings.JWT_SECRET,
@@ -54,7 +84,8 @@ class AuthService:
             expires_minutes=self._settings.JWT_ACCESS_EXPIRE_MINUTES,
             username=user.username,
             email=user.email,
-            token_type="access"
+            token_type="access",
+            roles=roles,
         )
         refresh_token = create_jwt_token(
             subject=str(user.id),
@@ -63,7 +94,8 @@ class AuthService:
             expires_minutes=self._settings.JWT_REFRESH_EXPIRE_DAYS * 24 * 60,
             username=user.username,
             email=user.email,
-            token_type="refresh"
+            token_type="refresh",
+            roles=roles,
         )
         return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "Bearer"}
 
@@ -84,6 +116,8 @@ class AuthService:
         if not user or not user.is_active:
             raise InvalidCredentialsError("Invalid refresh token")
 
+        roles = payload.get("roles", [])
+
         access_token = create_jwt_token(
             subject=str(user.id),
             secret=self._settings.JWT_SECRET,
@@ -91,7 +125,8 @@ class AuthService:
             expires_minutes=self._settings.JWT_ACCESS_EXPIRE_MINUTES,
             username=user.username,
             email=user.email,
-            token_type="access"
+            token_type="access",
+            roles=roles,
         )
         return {"access_token": access_token, "token_type": "Bearer"}
 

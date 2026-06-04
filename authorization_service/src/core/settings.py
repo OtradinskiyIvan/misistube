@@ -34,6 +34,8 @@ class AuthSettings(SharedBaseSettings):
     SMTP_FROM: str | None = None
     SMTP_USE_TLS: bool = False
 
+    USER_SERVICE_URL: str = "http://127.0.0.1:8001"
+
     S3_ENDPOINT: str | None = None
     S3_ACCESS_KEY: SecretStr | None = None
     S3_SECRET_KEY: SecretStr | None = None
