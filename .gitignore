@@ -21,6 +21,7 @@ env/
 .vscode/
 
 # Файлы проекта
+logs/
 *.log
 .DS_Store
 
