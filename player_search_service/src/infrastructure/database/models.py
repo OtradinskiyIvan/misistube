@@ -30,7 +30,7 @@ class Video(Base):
             create_type=False             
         ),
         nullable=False,
-        server_default=text("'uploading'")
+        server_default=text("'UPLOADING'")
     )
     
     tags = Column(ARRAY(String), nullable=True, server_default=text("'{}'"))
