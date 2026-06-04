@@ -5,16 +5,25 @@ from jwt import PyJWTError
 
 from shared.security import create_jwt_token, decode_jwt_token, hash_password, verify_password
 
+from typing import Optional
+
 from ..core.settings import AuthSettings
 from ..domain.entities.user import User
 from ..domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError, UserNotFoundError
 from ..domain.interfaces.repositories import IUserRepository
+from ..infrastructure.clients.user_service_client import UserServiceClient
 
 
 class AuthService:
-    def __init__(self, user_repo: IUserRepository, settings: AuthSettings):
+    def __init__(
+        self,
+        user_repo: IUserRepository,
+        settings: AuthSettings,
+        user_svc_client: Optional[UserServiceClient] = None,
+    ):
         self._user_repo = user_repo
         self._settings = settings
+        self._user_svc_client = user_svc_client
 
     async def _fetch_user_roles(self, user_id: UUID) -> list[str]:
         try:
@@ -97,6 +106,8 @@ class AuthService:
             token_type="refresh",
             roles=roles,
         )
+        if self._user_svc_client is not None:
+            await self._user_svc_client.sync_user(access_token)
         return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "Bearer"}
 
     async def refresh_access_token(self, refresh_token: str) -> dict[str, str]:
@@ -135,3 +146,17 @@ class AuthService:
         if not user:
             raise UserNotFoundError(f"User {user_id} not found")
         return user
+
+    async def sync_user_to_user_service(self, user: User) -> None:
+        if self._user_svc_client is None:
+            return
+        token = create_jwt_token(
+            subject=str(user.id),
+            secret=self._settings.JWT_SECRET,
+            algorithm=self._settings.JWT_ALGORITHM,
+            expires_minutes=5,
+            username=user.username,
+            email=user.email,
+            token_type="access",
+        )
+        await self._user_svc_client.sync_user(token)

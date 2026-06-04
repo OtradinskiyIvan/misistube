@@ -1,4 +1,5 @@
 const BASE = "/api/v1";
+const INTERACTION_BASE = "http://localhost:8002/api/v1";
 
 class ApiError extends Error {
   constructor(code, detail, status) {
@@ -75,6 +76,30 @@ export const api = {
 
   updateUserStatus: (userId, status) =>
     request(`/users/${userId}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+
+  follow: (followerId, followingId) =>
+    request(`/users/${followerId}/follow/${followingId}`, { method: "POST" }),
+
+  unfollow: (followerId, followingId) =>
+    request(`/users/${followerId}/follow/${followingId}`, { method: "DELETE" }),
+
+  getFollowing: (userId, skip = 0, limit = 100) =>
+    request(`/users/${userId}/following?skip=${skip}&limit=${limit}`),
+
+  getFollowers: (userId, skip = 0, limit = 100) =>
+    request(`/users/${userId}/followers?skip=${skip}&limit=${limit}`),
+
+  isFollowing: (followerId, followingId) =>
+    request(`/users/${followerId}/is-following/${followingId}`),
+
+  getLikedVideos: async (userId) => {
+    const token = getToken();
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${INTERACTION_BASE}/users/${userId}/liked-videos`, { headers });
+    if (!res.ok) return { video_ids: [] };
+    return res.json();
+  },
 };
 
 export { ApiError };

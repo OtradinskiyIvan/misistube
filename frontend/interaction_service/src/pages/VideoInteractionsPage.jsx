@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api/interactions.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function VideoInteractionsPage() {
   const { videoId } = useParams();
-  const { isAuthenticated } = useAuth();
+  const [searchParams] = useSearchParams();
+  const authorId = searchParams.get("authorId");
+  const { isAuthenticated, user } = useAuth();
 
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [following, setFollowing] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentsTotal, setCommentsTotal] = useState(0);
   const [newComment, setNewComment] = useState("");
@@ -31,15 +34,19 @@ export default function VideoInteractionsPage() {
       setCommentsTotal(commentsRes.total || 0);
 
       if (isAuthenticated) {
-        const likeRes = await api.isLiked(videoId);
+        const [likeRes, followRes] = await Promise.all([
+          api.isLiked(videoId),
+          authorId ? api.isFollowing(authorId).catch(() => ({ is_following: false })) : { is_following: false },
+        ]);
         setLiked(likeRes.liked);
+        setFollowing(followRes.is_following);
       }
     } catch (err) {
       setError(err.detail || "Failed to load data");
     } finally {
       setLoading(false);
     }
-  }, [videoId, skip, isAuthenticated]);
+  }, [videoId, skip, isAuthenticated, authorId]);
 
   useEffect(() => {
     fetchData();
@@ -59,6 +66,21 @@ export default function VideoInteractionsPage() {
       }
     } catch (err) {
       setError(err.detail || "Failed to toggle like");
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!isAuthenticated || !authorId) return;
+    try {
+      if (following) {
+        await api.unfollow(authorId);
+        setFollowing(false);
+      } else {
+        await api.follow(authorId);
+        setFollowing(true);
+      }
+    } catch (err) {
+      setError(err.detail || "Failed to toggle follow");
     }
   };
 
@@ -108,13 +130,21 @@ export default function VideoInteractionsPage() {
       )}
 
       <div className="card mb-4">
-        <div className="card__content">
+        <div className="card__content" style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
           <div
             className={`like-button ${liked ? "like-button--active" : ""}`}
             onClick={handleLike}
           >
             {liked ? "❤️" : "🤍"} {likesCount} {likesCount === 1 ? "like" : "likes"}
           </div>
+          {authorId && isAuthenticated && (
+            <button
+              className={`btn btn-sm ${following ? "btn-secondary" : "btn-primary"}`}
+              onClick={handleFollow}
+            >
+              {following ? "Unsubscribe" : "Subscribe"}
+            </button>
+          )}
         </div>
       </div>
 

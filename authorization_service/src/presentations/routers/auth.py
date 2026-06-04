@@ -63,6 +63,7 @@ async def confirm_email(
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    await auth_service.sync_user_to_user_service(created)
     return created
 
 @router.post("/login", response_model=TokenResponse)

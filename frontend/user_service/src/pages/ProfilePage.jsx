@@ -1,8 +1,146 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
+import { api } from "../api/users.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+
+function InfoTab({ user, isAdmin, isOwner, logout }) {
+  return (
+    <div className="card" style={{ padding: "1.5rem" }}>
+      <div className="detail-grid">
+        <div className="detail-row">
+          <span className="detail-label">ID</span>
+          <span className="detail-value">{user.id}</span>
+        </div>
+        <div className="detail-row">
+          <span className="detail-label">Username</span>
+          <span className="detail-value">{user.username}</span>
+        </div>
+        <div className="detail-row">
+          <span className="detail-label">Email</span>
+          <span className="detail-value">{user.email}</span>
+        </div>
+        <div className="detail-row">
+          <span className="detail-label">Роли</span>
+          <span className="detail-value">
+            {user.roles.length > 0 ? user.roles.join(", ") : "—"}
+          </span>
+        </div>
+        <div className="detail-row">
+          <span className="detail-label">Права</span>
+          <span className="detail-value">
+            {isAdmin && "Администратор"}
+            {isOwner && (isAdmin ? ", Владелец" : "Владелец")}
+            {!isAdmin && !isOwner && "Обычный пользователь"}
+          </span>
+        </div>
+      </div>
+      <div style={{ marginTop: "1.5rem" }}>
+        <button className="btn btn-secondary" onClick={logout}>
+          Выйти
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SubscriptionsTab({ userId }) {
+  const [following, setFollowing] = useState([]);
+  const [followers, setFollowers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [followingRes, followersRes] = await Promise.all([
+          api.getFollowing(userId),
+          api.getFollowers(userId),
+        ]);
+        setFollowing(Array.isArray(followingRes) ? followingRes : []);
+        setFollowers(Array.isArray(followersRes) ? followersRes : []);
+      } catch {
+        setFollowing([]);
+        setFollowers([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [userId]);
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="card" style={{ padding: "1.5rem" }}>
+      <h3 style={{ marginBottom: "1rem" }}>Подписки ({following.length})</h3>
+      {following.length === 0 ? (
+        <p style={{ opacity: 0.6 }}>Нет подписок</p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {following.map((s) => (
+            <li key={s.id} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--misis-gray-200)" }}>
+              following_id: {s.following_id}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h3 style={{ margin: "1.5rem 0 1rem" }}>Подписчики ({followers.length})</h3>
+      {followers.length === 0 ? (
+        <p style={{ opacity: 0.6 }}>Нет подписчиков</p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {followers.map((s) => (
+            <li key={s.id} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--misis-gray-200)" }}>
+              follower_id: {s.follower_id}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function LikesTab({ userId }) {
+  const [videoIds, setVideoIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await api.getLikedVideos(userId);
+        setVideoIds(res.video_ids || []);
+      } catch {
+        setVideoIds([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [userId]);
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="card" style={{ padding: "1.5rem" }}>
+      <h3 style={{ marginBottom: "1rem" }}>Понравившиеся видео ({videoIds.length})</h3>
+      {videoIds.length === 0 ? (
+        <p style={{ opacity: 0.6 }}>Нет лайкнутых видео</p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {videoIds.map((vid) => (
+            <li key={vid} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--misis-gray-200)" }}>
+              video_id: {vid}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const { user, isAdmin, isOwner, logout, authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState("info");
 
   if (authLoading) {
     return (
@@ -35,46 +173,31 @@ export default function ProfilePage() {
     );
   }
 
+  const tabs = [
+    { key: "info", label: "Информация" },
+    { key: "subscriptions", label: "Подписки" },
+    { key: "likes", label: "Лайки" },
+  ];
+
   return (
     <div className="fade-in" style={{ maxWidth: "640px", margin: "0 auto" }}>
       <h1 style={{ marginBottom: "1.5rem" }}>Личный кабинет</h1>
 
-      <div className="card" style={{ padding: "1.5rem" }}>
-        <div className="detail-grid">
-          <div className="detail-row">
-            <span className="detail-label">ID</span>
-            <span className="detail-value">{user.id}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Username</span>
-            <span className="detail-value">{user.username}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Email</span>
-            <span className="detail-value">{user.email}</span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Роли</span>
-            <span className="detail-value">
-              {user.roles.length > 0 ? user.roles.join(", ") : "—"}
-            </span>
-          </div>
-          <div className="detail-row">
-            <span className="detail-label">Права</span>
-            <span className="detail-value">
-              {isAdmin && "Администратор"}
-              {isOwner && (isAdmin ? ", Владелец" : "Владелец")}
-              {!isAdmin && !isOwner && "Обычный пользователь"}
-            </span>
-          </div>
-        </div>
-
-        <div style={{ marginTop: "1.5rem" }}>
-          <button className="btn btn-secondary" onClick={logout}>
-            Выйти
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            className={`btn btn-sm ${activeTab === tab.key ? "btn-primary" : "btn-outline"}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
           </button>
-        </div>
+        ))}
       </div>
+
+      {activeTab === "info" && <InfoTab user={user} isAdmin={isAdmin} isOwner={isOwner} logout={logout} />}
+      {activeTab === "subscriptions" && <SubscriptionsTab userId={user.id} />}
+      {activeTab === "likes" && <LikesTab userId={user.id} />}
     </div>
   );
 }

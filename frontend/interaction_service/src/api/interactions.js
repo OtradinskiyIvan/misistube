@@ -85,6 +85,15 @@ export const api = {
 
   getBlockedComments: (skip = 0, limit = 50) =>
     request(`/admin/comments/blocked?skip=${skip}&limit=${limit}`),
+
+  follow: (userId) =>
+    request(`/subscriptions/follow/${userId}`, { method: "POST" }),
+
+  unfollow: (userId) =>
+    request(`/subscriptions/follow/${userId}`, { method: "DELETE" }),
+
+  isFollowing: (userId) =>
+    request(`/subscriptions/is-following/${userId}`),
 };
 
 export { ApiError };
