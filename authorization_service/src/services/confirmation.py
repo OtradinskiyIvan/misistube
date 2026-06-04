@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import random
 import smtplib
 import ssl
@@ -7,6 +8,8 @@ from datetime import datetime, timedelta
 from shared.security import hash_password
 
 from ..core.settings import AuthSettings
+
+logger = logging.getLogger("Authorization Service")
 
 # Simple in-memory stores:
 # _CODES: email -> (code, expires)
@@ -23,6 +26,7 @@ def generate_code() -> str:
 
 def _store_code(email: str, code: str) -> None:
     _CODES[email.lower()] = (code, datetime.utcnow() + timedelta(minutes=CODE_TTL_MINUTES))
+    logger.info("Confirmation code stored for %s: %s", email.lower(), code)
 
 
 def _store_pending(email: str, username: str, hashed_password: str) -> None:
@@ -32,9 +36,12 @@ def _store_pending(email: str, username: str, hashed_password: str) -> None:
 def verify_code(email: str, code: str) -> bool:
     entry = _CODES.get(email.lower())
     if not entry:
+        logger.warning("Verify: no code found for %s (stored emails: %s)", email.lower(), list(_CODES.keys()))
         return False
     stored, expires = entry
+    logger.info("Verify: comparing stored=%s received=%s for %s", stored, code, email.lower())
     if datetime.utcnow() > expires:
+        logger.warning("Verify: code expired for %s", email.lower())
         del _CODES[email.lower()]
         if email.lower() in _PENDING:
             del _PENDING[email.lower()]
@@ -42,6 +49,7 @@ def verify_code(email: str, code: str) -> bool:
     if stored == code:
         del _CODES[email.lower()]
         return True
+    logger.warning("Verify: code mismatch for %s: stored=%s received=%s", email.lower(), stored, code)
     return False
 
 
@@ -51,6 +59,7 @@ def pop_pending(email: str) -> tuple[str, str] | None:
         return None
     username, hashed_password, expires = entry
     if datetime.utcnow() > expires:
+        logger.warning("Pop: pending expired for %s", email.lower())
         return None
     return username, hashed_password
 

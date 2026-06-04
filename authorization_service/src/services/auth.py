@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 import httpx
@@ -12,6 +13,8 @@ from ..domain.entities.user import User
 from ..domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError, UserNotFoundError
 from ..domain.interfaces.repositories import IUserRepository
 from ..infrastructure.clients.user_service_client import UserServiceClient
+
+logger = logging.getLogger("Authorization Service")
 
 
 class AuthService:
@@ -33,8 +36,8 @@ class AuthService:
                 )
                 if resp.status_code == 200:
                     return resp.json().get("roles", [])
-        except (httpx.RequestError, httpx.HTTPStatusError, ValueError):
-            pass
+        except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
+            logger.warning("Failed to fetch roles for user %s: %s", user_id, exc)
         return []
 
     async def _check_user_banned(self, user_id: UUID) -> bool:
@@ -45,15 +48,17 @@ class AuthService:
                 )
                 if resp.status_code == 200:
                     return resp.json().get("status") == "banned"
-        except (httpx.RequestError, httpx.HTTPStatusError, ValueError):
-            pass
+        except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
+            logger.warning("Failed to check ban status for user %s: %s", user_id, exc)
         return False
 
     async def register(self, username: str, email: str, password: str, is_active: bool = True) -> User:
         if await self._user_repo.exists_by_email(email):
+            logger.warning("Registration failed: email %s already exists", email)
             raise UserAlreadyExistsError(f"User with email {email} already exists")
 
         if await self._user_repo.exists_by_username(username):
+            logger.warning("Registration failed: username %s already exists", username)
             raise UserAlreadyExistsError(f"User with username {username} already exists")
 
         hashed_pwd = hash_password(password)
@@ -64,25 +69,36 @@ class AuthService:
             hashed_password=hashed_pwd,
             is_active=is_active,
         )
-        return await self._user_repo.save(user)
+        saved = await self._user_repo.save(user)
+        logger.info("User registered: %s (%s)", username, email)
+        return saved
 
     async def activate_user(self, email: str) -> None:
         await self._user_repo.activate_user_by_email(email)
+        logger.info("User activated: %s", email)
 
     async def login(self, login: str, password: str) -> dict[str, str]:
-        # Try to get user by email first, then by username
         user = await self._user_repo.get_by_email(login)
         if not user:
             user = await self._user_repo.get_by_username(login)
 
-        if not user or not verify_password(password, user.hashed_password):
+        if not user:
+            logger.warning("Login failed: user not found: %s", login)
+            raise InvalidCredentialsError("Invalid username/email or password")
+
+        if not verify_password(password, user.hashed_password):
+            logger.warning("Login failed: wrong password for user %s (%s)", user.username, login)
             raise InvalidCredentialsError("Invalid username/email or password")
 
         if not user.is_active:
+            logger.warning("Login failed: user %s is deactivated", user.username)
             raise InvalidCredentialsError("User account is deactivated")
 
         if await self._check_user_banned(user.id):
+            logger.warning("Login failed: user %s is banned", user.username)
             raise InvalidCredentialsError("User account is banned")
+
+        logger.info("User logged in: %s (%s)", user.username, login)
 
         roles = await self._fetch_user_roles(user.id)
 

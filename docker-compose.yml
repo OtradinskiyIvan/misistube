@@ -33,6 +33,8 @@ services:
       APP_NAME: "Authorization Service"
       APP_ENV: development
       USER_SERVICE_URL: http://user-service:8000
+    volumes:
+      - ./logs:/app/logs:z
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,6 +51,8 @@ services:
       - user_service/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@postgres:5432/misistube_users
+    volumes:
+      - ./logs:/app/logs:z
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,6 +70,8 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@postgres:5432/misistube_interactions
       USER_SERVICE_URL: http://user-service:8000
+    volumes:
+      - ./logs:/app/logs:z
     depends_on:
       postgres:
         condition: service_healthy

@@ -16,7 +16,7 @@ from .presentations.routers.health import router as health_router
 
 load_dotenv()
 settings = AuthSettings()
-log_file = Path(__file__).resolve().parents[1] / "logs" / "authorization_service.log"
+log_file = Path(__file__).resolve().parents[2] / "logs" / "authorization_service.log"
 logger = get_logger_with_file(settings.APP_NAME, settings.LOG_LEVEL, log_file)
 
 
