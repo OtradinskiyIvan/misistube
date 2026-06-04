@@ -1,4 +1,6 @@
+import json
 import sys
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 ROOT_DIRECTORY = Path(__file__).resolve().parents[3]
@@ -7,44 +9,94 @@ if str(ROOT_DIRECTORY) not in sys.path:
 
 import logging
 from logging.handlers import RotatingFileHandler
+from shared.logger import correlation_id_var
 
-from shared.logger import JSONFormatter
+# Московский часовой пояс (UTC+3)
+MOSCOW_TZ = timezone(timedelta(hours=3))
+
+
+class JSONFormatter(logging.Formatter):    
+    def format(self, record: logging.LogRecord) -> str:
+        timestamp = datetime.fromtimestamp(record.created, tz=MOSCOW_TZ).isoformat()
+
+        service = getattr(record, 'service', None) or record.__dict__.get('service', 'player_search_service')
+        if service == 'unknown':
+            service = 'player_search_service'
+
+        correlation_id = correlation_id_var.get()
+        
+        log_entry = {
+            "timestamp": timestamp,
+            "level": record.levelname,
+            "service": service,
+            "correlation_id": correlation_id,
+            "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
+            "line": record.lineno,
+        }
+
+        if record.exc_info and record.exc_info[0] is not None:
+            log_entry["exception"] = self.formatException(record.exc_info)
+        
+        return json.dumps(log_entry, ensure_ascii=False)
+
+
+class ServiceFilter(logging.Filter):
+    """Добавляет поле 'service' во все логи"""
+    
+    def __init__(self, service_name: str):
+        super().__init__()
+        self.service_name = service_name
+    
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.service = self.service_name
+        return True
 
 
 def setup_service_logger(service_name: str, level: str = "INFO") -> logging.LoggerAdapter:
     """
-    Создаёт логгер, который пишет в консоль И в файл.
-    Использует JSON-форматтер и correlation_id из shared.
+    Создаёт логгер с московским временем и корректным service.
+    Логи пишутся в misistube/logs/player_search_service.log
     """
-    logger = logging.getLogger(service_name)
+    src_level = getattr(logging, level.upper(), logging.INFO)
+    
+    src_logger = logging.getLogger("src")
+    
+    if not src_logger.handlers:
+        src_logger.setLevel(src_level)
+        src_logger.propagate = False
 
-    if logger.handlers:
-        return logging.LoggerAdapter(logger, {"service_name": service_name})
+        service_filter = ServiceFilter(service_name)
+        src_logger.addFilter(service_filter)
 
-    logger.setLevel(getattr(logging, level.upper(), logging.INFO))
-    logger.propagate = False  # Чтобы логи не дублировались в root-логгер
+        formatter = JSONFormatter()
+        
+        # Консоль
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        console_handler.setLevel(src_level)
+        src_logger.addHandler(console_handler)
+        
+        log_file = ROOT_DIRECTORY / "logs/player_search_service.log"
+        
+        file_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=10 * 1024 * 1024,
+            backupCount=5,
+            encoding="utf-8",
+            delay=True
+        )
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        src_logger.addHandler(file_handler)
+    
 
-    formatter = JSONFormatter()
-
-    # Консольный вывод (для Docker logs / терминала)
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    console_handler.setLevel(logging.INFO)
-    logger.addHandler(console_handler)
-
-    # всегда относительно расположения этого файла
-    log_dir = Path(__file__).resolve().parent.parent / "logs"
-    log_dir.mkdir(exist_ok=True)
-
-    file_handler = RotatingFileHandler(
-        log_dir / "service.log",
-        maxBytes=10 * 1024 * 1024,  # 10 МБ на файл
-        backupCount=5,              # Храним 5 последних архивов
-        encoding="utf-8",
-        delay=True                  # Создаём файл только при первой записи
-    )
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.DEBUG)  # B файл пишем всё (включая DEBUG)
-    logger.addHandler(file_handler)
-
-    return logging.LoggerAdapter(logger, {"service_name": service_name})
+    service_logger = logging.getLogger(service_name)
+    if not service_logger.handlers:
+        service_logger.setLevel(src_level)
+        service_logger.propagate = False
+        service_logger.parent = src_logger
+        service_logger.addFilter(ServiceFilter(service_name))
+    
+    return logging.LoggerAdapter(service_logger, {"service": service_name})
