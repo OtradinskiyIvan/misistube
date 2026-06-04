@@ -1,7 +1,6 @@
-"""RFC 7807 Problem Details для стандартизации ответов o6 ошибках"""
-
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
+from typing import Any
 
 
 class ProblemDetail(BaseModel):
@@ -12,7 +11,14 @@ class ProblemDetail(BaseModel):
                 "type": "https://misistube.dev/errors/validation",
                 "title": "Validation Error",
                 "status": 422,
-                "detail": "Field 'q' is required",
+                "detail": "Request validation failed",
+                "errors": [
+                    {
+                        "type": "missing",
+                        "loc": ["query", "q"],
+                        "msg": "Field required"
+                    }
+                ],
                 "instance": "/api/v1/search"
             }
         }
@@ -21,23 +27,26 @@ class ProblemDetail(BaseModel):
     type: str = Field(default="about:blank", description="URI-тип ошибки")
     title: str = Field(..., description="Краткое название проблемы")
     status: int = Field(..., description="HTTP-статус код")
-    detail: str | None = Field(None, description="Подробное описание (может содержать JSON-строку)")
-    instance: str | None = Field(None, description="URI конкретного запроса, вызвавшего ошибку")
+    detail: str | None = Field(None, description="Подробное описание")
+    errors: list[dict[str, Any]] | None = Field(None, description="Детали ошибок валидации")
+    instance: str | None = Field(None, description="URI конкретного запроса")
 
 
 def problem_response(
     status_code: int,
     title: str,
     detail: str | None = None,
+    errors: list[dict[str, Any]] | None = None,
     problem_type: str = "about:blank",
     instance: str | None = None
 ) -> JSONResponse:
-    """Возвращает ответ в формате RFC 7807 c правильным Content-Type"""
+    """Возвращает ответ в формате RFC 7807 с правильным Content-Type"""
     content = ProblemDetail(
         type=problem_type,
         title=title,
         status=status_code,
         detail=detail,
+        errors=errors, 
         instance=instance
     ).model_dump(exclude_none=True)
 
