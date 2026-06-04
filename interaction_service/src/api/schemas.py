@@ -74,6 +74,15 @@ class PaginatedCommentsResponse(BaseModel):
     limit: int = Field(..., ge=0)
 
 
+class LikedVideosResponse(BaseModel):
+    video_ids: list[UUID]
+
+
 class AdminCommentActionResponse(BaseModel):
     success: bool
     detail: str = ""
+
+
+class AdminActionResponse(BaseModel):
+    success: bool
+    detail: str

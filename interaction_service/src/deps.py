@@ -14,6 +14,7 @@ from .infrastructure.repositories.comment_repository import CommentRepositoryImp
 from .infrastructure.repositories.like_repository import LikeRepositoryImpl
 from .services.comment_service import CommentService
 from .services.like_service import LikeService
+from .infrastructure.clients.user_service_client import UserServiceClient
 
 configure_logging(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
 
@@ -62,6 +63,12 @@ async def get_comment_service(
         CommentRepositoryImpl(session),
         UnitOfWorkImpl(session),
     )
+
+
+async def get_user_service_client(
+    s: InteractionSettings = Depends(get_settings),
+) -> UserServiceClient:
+    return UserServiceClient(base_url=s.USER_SERVICE_URL)
 
 
 async def get_current_user_id(

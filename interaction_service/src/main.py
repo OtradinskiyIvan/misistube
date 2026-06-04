@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 ROOT_DIRECTORY = Path(__file__).resolve().parents[2]
 if str(ROOT_DIRECTORY) not in sys.path:
@@ -60,6 +61,14 @@ app = FastAPI(
             "description": "Service health and readiness checks",
         },
     ],
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.add_middleware(CorrelationIDMiddleware)

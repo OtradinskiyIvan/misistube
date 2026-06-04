@@ -37,6 +37,11 @@ class LikeRepositoryImpl:
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_by_user(self, user_id: UUID) -> list[LikeModel]:
+        stmt = select(LikeModel).where(LikeModel.user_id == user_id).order_by(LikeModel.created_at.desc())
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
+
     async def count_by_video(self, video_id: UUID) -> int:
         stmt = select(func.count()).select_from(LikeModel).where(LikeModel.video_id == video_id)
         result = await self._session.execute(stmt)

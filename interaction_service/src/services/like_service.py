@@ -36,5 +36,9 @@ class LikeService:
         likes = await self._like_repo.get_by_video(video_id)
         return [like.user_id for like in likes]
 
+    async def get_user_liked_video_ids(self, user_id: UUID) -> list[UUID]:
+        likes = await self._like_repo.get_by_user(user_id)
+        return [like.video_id for like in likes]
+
     async def get_video_likes_count(self, video_id: UUID) -> int:
         return await self._like_repo.count_by_video(video_id)

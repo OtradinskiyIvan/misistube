@@ -4,12 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .mappers import map_comment_to_response
 from .schemas import (
+    AdminActionResponse,
     AdminCommentActionResponse,
     CommentCreateRequest,
     CommentResponse,
     CommentUpdateRequest,
     ErrorResponse,
     HealthResponse,
+    LikedVideosResponse,
     LikeCountResponse,
     LikeRequest,
     LikeResponse,
@@ -21,8 +23,10 @@ from ..deps import (
     get_like_service,
     get_logger_dep,
     get_settings,
+    get_user_service_client,
     require_admin,
 )
+from ..infrastructure.clients.user_service_client import UserServiceClient
 from ..services.comment_service import CommentService
 from ..services.like_service import LikeService
 
@@ -255,10 +259,110 @@ async def unblock_comment(
     return AdminCommentActionResponse(success=True, detail="Comment unblocked")
 
 
+@router.post(
+    "/subscriptions/follow/{following_id}",
+    status_code=201,
+    summary="Follow a user",
+    description="Proxy to user_service follow endpoint.",
+)
+async def proxy_follow(
+    following_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+    user_svc: UserServiceClient = Depends(get_user_service_client),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.follow.requested", extra={"follower": str(user_id), "following": str(following_id)})
+    ok = await user_svc.follow(user_id, following_id)
+    if not ok:
+        raise HTTPException(status_code=400, detail="Already following or error")
+    return {"success": True}
+
+
+@router.delete(
+    "/subscriptions/follow/{following_id}",
+    status_code=204,
+    summary="Unfollow a user",
+    description="Proxy to user_service unfollow endpoint.",
+)
+async def proxy_unfollow(
+    following_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+    user_svc: UserServiceClient = Depends(get_user_service_client),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.unfollow.requested", extra={"follower": str(user_id), "following": str(following_id)})
+    await user_svc.unfollow(user_id, following_id)
+    return None
+
+
+@router.get(
+    "/subscriptions/{user_id}/following",
+    summary="Get following",
+    description="Proxy to user_service get following.",
+)
+async def proxy_get_following(
+    user_id: UUID,
+    user_svc: UserServiceClient = Depends(get_user_service_client),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.following.requested", extra={"user_id": str(user_id)})
+    data = await user_svc.get_following(user_id)
+    return {"subscriptions": data}
+
+
+@router.get(
+    "/subscriptions/{user_id}/followers",
+    summary="Get followers",
+    description="Proxy to user_service get followers.",
+)
+async def proxy_get_followers(
+    user_id: UUID,
+    user_svc: UserServiceClient = Depends(get_user_service_client),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.followers.requested", extra={"user_id": str(user_id)})
+    data = await user_svc.get_followers(user_id)
+    return {"subscriptions": data}
+
+
+@router.get(
+    "/subscriptions/is-following/{following_id}",
+    summary="Check if following",
+    description="Proxy to user_service is-following.",
+)
+async def proxy_is_following(
+    following_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
+    user_svc: UserServiceClient = Depends(get_user_service_client),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.is_following.requested", extra={"follower": str(user_id), "following": str(following_id)})
+    result = await user_svc.is_following(user_id, following_id)
+    return {"is_following": result}
+
+
+@router.get(
+    "/users/{user_id}/liked-videos",
+    response_model=LikedVideosResponse,
+    summary="Get liked videos",
+    description="Returns video IDs liked by a user.",
+)
+async def get_liked_videos(
+    user_id: UUID,
+    service: LikeService = Depends(get_like_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.liked_videos.requested", extra={"user_id": str(user_id)})
+    video_ids = await service.get_user_liked_video_ids(user_id)
+    logger.info("users.liked_videos.success", extra={"count": len(video_ids)})
+    return LikedVideosResponse(video_ids=video_ids)
+
+
 @router.delete(
     "/admin/comments/{comment_id}",
     status_code=204,
     summary="Delete any comment (admin)",
+    description="Deletes any comment by ID (admin/moderator).",
     responses={**_error_responses},
 )
 async def admin_delete_comment(
@@ -296,3 +400,41 @@ async def list_blocked_comments(
         skip=skip,
         limit=limit,
     )
+
+
+@router.post(
+    "/admin/users/{user_id}/ban",
+    response_model=AdminActionResponse,
+    summary="Admin: ban a user",
+    description="Sets user status to 'banned' via user_service.",
+)
+async def admin_ban_user(
+    user_id: UUID,
+    user_svc: UserServiceClient = Depends(get_user_service_client),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("admin.users.ban.requested", extra={"user_id": str(user_id)})
+    ok = await user_svc.update_user_status(user_id, "banned")
+    if not ok:
+        raise HTTPException(status_code=404, detail="User not found")
+    logger.info("admin.users.ban.success", extra={"user_id": str(user_id)})
+    return AdminActionResponse(success=True, detail=f"User {user_id} banned")
+
+
+@router.post(
+    "/admin/users/{user_id}/unban",
+    response_model=AdminActionResponse,
+    summary="Admin: unban a user",
+    description="Sets user status to 'active' via user_service.",
+)
+async def admin_unban_user(
+    user_id: UUID,
+    user_svc: UserServiceClient = Depends(get_user_service_client),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("admin.users.unban.requested", extra={"user_id": str(user_id)})
+    ok = await user_svc.update_user_status(user_id, "active")
+    if not ok:
+        raise HTTPException(status_code=404, detail="User not found")
+    logger.info("admin.users.unban.success", extra={"user_id": str(user_id)})
+    return AdminActionResponse(success=True, detail=f"User {user_id} unbanned")
