@@ -26,7 +26,7 @@ class S3StorageAdapter(StoragePort):
         self.secret_key = secret_key or settings.S3_SECRET_KEY.get_secret_value()
         
         self.session: AioSession = aiobotocore.session.get_session()
-        self._client = None  # 🔹 P1: Кэш для клиента
+        self._client = None
 
     async def _get_client(self):
         """Ленивая инициализация клиента (создаётся только один раз)"""
