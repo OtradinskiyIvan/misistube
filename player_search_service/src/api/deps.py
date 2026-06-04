@@ -13,6 +13,7 @@ from src.infrastructure.storage.s3 import S3StorageAdapter
 from src.usecases.playback import GetPlaybackUrlUseCase
 from src.usecases.search import SearchVideoUseCase
 
+from src.core.config import get_settings
 
 @lru_cache
 def get_cache_adapter() -> CachePort:

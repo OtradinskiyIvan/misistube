@@ -27,23 +27,26 @@ class S3StorageAdapter(StoragePort):
         
         self.session: AioSession = aiobotocore.session.get_session()
         self._client = None
+        self._client_context = None
 
     async def _get_client(self):
-        """Ленивая инициализация клиента (создаётся только один раз)"""
+        """Ленивая инициализация клиента (входим в контекст один раз)"""
         if self._client is None:
-            self._client = self.session.create_client(
+            self._client_context = self.session.create_client(
                 "s3",
                 endpoint_url=self.endpoint_url,
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
             )
+            self._client = await self._client_context.__aenter__()
         return self._client
 
     async def close(self):
-        """Корректное закрытие клиента при завершении работы приложения"""
-        if self._client is not None:
-            await self._client.close()
+        """Корректное закрытие клиента"""
+        if self._client_context is not None:
+            await self._client_context.__aexit__(None, None, None)
             self._client = None
+            self._client_context = None
 
     async def generate_presigned_url(
         self,
