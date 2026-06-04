@@ -10,12 +10,18 @@ from .mappers import (
     map_users_to_response,
 )
 from .schemas import (
+    BatchUserRequest,
     ErrorResponse,
+    FollowStatusResponse,
     HealthResponse,
     RoleAssignDTO,
     RoleResponse,
+    SubscriptionActionRequest,
+    SubscriptionListResponse,
+    SubscriptionResponse,
     TokenDecodeRequest,
     TokenDecodedResponse,
+    UserBriefResponse,
     UserCreateDTO,
     UserListResponse,
     UserResponseDTO,
@@ -24,11 +30,13 @@ from .schemas import (
 from ..core.security import decode_jwt_token
 from ..deps import (
     get_assign_role_service,
+    get_brief_user_service,
     get_create_user_service,
     get_delete_user_service,
     get_get_user_service,
     get_logger_dep,
     get_settings,
+    get_subscription_service,
     get_sync_user_service,
     get_update_user_service,
     get_user_roles_service,
@@ -37,11 +45,13 @@ from ..deps import (
     get_current_user_payload,
 )
 from ..services.assign_role import AssignRoleService
+from ..services.brief_user import BriefUserService
 from ..services.create_user import CreateUserService
 from ..services.delete_user import DeleteUserService
 from ..services.get_user import GetUserService
 from ..services.get_user_roles import GetUserRolesService
 from ..services.revoke_role import RevokeRoleService
+from ..services.subscription_service import SubscriptionService
 from ..services.sync_user import SyncUserService
 from ..services.update_user import UpdateUserService
 
@@ -374,3 +384,170 @@ async def revoke_role(
     roles = await service.execute(user_id=user_id, role=role)
     logger.info("users.roles.revoke.success", extra={"user_id": str(user_id), "role": role})
     return RoleResponse(user_id=user_id, roles=roles)
+
+
+@router.get(
+    "/users/search",
+    response_model=list[UserBriefResponse],
+    summary="Search users",
+    description="Search users by username (case-insensitive partial match).",
+)
+async def search_users(
+    q: str = Query(..., min_length=1, description="Search query"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    service: GetUserService = Depends(get_get_user_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.search.requested", extra={"query": q})
+    users = await service.search_by_username(q, skip, limit)
+    logger.info("users.search.success", extra={"count": len(users)})
+    return [
+        UserBriefResponse(id=u.id, username=u.username, avatar_url=None, status=u.status)
+        for u in users
+    ]
+
+
+@router.get(
+    "/users/{user_id}/brief",
+    response_model=UserBriefResponse,
+    summary="Get user brief",
+    description="Returns lightweight user info (id, username, avatar_url, status).",
+)
+async def get_user_brief(
+    user_id: UUID,
+    service: BriefUserService = Depends(get_brief_user_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.brief.requested", extra={"user_id": str(user_id)})
+    user = await service.get_brief(user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    logger.info("users.brief.success", extra={"user_id": str(user_id)})
+    return UserBriefResponse(
+        id=user.id, username=user.username, avatar_url=user.avatar_url, status=user.status,
+    )
+
+
+@router.post(
+    "/users/batch",
+    response_model=list[UserBriefResponse],
+    summary="Get batch users",
+    description="Returns brief info for multiple users by IDs.",
+)
+async def batch_users(
+    dto: BatchUserRequest,
+    service: BriefUserService = Depends(get_brief_user_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.batch.requested", extra={"count": len(dto.ids)})
+    users = await service.get_batch(dto.ids)
+    logger.info("users.batch.success", extra={"count": len(users)})
+    return [
+        UserBriefResponse(id=u.id, username=u.username, avatar_url=u.avatar_url, status=u.status)
+        for u in users
+    ]
+
+
+@router.post(
+    "/users/{follower_id}/follow/{following_id}",
+    response_model=SubscriptionResponse,
+    summary="Follow a user",
+    description="Creates a subscription (follower_id follows following_id).",
+)
+async def follow_user(
+    follower_id: UUID,
+    following_id: UUID,
+    service: SubscriptionService = Depends(get_subscription_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.follow.requested", extra={"follower": str(follower_id), "following": str(following_id)})
+    if follower_id == following_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot follow yourself")
+    sub = await service.follow(follower_id, following_id)
+    logger.info("subscriptions.follow.success")
+    return SubscriptionResponse(
+        id=sub.id,
+        follower_id=sub.follower_id,
+        following_id=sub.following_id,
+        subscribed_at=sub.subscribed_at,
+    )
+
+
+@router.delete(
+    "/users/{follower_id}/follow/{following_id}",
+    status_code=204,
+    summary="Unfollow a user",
+    description="Removes a subscription.",
+)
+async def unfollow_user(
+    follower_id: UUID,
+    following_id: UUID,
+    service: SubscriptionService = Depends(get_subscription_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.unfollow.requested", extra={"follower": str(follower_id), "following": str(following_id)})
+    await service.unfollow(follower_id, following_id)
+    logger.info("subscriptions.unfollow.success")
+    return None
+
+
+@router.get(
+    "/users/{user_id}/following",
+    response_model=list[SubscriptionResponse],
+    summary="Get following",
+    description="Returns users that user_id is following.",
+)
+async def get_following(
+    user_id: UUID,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    service: SubscriptionService = Depends(get_subscription_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.following.requested", extra={"user_id": str(user_id)})
+    subs = await service.get_following(user_id, skip, limit)
+    logger.info("subscriptions.following.success", extra={"count": len(subs)})
+    return [
+        SubscriptionResponse(id=s.id, follower_id=s.follower_id, following_id=s.following_id, subscribed_at=s.subscribed_at)
+        for s in subs
+    ]
+
+
+@router.get(
+    "/users/{user_id}/followers",
+    response_model=list[SubscriptionResponse],
+    summary="Get followers",
+    description="Returns users that follow user_id.",
+)
+async def get_followers(
+    user_id: UUID,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    service: SubscriptionService = Depends(get_subscription_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.followers.requested", extra={"user_id": str(user_id)})
+    subs = await service.get_followers(user_id, skip, limit)
+    logger.info("subscriptions.followers.success", extra={"count": len(subs)})
+    return [
+        SubscriptionResponse(id=s.id, follower_id=s.follower_id, following_id=s.following_id, subscribed_at=s.subscribed_at)
+        for s in subs
+    ]
+
+
+@router.get(
+    "/users/{follower_id}/is-following/{following_id}",
+    response_model=FollowStatusResponse,
+    summary="Check follow status",
+    description="Returns whether follower_id is following following_id.",
+)
+async def is_following(
+    follower_id: UUID,
+    following_id: UUID,
+    service: SubscriptionService = Depends(get_subscription_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("subscriptions.is_following.requested", extra={"follower": str(follower_id), "following": str(following_id)})
+    result = await service.is_following(follower_id, following_id)
+    return FollowStatusResponse(is_following=result)

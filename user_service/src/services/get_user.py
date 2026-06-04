@@ -24,6 +24,13 @@ class GetUserService:
     async def by_email(self, email: str) -> Optional[User]:
         return await self._repository.get_by_email(email)
 
+    async def search_by_username(self, query: str, skip: int = 0, limit: int = 100) -> list[User]:
+        if limit > 1000:
+            limit = 1000
+        if skip < 0:
+            skip = 0
+        return await self._repository.search_by_username(query, skip, limit)
+
     async def all(self, skip: int = 0, limit: int = 100) -> list[User]:
         if limit > 1000:
             limit = 1000

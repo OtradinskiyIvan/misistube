@@ -103,6 +103,37 @@ class ErrorResponse(BaseModel):
     )
 
 
+class SubscriptionActionRequest(BaseModel):
+    following_id: UUID
+
+class SubscriptionResponse(BaseModel):
+    id: UUID
+    follower_id: UUID
+    following_id: UUID
+    subscribed_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class SubscriptionListResponse(BaseModel):
+    subscriptions: list[SubscriptionResponse]
+    total: int = Field(..., ge=0)
+    skip: int = Field(..., ge=0)
+    limit: int = Field(..., ge=0)
+
+class FollowStatusResponse(BaseModel):
+    is_following: bool
+
+class UserBriefResponse(BaseModel):
+    id: UUID
+    username: str
+    avatar_url: Optional[str] = None
+    status: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class BatchUserRequest(BaseModel):
+    ids: list[UUID]
+
 class HealthResponse(BaseModel):
     status: str = Field(default="ok", description="Service health status")
     service: str = Field(default="user-service", description="Service name")

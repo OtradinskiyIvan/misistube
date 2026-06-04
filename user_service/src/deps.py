@@ -19,6 +19,9 @@ from .services.update_user import UpdateUserService
 from .services.assign_role import AssignRoleService
 from .services.revoke_role import RevokeRoleService
 from .services.get_user_roles import GetUserRolesService
+from .services.subscription_service import SubscriptionService
+from .services.brief_user import BriefUserService
+from .infrastructure.repositories.subscription_repository import SubscriptionRepositoryImpl
 
 configure_logging(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
 
@@ -149,3 +152,15 @@ def require_admin(payload: dict = Depends(get_current_user_payload)) -> dict:
             detail="Admin access required",
         )
     return payload
+
+
+async def get_subscription_service(
+    session: AsyncSession = Depends(get_session),
+) -> SubscriptionService:
+    return SubscriptionService(SubscriptionRepositoryImpl(session), UnitOfWorkImpl(session))
+
+
+async def get_brief_user_service(
+    session: AsyncSession = Depends(get_session),
+) -> BriefUserService:
+    return BriefUserService(session)

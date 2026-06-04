@@ -48,6 +48,22 @@ class UserRepositoryImpl:
             return None
         return self._to_domain(model)
 
+    async def search_by_username(self, query: str, skip: int = 0, limit: int = 100) -> list[User]:
+        return await self._session.run_sync(
+            lambda sync_session: self._search_by_username_sync(sync_session, query, skip, limit)
+        )
+
+    def _search_by_username_sync(self, sync_session, query: str, skip: int, limit: int) -> list[User]:
+        stmt = (
+            select(UserModel)
+            .where(UserModel.username.ilike(f"%{query}%"))
+            .offset(skip)
+            .limit(limit)
+            .order_by(UserModel.username)
+        )
+        models = sync_session.execute(stmt).scalars().all()
+        return [self._to_domain(m) for m in models]
+
     async def get_all(self, skip: int = 0, limit: int = 100) -> list[User]:
         return await self._session.run_sync(
             lambda sync_session: self._get_all_sync(sync_session, skip, limit)
