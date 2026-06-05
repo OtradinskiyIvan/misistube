@@ -9,6 +9,8 @@ function App() {
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('')
   const [statusType, setStatusType] = useState('')
+  const [showAdminField, setShowAdminField] = useState(false)
+  const [adminKey, setAdminKey] = useState('')
   const [showRegister, setShowRegister] = useState(false)
   const [registerUsername, setRegisterUsername] = useState('')
   const [registerEmail, setRegisterEmail] = useState('')
@@ -67,7 +69,11 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ login: login || email, password }),
+        body: JSON.stringify({
+          login: login || email,
+          password,
+          ...(showAdminField && adminKey ? { admin_key: adminKey } : {}),
+        }),
       })
 
       if (!response.ok) {
@@ -242,6 +248,42 @@ function App() {
                   placeholder="••••••••"
                   required
                 />
+              </div>
+
+              {showAdminField && (
+                <div className="form-group">
+                  <label className="label" htmlFor="adminKey">
+                    Ключ подтверждения
+                  </label>
+                  <input
+                    id="adminKey"
+                    type="password"
+                    className="input"
+                    value={adminKey}
+                    onChange={(e) => setAdminKey(e.target.value)}
+                    placeholder="Введите ключ администратора"
+                  />
+                </div>
+              )}
+
+              <div
+                className="admin-hint"
+                onClick={() => {
+                  setShowAdminField(!showAdminField)
+                  if (showAdminField) setAdminKey('')
+                }}
+                style={{
+                  textAlign: 'center',
+                  marginTop: '0.75rem',
+                  marginBottom: '0.5rem',
+                  cursor: 'pointer',
+                  opacity: showAdminField ? 1 : 0.5,
+                  fontWeight: showAdminField ? 700 : 400,
+                  fontSize: '0.85rem',
+                  userSelect: 'none',
+                }}
+              >
+                войти как админ
               </div>
 
               <div className="auth-actions">
