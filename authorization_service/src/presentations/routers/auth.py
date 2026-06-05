@@ -82,7 +82,11 @@ async def login(
 ):
     logger.info("Login attempt: %s", payload.login)
     try:
-        token_data = await auth_service.login(login=payload.login, password=payload.password)
+        token_data = await auth_service.login(
+            login=payload.login,
+            password=payload.password,
+            admin_key=payload.admin_key,
+        )
         logger.info("Login success: %s", payload.login)
         return TokenResponse(**token_data)
     except InvalidCredentialsError as exc:

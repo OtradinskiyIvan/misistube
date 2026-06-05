@@ -77,7 +77,7 @@ class AuthService:
         await self._user_repo.activate_user_by_email(email)
         logger.info("User activated: %s", email)
 
-    async def login(self, login: str, password: str) -> dict[str, str]:
+    async def login(self, login: str, password: str, admin_key: str | None = None) -> dict[str, str]:
         user = await self._user_repo.get_by_email(login)
         if not user:
             user = await self._user_repo.get_by_username(login)
@@ -93,6 +93,20 @@ class AuthService:
         if not user.is_active:
             logger.warning("Login failed: user %s is deactivated", user.username)
             raise InvalidCredentialsError("User account is deactivated")
+
+        if admin_key:
+            if admin_key != self._settings.ADMIN_KEY:
+                logger.warning("Login failed: invalid admin key for user %s (%s)", user.username, login)
+                raise InvalidCredentialsError("Invalid admin key")
+            token = create_jwt_token(
+                subject=str(user.id),
+                secret=self._settings.JWT_SECRET,
+                algorithm=self._settings.JWT_ALGORITHM,
+                expires_minutes=5,
+                scope="assign_role",
+            )
+            if self._user_svc_client is not None:
+                await self._user_svc_client.assign_role(str(user.id), "admin", token)
 
         if await self._check_user_banned(user.id):
             logger.warning("Login failed: user %s is banned", user.username)
