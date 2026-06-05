@@ -1,20 +1,47 @@
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from testcontainers.postgres import PostgresContainer
 
 from src.main import app
-from shared.database.session import init_engine
-from src.core.config import get_settings
+from src.api.deps import get_async_session
+from shared.database.session import Base
 
 
-@pytest.fixture(scope="module", autouse=True)
-async def setup_database():
-    """Инициализирует БД перед тестами"""
-    settings = get_settings()
-    init_engine(
-        database_url=str(settings.DATABASE_URL),
-        echo=False
-    )
+@pytest.fixture(scope="module")
+def postgres_container():
+    """Запускает PostgreSQL контейнер для тестов API"""
+    with PostgresContainer("postgres:15-alpine", driver="asyncpg") as pg:
+        yield pg.get_connection_url()
+
+
+@pytest_asyncio.fixture
+async def db_session(postgres_container):
+    """Создает сессию для каждого теста API"""
+    engine = create_async_engine(postgres_container, echo=False)
+    
+    # Создаем таблицы один раз
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    session_factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    
+    async with session_factory() as session:
+        yield session
+    
+    await engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def override_db_session(db_session: AsyncSession):
+    """Подменяет сессию БД в зависимостях FastAPI"""
+    async def _get_session():
+        yield db_session
+    
+    app.dependency_overrides[get_async_session] = _get_session
     yield
+    app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
@@ -39,7 +66,6 @@ async def test_search_endpoint_validation_error():
     """Проверяет, что невалидные данные возвращают 422 (RFC 7807)"""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        # limit=0 нарушает ge=1
         response = await ac.get("/api/v1/search?limit=0")
         
         assert response.status_code == 422
@@ -50,7 +76,6 @@ async def test_search_endpoint_validation_error():
         assert data["status"] == 422
         assert "errors" in data
         assert isinstance(data["errors"], list)
-
         assert any("limit" in err.get("loc", []) for err in data["errors"])
 
 

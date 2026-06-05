@@ -3,9 +3,14 @@ from datetime import datetime, timezone
 from enum import Enum
 from sqlalchemy import Column, String, Text, Integer, DateTime, ARRAY, Enum as SQLEnum, text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import declarative_base
 
-Base = declarative_base()
+import sys
+from pathlib import Path
+ROOT_DIRECTORY = Path(__file__).resolve().parents[2]
+if str(ROOT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIRECTORY))
+
+from shared.database.session import Base
 
 class VideoStatus(str, Enum):
     UPLOADING = "UPLOADING"

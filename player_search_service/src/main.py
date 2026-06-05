@@ -17,6 +17,7 @@ from src.core.config import get_settings
 from src.core.exceptions import register_rfc7807_handlers
 from src.core.logger import setup_service_logger
 from src.core.middleware import CorrelationIdMiddleware
+from src.api.deps import get_storage_adapter
 
 
 settings = get_settings()
@@ -55,6 +56,11 @@ async def lifespan(app: FastAPI):
         logger.info("Closing database connections...")
         await _db_engine.dispose()
         logger.info("Database connections closed.")
+    
+    storage = get_storage_adapter()
+    await storage.close()
+
+    logger.info("Service shutdown complete.")
 
 
 app = FastAPI(
