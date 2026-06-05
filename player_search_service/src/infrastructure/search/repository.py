@@ -2,6 +2,7 @@ from typing import Optional
 from sqlalchemy import select, func, or_, cast, String
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.asyncio import AsyncSession
+import uuid
 
 from src.infrastructure.database.models import Video, VideoStatus
 from src.infrastructure.search.protocol import SearchPort
@@ -66,3 +67,16 @@ class SQLAlchemyVideoRepository(SearchPort):
         ]
         
         return items, total
+    
+    async def get_by_id(self, video_id: str) -> Optional[Video]:
+        """Получить видео по ID"""
+        from sqlalchemy import select
+        
+        try:
+            video_uuid = uuid.UUID(video_id)
+        except ValueError:
+            return None
+        
+        stmt = select(Video).where(Video.id == video_uuid)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()

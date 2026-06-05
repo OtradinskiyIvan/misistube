@@ -39,13 +39,16 @@ def get_search_usecase(
         search_port=search_port
     )
 
-def get_playback_usecase(
-    storage: StoragePort = Depends(get_storage_adapter)
+async def get_playback_usecase(
+    session: AsyncSession = Depends(get_async_session),
+    storage: StoragePort = Depends(get_storage_adapter),
+    settings: Settings = Depends(get_settings)
 ) -> GetPlaybackUrlUseCase:
-    """Фабрика UseCase воспроизведения с инъекцией настроек"""
-    settings = get_settings()
+    search_port = SQLAlchemyVideoRepository(session=session)
+    
     return GetPlaybackUrlUseCase(
         storage=storage,
+        search_port=search_port,
         bucket_name=settings.S3_BUCKET_NAME,
         expires_in=settings.S3_PRESIGNED_URL_EXPIRES
     )
