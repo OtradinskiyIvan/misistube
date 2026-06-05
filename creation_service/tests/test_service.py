@@ -15,7 +15,7 @@ class TestVideoService:
         assert isinstance(video, Video)
         assert video.title == "Title"
         assert video.description == "Desc"
-        assert video.status == VideoStatus.UPLOADING
+        assert video.status == VideoStatus.READY
         assert video.duration >= 0
         mock_storage.upload_file.assert_awaited_once()
         mock_repo.add.assert_awaited_once()

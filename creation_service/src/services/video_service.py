@@ -2,7 +2,7 @@ import logging
 import tempfile
 from moviepy import VideoFileClip
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from src.domain.entities.video import Video, VideoStatus
 from src.domain.exceptions import VideoNotFoundError, VideoUploadError
 from src.domain.interfaces.video_repository import VideoRepositoryProtocol
@@ -41,6 +41,10 @@ class VideoService:
             except Exception:
                 await self._try_cleanup_s3(storage_key)
                 raise
+
+            video.status = VideoStatus.READY
+            video.updated_at = datetime.now(timezone.utc)
+            await self._repo.update_status(video.id, VideoStatus.READY)
         finally:
             import os
             try:
@@ -72,3 +76,12 @@ class VideoService:
 
     async def stream_video(self, storage_key: str, range_header: str = None):
         return await self._storage.get_file_stream(storage_key, range_header)
+
+    async def update_video_status(self, video_id: UUID, status: VideoStatus) -> Video:
+        video = await self._repo.get(video_id)
+        if not video:
+            raise VideoNotFoundError(video_id)
+        video.status = status
+        video.updated_at = datetime.now(timezone.utc)
+        await self._repo.update_status(video_id, status)
+        return video
