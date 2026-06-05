@@ -42,11 +42,11 @@ async def lifespan(app: FastAPI):
         database_url=str(settings.DATABASE_URL),  
         echo=settings.APP_ENV == "development"
     )
-    if settings.APP_ENV == "development":
-        logger.info("Creating database tables (development mode)...")
-        async with _db_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("Tables created")
+    # if settings.APP_ENV == "development":
+    #     logger.info("Creating database tables (development mode)...")
+    #     async with _db_engine.begin() as conn:
+    #         await conn.run_sync(Base.metadata.create_all)
+    #     logger.info("Tables created")
 
     yield
 
