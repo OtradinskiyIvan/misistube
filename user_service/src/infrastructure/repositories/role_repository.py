@@ -17,6 +17,14 @@ class RoleRepositoryImpl:
         return [r.role for r in result.scalars().all()]
 
     async def assign_role(self, user_id: UUID, role: str, assigned_by: Optional[UUID] = None) -> UserRoleModel:
+        stmt = select(UserRoleModel).where(
+            UserRoleModel.user_id == user_id,
+            UserRoleModel.role == role,
+        )
+        result = await self._session.execute(stmt)
+        existing = result.scalar_one_or_none()
+        if existing:
+            return existing
         model = UserRoleModel(user_id=user_id, role=role, assigned_by=assigned_by)
         self._session.add(model)
         await self._session.flush()

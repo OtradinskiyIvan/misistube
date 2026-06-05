@@ -77,6 +77,11 @@ class UserListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AssignRoleInternalRequest(BaseModel):
+    user_id: str
+    role: str = Field(..., min_length=1, max_length=50)
+    token: str
+
 class RoleAssignDTO(BaseModel):
     role: str = Field(..., min_length=1, max_length=50)
 

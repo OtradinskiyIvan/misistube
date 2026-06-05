@@ -10,6 +10,7 @@ from .mappers import (
     map_users_to_response,
 )
 from .schemas import (
+    AssignRoleInternalRequest,
     BatchUserRequest,
     ErrorResponse,
     FollowStatusResponse,
@@ -175,6 +176,57 @@ async def sync_user(
     user = await service.execute(user_id=user_id, username=username, email=email)
     logger.info("auth.sync.success", extra={"user_id": str(user_id)})
     return map_user_to_response(user)
+
+
+@router.post(
+    "/auth/assign-role",
+    response_model=RoleResponse,
+    status_code=200,
+    tags=["auth"],
+    summary="Assign role to user (internal)",
+    description="Assigns a role to a user. Authenticated via JWT from auth service.",
+)
+async def assign_role_internal(
+    payload: AssignRoleInternalRequest,
+    settings=Depends(get_settings),
+    logger=Depends(get_logger_dep),
+    service: AssignRoleService = Depends(get_assign_role_service),
+):
+    try:
+        data = decode_jwt_token(
+            payload.token,
+            secret=settings.JWT_SECRET,
+            algorithm=settings.JWT_ALGORITHM,
+        )
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+        )
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token",
+        )
+
+    if data.get("sub") != payload.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Token sub does not match user_id",
+        )
+
+    try:
+        user_id = UUID(payload.user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid user_id format",
+        )
+
+    logger.info("auth.assign_role.requested", extra={"user_id": str(user_id), "role": payload.role})
+    roles = await service.execute(user_id=user_id, role=payload.role, assigned_by=None)
+    logger.info("auth.assign_role.success", extra={"user_id": str(user_id), "role": payload.role})
+    return RoleResponse(user_id=user_id, roles=roles)
 
 
 @router.post(
