@@ -70,6 +70,7 @@ services:
       USER_DB_URL: postgresql+asyncpg://misistube:misistube_secret@user-db:5432/misistube_users
       INTERACTION_DB_URL: postgresql+asyncpg://misistube:misistube_secret@interaction-db:5432/misistube_interactions
       USER_SERVICE_URL: http://localhost:8001
+      ADMIN_KEY: misistube-admin-secret-2026
       VITE_AUTH_PROXY_TARGET: http://localhost:8000
       VITE_USER_PROXY_TARGET: http://localhost:8001
       VITE_INTERACTION_PROXY_TARGET: http://localhost:8002
