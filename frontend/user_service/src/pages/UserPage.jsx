@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/users.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function UserPage() {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const { user: me } = useAuth();
   const [target, setTarget] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,6 +20,25 @@ export default function UserPage() {
     (async () => {
       setLoading(true);
       setError(null);
+
+      if (!UUID_RE.test(userId)) {
+        try {
+          const results = await api.searchUsers(userId, 0, 10);
+          const found = Array.isArray(results) && results.find(
+            (u) => u.id === userId || u.username.toLowerCase() === userId.toLowerCase(),
+          );
+          if (found && !cancelled) {
+            navigate(`/users/${found.id}`, { replace: true });
+            return;
+          }
+        } catch { /* fall through to error */ }
+        if (!cancelled) {
+          setError(`Пользователь «${userId}» не найден`);
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
         const data = await api.getUserBrief(userId);
         if (!cancelled) setTarget(data);
@@ -27,7 +49,7 @@ export default function UserPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [userId, navigate]);
 
   useEffect(() => {
     if (!me || !target || target.id === me.id) return;

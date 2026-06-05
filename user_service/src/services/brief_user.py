@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import cast, or_, select, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -73,7 +73,12 @@ class BriefUserService:
         stmt = (
             select(UserModel)
             .options(joinedload(UserModel.profile))
-            .where(UserModel.username.ilike(f"%{query}%"))
+            .where(
+                or_(
+                    UserModel.username.ilike(f"%{query}%"),
+                    cast(UserModel.id, String).ilike(f"%{query}%"),
+                ),
+            )
             .offset(skip)
             .limit(limit)
             .order_by(UserModel.username)
