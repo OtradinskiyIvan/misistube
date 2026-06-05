@@ -58,10 +58,14 @@ export function AuthProvider({ children, initialHash = "" }) {
       const refreshToken = params.get("refresh_token");
       if (accessToken) {
         if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
+        saveUser(null);
         setAuthLoading(true);
         loginWithToken(accessToken)
           .then(() => window.location.hash = "")
-          .catch(() => window.location.hash = "")
+          .catch(() => {
+            window.location.hash = "";
+            saveUser(null);
+          })
           .finally(() => setAuthLoading(false));
         return;
       }
@@ -70,6 +74,7 @@ export function AuthProvider({ children, initialHash = "" }) {
     const accessToken = localStorage.getItem("access_token");
     if (!accessToken) return;
 
+    saveUser(null);
     setAuthLoading(true);
     loginWithToken(accessToken)
       .then(() => {
@@ -79,6 +84,7 @@ export function AuthProvider({ children, initialHash = "" }) {
       .catch(() => {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        saveUser(null);
       })
       .finally(() => setAuthLoading(false));
   }, [user, loginWithToken]);
