@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, R
 from fastapi.responses import StreamingResponse, Response
 from uuid import UUID
 from src.api.deps import get_video_service
-from src.api.schemas.video import VideoUploadResponse, VideoDetailResponse, VideoListResponse
+from src.api.schemas.video import VideoUploadResponse, VideoDetailResponse, VideoListResponse, VideoStatusUpdate
 from src.services.video_service import VideoService
 from src.domain.exceptions import VideoNotFoundError, VideoUploadError
 
@@ -108,3 +108,23 @@ async def stream_video(
         return Response(content=body, status_code=206, headers=headers, media_type=content_type)
 
     return Response(content=body, status_code=200, headers=headers, media_type=content_type)
+
+@router.patch("/{video_id}/status")
+async def update_video_status(
+    video_id: UUID,
+    body: VideoStatusUpdate,
+    service: VideoService = Depends(get_video_service),
+):
+    try:
+        video = await service.update_video_status(video_id, body.status)
+    except VideoNotFoundError:
+        raise HTTPException(status_code=404, detail="Video not found")
+    return VideoUploadResponse(
+        id=video.id,
+        title=video.title,
+        description=video.description,
+        status=video.status.value,
+        duration=video.duration,
+        created_at=video.created_at,
+        updated_at=video.updated_at,
+    )

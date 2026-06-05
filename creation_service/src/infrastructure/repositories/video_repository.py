@@ -1,8 +1,10 @@
 # infrastructure/repositories/video_repository.py
 from uuid import UUID
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, func
 from src.domain.entities.video import Video, VideoStatus
+from src.domain.exceptions import VideoNotFoundError
 from src.domain.interfaces.video_repository import VideoRepositoryProtocol
 from src.infrastructure.database.models import VideoModel
 
@@ -61,6 +63,16 @@ class SQLAlchemyVideoRepository(VideoRepositoryProtocol):
                 updated_at=video.updated_at,
             )
         )
+        await self._session.commit()
+
+    async def update_status(self, video_id: UUID, status: VideoStatus) -> None:
+        result = await self._session.execute(
+            update(VideoModel)
+            .where(VideoModel.id == video_id)
+            .values(status=status, updated_at=datetime.now(timezone.utc))
+        )
+        if result.rowcount == 0:
+            raise VideoNotFoundError(video_id)
         await self._session.commit()
 
     @staticmethod

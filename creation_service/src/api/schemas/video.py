@@ -20,6 +20,9 @@ class VideoUploadResponse(BaseModel):
 class VideoDetailResponse(VideoUploadResponse):
     storage_url: str
 
+class VideoStatusUpdate(BaseModel):
+    status: VideoStatus
+
 class VideoListResponse(BaseModel):
     items: list[VideoUploadResponse]
     total: int
