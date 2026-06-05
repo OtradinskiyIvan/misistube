@@ -24,7 +24,7 @@ class SQLAlchemyVideoRepository(SearchPort):
         """
         Поиск видео с фильтрацией по тексту и тегам.
         """
-        stmt = select(Video).where(Video.status == VideoStatus.READY)
+        stmt = select(Video).where(Video.status == VideoStatus.READY)   # UPLOADING можно заменить для тестов
         
         if query:
             stmt = stmt.where(
@@ -34,9 +34,9 @@ class SQLAlchemyVideoRepository(SearchPort):
                 )
             )
         
-        if tags:
-            tags_list = tags if isinstance(tags, list) else [tags]
-            stmt = stmt.where(Video.tags.op('&&')(cast(tags_list, ARRAY(String))))
+        # if tags:
+        #    tags_list = tags if isinstance(tags, list) else [tags]
+        #    stmt = stmt.where(Video.tags.op('&&')(cast(tags_list, ARRAY(String))))
 
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total_result = await self.session.execute(count_stmt)
@@ -51,9 +51,16 @@ class SQLAlchemyVideoRepository(SearchPort):
             VideoResult(
                 id=str(v.id),
                 title=v.title,
-                thumbnail_url=v.thumbnail_url,
-                duration=v.duration,
-                tags=v.tags or []
+                description=v.description,       
+                storage_key=v.storage_key,          
+                status=v.status.value if hasattr(v.status, 'value') else str(v.status), 
+                duration_seconds=v.duration_seconds,
+                created_at=v.created_at.isoformat() if v.created_at else None, 
+                updated_at=v.updated_at.isoformat() if v.updated_at else None, 
+                
+                # Безопасное получение отсутствующих полей
+                tags=getattr(v, 'tags', None),       
+                thumbnail_url=getattr(v, 'thumbnail_url', None)
             )
             for v in videos
         ]

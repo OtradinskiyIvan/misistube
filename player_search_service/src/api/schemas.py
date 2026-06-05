@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import Optional 
+
 
 from pydantic import BaseModel, Field
 
@@ -13,9 +15,15 @@ class VideoResult(BaseModel):
     """Результат поиска"""
     id: str
     title: str
-    thumbnail_url: str | None = None
-    duration: int | None = None
-    tags: list[str] | None = None
+    description: Optional[str] = None
+    storage_key: str
+    status: str
+    duration_seconds: int
+    created_at: str
+    updated_at: str
+
+    tags: Optional[list[str]] = None
+    thumbnail_url: Optional[str] = None
 
 class SearchResponse(BaseModel):
     items: list[VideoResult]

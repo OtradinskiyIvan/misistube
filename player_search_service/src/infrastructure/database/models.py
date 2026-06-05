@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from sqlalchemy import Column, String, Text, Integer, DateTime, ARRAY, Enum as SQLEnum, text
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import deferred
 
 import sys
 from pathlib import Path
@@ -13,10 +14,10 @@ if str(ROOT_DIRECTORY) not in sys.path:
 from shared.database.session import Base
 
 class VideoStatus(str, Enum):
-    UPLOADING = "UPLOADING"
-    PROCESSING = "PROCESSING"
-    READY = "READY"
-    FAILED = "FAILED"
+    UPLOADING = "uploading"
+    PROCESSING = "processing"
+    READY = "ready"
+    FAILED = "failed"
 
 class Video(Base):
     __tablename__ = "videos"
@@ -29,17 +30,17 @@ class Video(Base):
     status = Column(
         SQLEnum(
             VideoStatus,
-            name="videostatus",         
+            name="video_status",         
             native_enum=True,             
             values_callable=lambda x: [e.value for e in x], 
             create_type=False             
         ),
         nullable=False,
-        server_default=text("'UPLOADING'")
+        server_default=text("'uploading'::video_status'")
     )
-    
-    tags = Column(ARRAY(String), nullable=True, server_default=text("'{}'"))
-    duration = Column(Integer, nullable=True, server_default=text("0"))
-    thumbnail_url = Column(String(500), nullable=True)
+    duration_seconds = Column(Integer, nullable=True, server_default=text("0"))
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("NOW()"))
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=text("NOW()"))
+
+    # tags = deferred(Column(ARRAY(String), nullable=True, server_default=text("'{}'")))  - нет в БД creation service
+    # thumbnail_url = deferred(Column(String(500), nullable=True))
