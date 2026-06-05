@@ -75,7 +75,15 @@ class S3StorageAdapter(StoragePort):
         bucket: str,
         content_type: str = "application/octet-stream"
     ) -> None:
-        """Загружает файл в бакет"""
+        """
+        ЗАПРЕЩЕНО: Этот сервис имеет права только на чтение.
+        Для загрузки файлов используйте creation_service.
+        """
+        raise NotImplementedError(
+            "Этот сервис (player_search) имеет права только на чтение. "
+            "Загрузка файлов запрещена. Используйте video_upload_service."
+        )
+
         client = await self._get_client()
         
         try:
