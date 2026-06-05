@@ -162,7 +162,7 @@ export default function ProfilePage() {
             Для доступа к личному кабинету необходимо авторизоваться
           </p>
           <a
-            href="/auth/login"
+            href="http://localhost:5174"
             className="btn btn-primary btn-lg"
             style={{ display: "block", textAlign: "center" }}
           >

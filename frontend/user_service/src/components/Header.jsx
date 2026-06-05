@@ -9,7 +9,7 @@ export default function Header() {
       <div className="container">
         <span className="logo">MISIS Tube</span>
         <nav className="nav">
-          {user && (
+          {user ? (
             <>
               {isAdmin && (
                 <Link
@@ -35,6 +35,14 @@ export default function Header() {
                 Выйти
               </button>
             </>
+          ) : (
+            <a
+              href="http://localhost:5174"
+              className="btn btn-sm btn-outline"
+              style={{ color: "white", borderColor: "white" }}
+            >
+              Войти
+            </a>
           )}
         </nav>
       </div>

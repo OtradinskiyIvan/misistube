@@ -88,7 +88,7 @@ export function AuthProvider({ children, initialHash = "" }) {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     setUser(null);
-    window.location.href = "/auth/login";
+    window.location.href = "http://localhost:5174";
   }, []);
 
   const hasRole = useCallback(
