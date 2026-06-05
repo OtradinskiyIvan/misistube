@@ -250,6 +250,28 @@ async def create_user(
 
 
 @router.get(
+    "/users/search",
+    response_model=list[UserBriefResponse],
+    summary="Search users",
+    description="Search users by username or uuid (case-insensitive partial match).",
+)
+async def search_users(
+    q: str = Query(..., min_length=1, description="Search query"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    service: BriefUserService = Depends(get_brief_user_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.search.requested", extra={"query": q})
+    users = await service.search_brief(q, skip, limit)
+    logger.info("users.search.success", extra={"count": len(users)})
+    return [
+        UserBriefResponse(id=u.id, username=u.username, avatar_url=u.avatar_url, status=u.status)
+        for u in users
+    ]
+
+
+@router.get(
     "/users/{user_id}",
     response_model=UserResponseDTO,
     summary="Get user by ID",
@@ -436,28 +458,6 @@ async def revoke_role(
     roles = await service.execute(user_id=user_id, role=role)
     logger.info("users.roles.revoke.success", extra={"user_id": str(user_id), "role": role})
     return RoleResponse(user_id=user_id, roles=roles)
-
-
-@router.get(
-    "/users/search",
-    response_model=list[UserBriefResponse],
-    summary="Search users",
-    description="Search users by username (case-insensitive partial match).",
-)
-async def search_users(
-    q: str = Query(..., min_length=1, description="Search query"),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    service: BriefUserService = Depends(get_brief_user_service),
-    logger=Depends(get_logger_dep),
-):
-    logger.info("users.search.requested", extra={"query": q})
-    users = await service.search_brief(q, skip, limit)
-    logger.info("users.search.success", extra={"count": len(users)})
-    return [
-        UserBriefResponse(id=u.id, username=u.username, avatar_url=u.avatar_url, status=u.status)
-        for u in users
-    ]
 
 
 @router.get(
