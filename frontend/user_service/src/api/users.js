@@ -54,8 +54,13 @@ export const api = {
   listUsers: (skip = 0, limit = 100) =>
     request(`/users?skip=${skip}&limit=${limit}`),
 
-  searchUsers: (username, skip = 0, limit = 100) =>
-    request(`/users?skip=${skip}&limit=${limit}&username=${encodeURIComponent(username)}`),
+  searchUsers: (q, skip = 0, limit = 20) =>
+    request(`/users/search?q=${encodeURIComponent(q)}&skip=${skip}&limit=${limit}`),
+
+  getUserBrief: (id) => request(`/users/${id}/brief`),
+
+  getUsersBatch: (ids) =>
+    request("/users/batch", { method: "POST", body: JSON.stringify({ ids }) }),
 
   getUser: (id) => request(`/users/${id}`),
 

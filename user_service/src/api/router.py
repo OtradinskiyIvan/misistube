@@ -448,14 +448,14 @@ async def search_users(
     q: str = Query(..., min_length=1, description="Search query"),
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
-    service: GetUserService = Depends(get_get_user_service),
+    service: BriefUserService = Depends(get_brief_user_service),
     logger=Depends(get_logger_dep),
 ):
     logger.info("users.search.requested", extra={"query": q})
-    users = await service.search_by_username(q, skip, limit)
+    users = await service.search_brief(q, skip, limit)
     logger.info("users.search.success", extra={"count": len(users)})
     return [
-        UserBriefResponse(id=u.id, username=u.username, avatar_url=None, status=u.status)
+        UserBriefResponse(id=u.id, username=u.username, avatar_url=u.avatar_url, status=u.status)
         for u in users
     ]
 

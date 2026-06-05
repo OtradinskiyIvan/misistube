@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/users.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
@@ -46,6 +47,7 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
 function SubscriptionsTab({ userId }) {
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
+  const [userMap, setUserMap] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,8 +57,20 @@ function SubscriptionsTab({ userId }) {
           api.getFollowing(userId),
           api.getFollowers(userId),
         ]);
-        setFollowing(Array.isArray(followingRes) ? followingRes : []);
-        setFollowers(Array.isArray(followersRes) ? followersRes : []);
+        const f = Array.isArray(followingRes) ? followingRes : [];
+        const fs = Array.isArray(followersRes) ? followersRes : [];
+        setFollowing(f);
+        setFollowers(fs);
+
+        const ids = new Set();
+        f.forEach((s) => ids.add(s.following_id));
+        fs.forEach((s) => ids.add(s.follower_id));
+        if (ids.size > 0) {
+          const briefs = await api.getUsersBatch(Array.from(ids));
+          const map = {};
+          briefs.forEach((u) => { map[u.id] = u; });
+          setUserMap(map);
+        }
       } catch {
         setFollowing([]);
         setFollowers([]);
@@ -69,6 +83,15 @@ function SubscriptionsTab({ userId }) {
 
   if (loading) return <LoadingSpinner />;
 
+  const UserLink = ({ id }) => {
+    const u = userMap[id];
+    return (
+      <Link to={`/users/${id}`} style={{ textDecoration: "none", color: "inherit" }}>
+        {u ? u.username : id.slice(0, 8) + "…"}
+      </Link>
+    );
+  };
+
   return (
     <div className="card" style={{ padding: "1.5rem" }}>
       <h3 style={{ marginBottom: "1rem" }}>Подписки ({following.length})</h3>
@@ -78,7 +101,7 @@ function SubscriptionsTab({ userId }) {
         <ul style={{ listStyle: "none", padding: 0 }}>
           {following.map((s) => (
             <li key={s.id} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--misis-gray-200)" }}>
-              following_id: {s.following_id}
+              <UserLink id={s.following_id} />
             </li>
           ))}
         </ul>
@@ -91,7 +114,7 @@ function SubscriptionsTab({ userId }) {
         <ul style={{ listStyle: "none", padding: 0 }}>
           {followers.map((s) => (
             <li key={s.id} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--misis-gray-200)" }}>
-              follower_id: {s.follower_id}
+              <UserLink id={s.follower_id} />
             </li>
           ))}
         </ul>
