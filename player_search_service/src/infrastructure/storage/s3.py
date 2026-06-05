@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 import aiobotocore.session
 from aiobotocore.session import AioSession
@@ -65,7 +65,7 @@ class S3StorageAdapter(StoragePort):
             },
             ExpiresIn=expires_in
         )
-        expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
         return url, expires_at
 
     async def upload_file(
