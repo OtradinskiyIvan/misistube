@@ -13,7 +13,7 @@ export default function WatchPage() {
       try {
         setLoading(true)
         // Получаем presigned URL для видео
-        const response = await fetch(`http://localhost:8000/api/v1/playback/${id}`)
+        const response = await fetch(`/api/v1/playback/${id}`)
         
         if (!response.ok) {
           throw new Error('Видео не найдено')
@@ -23,7 +23,7 @@ export default function WatchPage() {
         setVideoUrl(data.hls_master_url)
         
         // Дополнительно получаем информацию о видео
-        const searchResponse = await fetch(`http://localhost:8000/api/v1/search?q=&limit=1`)
+        const searchResponse = await fetch(`/api/v1/search?q=&limit=1`)
         const searchData = await searchResponse.json()
         const foundVideo = searchData.items?.find(v => v.id === id)
         if (foundVideo) {

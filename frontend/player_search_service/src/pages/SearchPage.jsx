@@ -21,7 +21,7 @@ export default function SearchPage() {
       tags.forEach(tag => params.append('tags', tag))
       params.append('limit', '10')
 
-      const response = await fetch(`http://localhost:8000/api/v1/search?${params.toString()}`, {
+      const response = await fetch(`/api/v1/search?${params.toString()}`, {
         signal: abortControllerRef.current.signal
       })
       const data = await response.json()
