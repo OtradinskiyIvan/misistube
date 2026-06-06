@@ -1,7 +1,7 @@
 from src.api.schemas import PlaybackUrl
 from src.infrastructure.storage.protocol import StoragePort
 from src.infrastructure.search.protocol import SearchPort
-from fastapi import HTTPException
+from src.core.exceptions import VideoNotFoundError
 
 import logging
 
@@ -22,20 +22,16 @@ class GetPlaybackUrlUseCase:
         self.expires_in = expires_in
 
     async def execute(self, video_id: str) -> PlaybackUrl:
-        logger.info(f"Searching for video_id: {video_id}")
+        logger.info("Searching for video_id: %s", video_id)
 
         video = await self.search_port.get_by_id(video_id)
         if not video:
-            logger.error(f"Video not found: {video_id}")
-            raise HTTPException(status_code=404, detail="Video not found")
+            logger.error("Video not found: %s", video_id)
+            raise VideoNotFoundError(video_id)
         
-        logger.info(f"Found video: {video.title}, storage_key: {video.storage_key}")
+        logger.info("Found video: %s, storage_key: %s", video.title, video.storage_key)
 
         storage_key = video.storage_key
-        
-        
-        # if not storage_key.startswith("videos/"):
-        #     storage_key = f"videos/{storage_key}"
         
         url, exp = await self.storage.generate_presigned_url(
             object_key=storage_key,

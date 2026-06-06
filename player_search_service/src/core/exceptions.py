@@ -10,10 +10,34 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 logger = logging.getLogger("player_search_service")
 
 
+class DomainError(Exception):
+    """Базовое исключение для доменных ошибок"""
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
+class VideoNotFoundError(DomainError):
+    def __init__(self, video_id: str):
+        self.video_id = video_id
+        super().__init__(f"Video not found: {video_id}")
+
+
 def register_rfc7807_handlers(app: FastAPI):
     """Регистрирует обработчики ошибок в FastAPI-приложении"""
     settings = get_settings()
     is_production = settings.APP_ENV == "production"
+
+    @app.exception_handler(VideoNotFoundError)
+    async def video_not_found_handler(request: Request, exc: VideoNotFoundError):
+        logger.info("Video not found: %s on %s", exc.video_id, request.url.path)
+        return problem_response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            title="Video Not Found",
+            detail=exc.message,
+            problem_type="https://misistube.dev/errors/not-found",
+            instance=request.url.path
+        )
 
     @app.exception_handler(StarletteHTTPException)
     async def http_exception_handler(request: Request, exc: StarletteHTTPException):
