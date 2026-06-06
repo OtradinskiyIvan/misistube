@@ -35,6 +35,15 @@ class PlayerSearchSettings(BaseSettings):
             raise ValueError("DATABASE_URL must be a PostgreSQL connection string")
         return v
 
+    @property
+    def cors_allow_credentials(self) -> bool:
+        """
+        В development с allow_origins=["*"] отключаем credentials.
+        В production с конкретными origins — включаем.
+        """
+        if self.APP_ENV == "development" and self.CORS_ALLOW_ORIGINS == ["*"]:
+            return False
+        return True
 
 def get_settings() -> Settings:
     """Возвращает экземпляр PlayerSearchSettings с валидацией"""
