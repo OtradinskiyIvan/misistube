@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import './App.css'
+import Layout from './components/Layout.jsx'
 
-const AUTH_API = 'http://127.0.0.1:8000/api/v1/auth'
+const AUTH_API = '/api/v1/auth'
 
 function App() {
   const [email, setEmail] = useState('')
@@ -9,6 +9,8 @@ function App() {
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('')
   const [statusType, setStatusType] = useState('')
+  const [showAdminField, setShowAdminField] = useState(false)
+  const [adminKey, setAdminKey] = useState('')
   const [showRegister, setShowRegister] = useState(false)
   const [registerUsername, setRegisterUsername] = useState('')
   const [registerEmail, setRegisterEmail] = useState('')
@@ -67,7 +69,11 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ login: login || email, password }),
+        body: JSON.stringify({
+          login: login || email,
+          password,
+          ...(showAdminField && adminKey ? { admin_key: adminKey } : {}),
+        }),
       })
 
       if (!response.ok) {
@@ -78,10 +84,9 @@ function App() {
       }
 
       const tokenData = await response.json()
-      saveTokens(tokenData)
       setStatusType('success')
       setStatus('Вход выполнен. Идет перенаправление...')
-      window.location.href = '/?authenticated=1'
+      window.location.replace(`http://localhost:5173/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`)
     } catch (error) {
       setStatusType('error')
       setStatus(error.message || 'Не удалось выполнить запрос. Попробуйте позже.')
@@ -149,11 +154,10 @@ function App() {
       }
 
       const tokenData = await loginResponse.json()
-      saveTokens(tokenData)
       setShowConfirm(false)
       setStatusType('success')
       setStatus('Регистрация и вход выполнены. Идет перенаправление...')
-      window.location.href = '/?authenticated=1'
+      window.location.replace(`http://localhost:5173/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`)
     } catch (error) {
       setConfirmStatusType('error')
       setConfirmStatus(error.message || 'Не удалось выполнить запрос. Попробуйте позже.')
@@ -204,68 +208,105 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <div className="auth-card card shadow">
-        <div className="card__content">
-          <div className="brand mb-4">
-            <h1>Авторизация</h1>
-            <p className="card__description">
-              Тестовый frontend auth сервиса с импортом общего стиля.
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label className="label" htmlFor="login">
-                Логин (username или email)
-              </label>
-              <input
-                id="login"
-                type="text"
-                className="input"
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
-                placeholder="ivan или ivan@example.com"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="label" htmlFor="password">
-                Пароль
-              </label>
-              <input
-                id="password"
-                type="password"
-                className="input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <div className="auth-actions">
-              <button type="submit" className="btn btn-primary btn-lg">
-                Войти
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-lg"
-                onClick={openRegister}
-              >
-                Зарегистрироваться
-              </button>
-            </div>
-
-            {status && (
-              <p className={`status mt-4 ${statusType === 'error' ? 'status-error' : ''} ${statusType === 'success' ? 'status-success' : ''}`}>
-                {status}
+    <Layout>
+      <div className="fade-in">
+        <div className="auth-card card shadow">
+          <div className="card__content">
+            <div className="brand mb-4">
+              <h1>Авторизация</h1>
+              <p className="card__description">
+                Тестовый frontend auth сервиса с импортом общего стиля.
               </p>
-            )}
-          </form>
+            </div>
+
+            <form onSubmit={handleLogin}>
+              <div className="form-group">
+                <label className="label" htmlFor="login">
+                  Логин (username или email)
+                </label>
+                <input
+                  id="login"
+                  type="text"
+                  className="input"
+                  value={login}
+                  onChange={(e) => setLogin(e.target.value)}
+                  placeholder="ivan или ivan@example.com"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="label" htmlFor="password">
+                  Пароль
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  className="input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              {showAdminField && (
+                <div className="form-group">
+                  <label className="label" htmlFor="adminKey">
+                    Ключ подтверждения
+                  </label>
+                  <input
+                    id="adminKey"
+                    type="password"
+                    className="input"
+                    value={adminKey}
+                    onChange={(e) => setAdminKey(e.target.value)}
+                    placeholder="Введите ключ администратора"
+                  />
+                </div>
+              )}
+
+              <div
+                className="admin-hint"
+                onClick={() => {
+                  setShowAdminField(!showAdminField)
+                  if (showAdminField) setAdminKey('')
+                }}
+                style={{
+                  textAlign: 'center',
+                  marginTop: '0.75rem',
+                  marginBottom: '0.5rem',
+                  cursor: 'pointer',
+                  opacity: showAdminField ? 1 : 0.5,
+                  fontWeight: showAdminField ? 700 : 400,
+                  fontSize: '0.85rem',
+                  userSelect: 'none',
+                }}
+              >
+                войти как админ
+              </div>
+
+              <div className="auth-actions">
+                <button type="submit" className="btn btn-primary btn-lg">
+                  Войти
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-lg"
+                  onClick={openRegister}
+                >
+                  Зарегистрироваться
+                </button>
+              </div>
+
+              {status && (
+                <p className={`status mt-4 ${statusType === 'error' ? 'status-error' : ''} ${statusType === 'success' ? 'status-success' : ''}`}>
+                  {status}
+                </p>
+              )}
+            </form>
+          </div>
         </div>
-      </div>
 
       {showRegister && (
         <div className="modal-overlay">
@@ -415,7 +456,8 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   )
 }
 

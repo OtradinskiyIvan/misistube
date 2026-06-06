@@ -35,3 +35,26 @@ def decode_jwt_token(
 ) -> dict:
     secret_value = secret.get_secret_value() if isinstance(secret, SecretStr) else secret
     return jwt.decode(token, secret_value, algorithms=[algorithm])
+
+
+async def get_token_payload(authorization: str, secret: SecretStr | str, algorithm: str = "HS256") -> dict:
+    prefix = "Bearer "
+    if not authorization.startswith(prefix):
+        from shared.exceptions import AuthenticationError
+        raise AuthenticationError("Invalid authorization header")
+    token = authorization[len(prefix):]
+    try:
+        return decode_jwt_token(token, secret, algorithm)
+    except jwt.ExpiredSignatureError:
+        from shared.exceptions import AuthenticationError
+        raise AuthenticationError("Token has expired")
+    except jwt.InvalidTokenError:
+        from shared.exceptions import AuthenticationError
+        raise AuthenticationError("Invalid token")
+
+
+async def require_role(role: str, payload: dict) -> None:
+    roles = payload.get("roles", [])
+    if role not in roles:
+        from shared.exceptions import ForbiddenError
+        raise ForbiddenError(f"Required role: {role}")

@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["shared"]
+packages = ["shared", "shared.database"]
 
 [tool.setuptools.package-dir]
 shared = "."

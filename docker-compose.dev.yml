@@ -1,0 +1,85 @@
+services:
+
+  # ── Databases ──────────────────────────────────────────────
+
+  auth-db:
+    image: postgres:16-alpine
+    container_name: misistube-auth-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: misistube
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: misistube_auth
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  user-db:
+    image: postgres:16-alpine
+    container_name: misistube-user-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: misistube
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: misistube_users
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_users"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  interaction-db:
+    image: postgres:16-alpine
+    container_name: misistube-interaction-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: misistube
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: misistube_interactions
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_interactions"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Unified dev container ─────────────────────────────────
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: misistube-dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+      - "5173:5173"
+      - "5174:5174"
+      - "5175:5175"
+    volumes:
+      - ./logs:/app/logs:z
+    env_file:
+      - authorization_service/.env
+      - user_service/.env
+      - interaction_service/.env
+    environment:
+      APP_ENV: development
+      DATABASE_ECHO: "false"
+      LOG_LEVEL: INFO
+      AUTH_DB_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@auth-db:5432/misistube_auth
+      USER_DB_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@user-db:5432/misistube_users
+      INTERACTION_DB_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@interaction-db:5432/misistube_interactions
+      USER_SERVICE_URL: http://localhost:8001
+      VITE_AUTH_PROXY_TARGET: http://localhost:8000
+      VITE_USER_PROXY_TARGET: http://localhost:8001
+      VITE_INTERACTION_PROXY_TARGET: http://localhost:8002
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      user-db:
+        condition: service_healthy
+      interaction-db:
+        condition: service_healthy
