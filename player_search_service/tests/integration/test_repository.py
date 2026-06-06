@@ -137,3 +137,39 @@ class TestSQLAlchemyVideoRepository:
         assert len(results1) == 2
         assert len(results2) == 2
         assert results1[0].title != results2[0].title
+    
+    @pytest.mark.asyncio
+    async def test_get_by_id_found(self, repository, db_session):
+        """get_by_id возвращает видео, если оно существует"""
+        video = Video(
+            title="Test Video",
+            storage_key="videos/test/master.m3u8",
+            status=VideoStatus.READY,
+            duration_seconds=120
+        )
+        db_session.add(video)
+        await db_session.commit()
+        
+        # Получаем ID только что созданного видео
+        result = await repository.get_by_id(str(video.id))
+        
+        assert result is not None
+        assert result.title == "Test Video"
+        assert result.storage_key == "videos/test/master.m3u8"
+        assert result.duration_seconds == 120
+
+    @pytest.mark.asyncio
+    async def test_get_by_id_not_found(self, repository, db_session):
+        """get_by_id возвращает None, если видео не найдено"""
+        # Используем несуществующий UUID
+        fake_uuid = "00000000-0000-0000-0000-000000000000"
+        result = await repository.get_by_id(fake_uuid)
+        
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_get_by_id_invalid_uuid(self, repository, db_session):
+        """get_by_id возвращает None для невалидного UUID"""
+        result = await repository.get_by_id("not-a-uuid")
+        
+        assert result is None
