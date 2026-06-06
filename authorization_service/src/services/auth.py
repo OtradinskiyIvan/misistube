@@ -104,6 +104,7 @@ class AuthService:
                 algorithm=self._settings.JWT_ALGORITHM,
                 expires_minutes=5,
                 scope="assign_role",
+                roles=["admin"],
             )
             if self._user_svc_client is not None:
                 await self._user_svc_client.assign_role(str(user.id), "admin", token)
