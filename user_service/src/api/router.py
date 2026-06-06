@@ -44,6 +44,7 @@ from ..deps import (
     get_revoke_role_service,
     require_admin,
     get_current_user_payload,
+    verify_internal_api_key,
 )
 from ..services.assign_role import AssignRoleService
 from ..services.brief_user import BriefUserService
@@ -136,6 +137,7 @@ async def sync_user(
     settings=Depends(get_settings),
     logger=Depends(get_logger_dep),
     service: SyncUserService = Depends(get_sync_user_service),
+    is_internal: bool = Depends(verify_internal_api_key),
 ):
     try:
         data = decode_jwt_token(
@@ -178,8 +180,8 @@ async def sync_user(
             detail="Invalid user_id format in token",
         )
 
-    logger.info("auth.sync.requested", extra={"user_id": str(user_id), "username": username})
-    user = await service.execute(user_id=user_id, username=username, email=email)
+    logger.info("auth.sync.requested", extra={"user_id": str(user_id), "username": username, "is_internal": is_internal})
+    user = await service.execute(user_id=user_id, username=username, email=email, create_if_missing=is_internal)
     logger.info("auth.sync.success", extra={"user_id": str(user_id)})
     return map_user_to_response(user)
 

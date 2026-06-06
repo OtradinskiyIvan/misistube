@@ -15,7 +15,10 @@ def get_settings() -> AuthSettings:
 def get_user_service_client(
     settings: AuthSettings = Depends(get_settings)
 ) -> UserServiceClient:
-    return UserServiceClient(base_url=settings.USER_SERVICE_URL)
+    return UserServiceClient(
+        base_url=settings.USER_SERVICE_URL,
+        internal_api_key=settings.INTERNAL_API_KEY,
+    )
 
 def get_auth_service(
     session: AsyncSession = Depends(get_async_session),

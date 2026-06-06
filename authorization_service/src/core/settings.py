@@ -35,6 +35,7 @@ class AuthSettings(SharedBaseSettings):
     SMTP_USE_TLS: bool = False
 
     USER_SERVICE_URL: str = "http://user-service:8000"
+    INTERNAL_API_KEY: str = ""
     ADMIN_KEY: str | None = None
 
     S3_ENDPOINT: str | None = None

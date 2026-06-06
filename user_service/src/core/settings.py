@@ -35,6 +35,8 @@ class UserServiceSettings(shared_config.BaseSettings):
     JWT_SECRET: shared_config.SecretStr = Field(validation_alias=AliasChoices("JWT_SECRET", "SECRET_KEY"))
     JWT_ALGORITHM: str = Field(default="HS256", validation_alias=AliasChoices("JWT_ALGORITHM", "JWT_ALGORITHM"))
 
+    INTERNAL_API_KEY: str = ""
+
     S3_ENDPOINT: Optional[str] = None
     S3_ACCESS_KEY: Optional[shared_config.SecretStr] = None
     S3_SECRET_KEY: Optional[shared_config.SecretStr] = None

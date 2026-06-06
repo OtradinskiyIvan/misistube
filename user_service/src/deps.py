@@ -3,6 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, status
+from fastapi.security import APIKeyHeader
 from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -164,3 +165,13 @@ async def get_brief_user_service(
     session: AsyncSession = Depends(get_session),
 ) -> BriefUserService:
     return BriefUserService(session)
+
+
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def verify_internal_api_key(
+    x_api_key: str = Depends(_api_key_header),
+    settings: UserServiceSettings = Depends(get_settings),
+) -> bool:
+    return bool(settings.INTERNAL_API_KEY) and x_api_key == settings.INTERNAL_API_KEY
