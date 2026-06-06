@@ -33,11 +33,11 @@ async def register(
         logger.warning("Register: username already taken: %s", payload.username)
         raise HTTPException(status_code=409, detail="Username already taken")
 
-    code = await confirmation.create_pending_registration(
+    await confirmation.create_pending_registration(
         payload.username, payload.email, payload.password, auth_service._settings
     )
     logger.info("Register: confirmation sent to %s", payload.email)
-    return {"detail": "confirmation_sent", "debug_code": code}
+    return {"detail": "confirmation_sent"}
 
 
 @router.post("/confirm", status_code=status.HTTP_200_OK)
