@@ -191,30 +191,8 @@ async def assign_role_internal(
     settings=Depends(get_settings),
     logger=Depends(get_logger_dep),
     service: AssignRoleService = Depends(get_assign_role_service),
+    _admin=Depends(require_admin),
 ):
-    try:
-        data = decode_jwt_token(
-            payload.token,
-            secret=settings.JWT_SECRET,
-            algorithm=settings.JWT_ALGORITHM,
-        )
-    except ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
-        )
-    except InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid token",
-        )
-
-    if data.get("sub") != payload.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Token sub does not match user_id",
-        )
-
     try:
         user_id = UUID(payload.user_id)
     except ValueError:

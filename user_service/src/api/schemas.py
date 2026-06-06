@@ -80,7 +80,6 @@ class UserListResponse(BaseModel):
 class AssignRoleInternalRequest(BaseModel):
     user_id: str
     role: str = Field(..., min_length=1, max_length=50)
-    token: str
 
 class RoleAssignDTO(BaseModel):
     role: str = Field(..., min_length=1, max_length=50)
