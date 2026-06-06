@@ -20,12 +20,14 @@ async def get_upload_info():
 async def upload_video(
     title: str = Form(..., min_length=1, max_length=255),
     description: str = Form(..., min_length=1, max_length=1000),
+    user_id: str = Form(None),
     file: UploadFile = File(...),
     service: VideoService = Depends(get_video_service),
 ):
     content = await file.read()
+    parsed_user_id = UUID(user_id) if user_id else None
     try:
-        video = await service.upload_video(title, description, content, file.filename)
+        video = await service.upload_video(title, description, content, file.filename, parsed_user_id)
     except VideoUploadError as e:
         raise HTTPException(status_code=502, detail=str(e))
     return VideoUploadResponse(
@@ -34,6 +36,7 @@ async def upload_video(
         description=video.description,
         status=video.status.value,
         duration=video.duration,
+        user_id=video.user_id,
         created_at=video.created_at,
         updated_at=video.updated_at,
     )

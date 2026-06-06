@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
+from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
@@ -17,7 +18,16 @@ logging.basicConfig(
     ],
 )
 
-app = FastAPI(title="Video Studio Service")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from src.infrastructure.database.models import Base
+    from src.infrastructure.database.session import engine
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    await engine.dispose()
+
+app = FastAPI(title="Video Studio Service", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,5 +49,3 @@ async def log_requests(request: Request, call_next):
 @app.get("/health")
 async def health():
     return {"status": "ok"}
-
-# Подключение роутеров (раскомментировать, когда создадите videos.py)

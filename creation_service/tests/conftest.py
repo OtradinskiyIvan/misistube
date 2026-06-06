@@ -14,6 +14,7 @@ def sample_video():
         storage_key=f"{uuid4()}.mp4",
         status=VideoStatus.UPLOADING,
         duration=120,
+        user_id=None,
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
     )

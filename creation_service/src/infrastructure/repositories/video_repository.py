@@ -15,6 +15,7 @@ class SQLAlchemyVideoRepository(VideoRepositoryProtocol):
     async def add(self, video: Video) -> None:
         model = VideoModel(
             id=video.id,
+            user_id=video.user_id,
             title=video.title,
             description=video.description,
             storage_key=video.storage_key,
@@ -55,9 +56,10 @@ class SQLAlchemyVideoRepository(VideoRepositoryProtocol):
             update(VideoModel)
             .where(VideoModel.id == video.id)
             .values(
+                user_id=video.user_id,
                 title=video.title,
                 description=video.description,
-            status=video.status,
+                status=video.status,
                 duration_seconds=video.duration,
                 storage_key=video.storage_key,
                 updated_at=video.updated_at,
@@ -84,6 +86,7 @@ class SQLAlchemyVideoRepository(VideoRepositoryProtocol):
             storage_key=model.storage_key,
             status=VideoStatus(model.status),
             duration=model.duration_seconds,
+            user_id=model.user_id,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )

@@ -15,7 +15,7 @@ class VideoService:
         self._repo = repo
         self._storage = storage
 
-    async def upload_video(self, title: str, description: str, file_bytes: bytes, filename: str) -> Video:
+    async def upload_video(self, title: str, description: str, file_bytes: bytes, filename: str, user_id: UUID | None = None) -> Video:
         with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
             tmp.write(file_bytes)
             tmpname = tmp.name
@@ -35,7 +35,7 @@ class VideoService:
             except Exception as e:
                 raise VideoUploadError(f"S3 upload failed: {e}") from e
 
-            video = Video.create(title, description, storage_key, duration)
+            video = Video.create(title, description, storage_key, duration, user_id)
             try:
                 await self._repo.add(video)
             except Exception:
