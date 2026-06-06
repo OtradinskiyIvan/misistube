@@ -412,6 +412,7 @@ async def admin_ban_user(
     user_id: UUID,
     user_svc: UserServiceClient = Depends(get_user_service_client),
     logger=Depends(get_logger_dep),
+    _admin=Depends(require_admin),
 ):
     logger.info("admin.users.ban.requested", extra={"user_id": str(user_id)})
     ok = await user_svc.update_user_status(user_id, "banned")
@@ -431,6 +432,7 @@ async def admin_unban_user(
     user_id: UUID,
     user_svc: UserServiceClient = Depends(get_user_service_client),
     logger=Depends(get_logger_dep),
+    _admin=Depends(require_admin),
 ):
     logger.info("admin.users.unban.requested", extra={"user_id": str(user_id)})
     ok = await user_svc.update_user_status(user_id, "active")

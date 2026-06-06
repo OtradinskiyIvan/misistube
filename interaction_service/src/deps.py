@@ -87,7 +87,7 @@ async def get_current_user_id(
     try:
         payload = decode_jwt_token(
             token,
-            secret=s.JWT_SECRET.get_secret_value(),
+            secret=s.JWT_SECRET,
             algorithm=s.JWT_ALGORITHM,
         )
     except ExpiredSignatureError:
@@ -132,7 +132,7 @@ async def get_current_user_payload(
     try:
         return decode_jwt_token(
             token,
-            secret=s.JWT_SECRET.get_secret_value(),
+            secret=s.JWT_SECRET,
             algorithm=s.JWT_ALGORITHM,
         )
     except ExpiredSignatureError:
