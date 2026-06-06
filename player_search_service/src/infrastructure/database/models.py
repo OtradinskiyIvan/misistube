@@ -36,7 +36,7 @@ class Video(Base):
             create_type=False             
         ),
         nullable=False,
-        server_default=text("'uploading'::video_status'")
+        server_default=text("'uploading'::video_status")
     )
     duration_seconds = Column(Integer, nullable=True, server_default=text("0"))
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("NOW()"))

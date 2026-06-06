@@ -26,8 +26,20 @@ class TestSearchVideoUseCase:
     @pytest.mark.asyncio
     async def test_search_cache_hit(self, mock_cache):
         """Cache hit → возврат без запроса к БД"""
+        # 🔹 Обновлен под новую схему
         mock_cache.get.return_value = {
-            "items": [{"id": "c1", "title": "Cached", "duration": 60, "tags": []}],
+            "items": [{
+                "id": "c1",
+                "title": "Cached",
+                "description": None,
+                "storage_key": "videos/cached/master.m3u8",
+                "status": "ready",
+                "duration_seconds": 60,
+                "created_at": "2026-06-05T10:00:00+00:00",
+                "updated_at": "2026-06-05T10:00:00+00:00",
+                "tags": None,
+                "thumbnail_url": None
+            }],
             "total": 1, "offset": 0, "limit": 10
         }
         uc = SearchVideoUseCase(cache=mock_cache, search_port=AsyncMock())
@@ -38,9 +50,14 @@ class TestSearchVideoUseCase:
         uc.search_port.search.assert_not_called()
         assert result.items[0].title == "Cached"
 
-
     @pytest.mark.asyncio
-    async def test_generate_url(self, mock_storage):
+    async def test_generate_url(self, mock_storage, mock_search_port):
+        """Генерация presigned URL для видео"""
+        # 🔹 Настраиваем мок для get_by_id
+        mock_video = AsyncMock()
+        mock_video.storage_key = "video-123/master.m3u8"
+        mock_search_port.get_by_id.return_value = mock_video
+        
         mock_storage.generate_presigned_url.return_value = (
             "https://fake-s3.url/video.m3u8",
             datetime.now(timezone.utc) + timedelta(minutes=15)
@@ -48,6 +65,7 @@ class TestSearchVideoUseCase:
 
         uc = GetPlaybackUrlUseCase(
             storage=mock_storage,
+            search_port=mock_search_port,  # 🔹 Добавлен search_port
             bucket_name="test-videos",
             expires_in=900
         )
