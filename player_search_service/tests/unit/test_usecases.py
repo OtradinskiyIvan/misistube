@@ -6,6 +6,7 @@ import pytest
 from src.api.schemas import SearchQuery
 from src.usecases.playback import GetPlaybackUrlUseCase
 from src.usecases.search import SearchVideoUseCase
+from src.core.exceptions import VideoNotFoundError
 
 
 class TestSearchVideoUseCase:
@@ -26,7 +27,6 @@ class TestSearchVideoUseCase:
     @pytest.mark.asyncio
     async def test_search_cache_hit(self, mock_cache):
         """Cache hit → возврат без запроса к БД"""
-        # 🔹 Обновлен под новую схему
         mock_cache.get.return_value = {
             "items": [{
                 "id": "c1",
@@ -53,7 +53,6 @@ class TestSearchVideoUseCase:
     @pytest.mark.asyncio
     async def test_generate_url(self, mock_storage, mock_search_port):
         """Генерация presigned URL для видео"""
-        # 🔹 Настраиваем мок для get_by_id
         mock_video = AsyncMock()
         mock_video.storage_key = "video-123/master.m3u8"
         mock_search_port.get_by_id.return_value = mock_video
@@ -65,7 +64,7 @@ class TestSearchVideoUseCase:
 
         uc = GetPlaybackUrlUseCase(
             storage=mock_storage,
-            search_port=mock_search_port,  # 🔹 Добавлен search_port
+            search_port=mock_search_port,
             bucket_name="test-videos",
             expires_in=900
         )
@@ -79,3 +78,23 @@ class TestSearchVideoUseCase:
             bucket="test-videos",
             expires_in=900
         )
+
+    @pytest.mark.asyncio
+    async def test_generate_url_video_not_found(self, mock_storage, mock_search_port):
+        """GetPlaybackUrlUseCase выбрасывает VideoNotFoundError, если видео не найдено"""
+        mock_search_port.get_by_id.return_value = None
+
+        uc = GetPlaybackUrlUseCase(
+            storage=mock_storage,
+            search_port=mock_search_port,
+            bucket_name="test-videos",
+            expires_in=900
+        )
+
+        with pytest.raises(VideoNotFoundError) as exc_info:
+            await uc.execute("non-existent-id")
+
+        assert exc_info.value.video_id == "non-existent-id"
+        assert "non-existent-id" in str(exc_info.value)
+
+        mock_storage.generate_presigned_url.assert_not_called()
