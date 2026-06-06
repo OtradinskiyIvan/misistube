@@ -18,6 +18,7 @@ class UserServiceClient:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             resp = await client.post(
                 f"{self._base_url}/api/v1/auth/assign-role",
-                json={"user_id": user_id, "role": role, "token": auth_token},
+                json={"user_id": user_id, "role": role},
+                headers={"Authorization": f"Bearer {auth_token}"},
             )
             return resp.status_code == 200
