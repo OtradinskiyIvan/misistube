@@ -16,7 +16,7 @@ class UserProfileModel(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=False,
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False,
     )
     avatar_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
     bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

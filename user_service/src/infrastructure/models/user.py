@@ -33,22 +33,22 @@ class UserModel(Base):
     )
 
     profile: Mapped[Optional["UserProfileModel"]] = relationship(
-        back_populates="user", uselist=False,
+        back_populates="user", uselist=False, cascade="all, delete",
     )
     roles: Mapped[list["UserRoleModel"]] = relationship(
-        back_populates="user", foreign_keys="UserRoleModel.user_id",
+        back_populates="user", foreign_keys="UserRoleModel.user_id", cascade="all, delete",
     )
     preferences: Mapped[Optional["UserPreferenceModel"]] = relationship(
-        back_populates="user", uselist=False,
+        back_populates="user", uselist=False, cascade="all, delete",
     )
     statistics: Mapped[Optional["UserStatisticModel"]] = relationship(
-        back_populates="user", uselist=False,
+        back_populates="user", uselist=False, cascade="all, delete",
     )
     subscriptions_as_follower: Mapped[list["UserSubscriptionModel"]] = relationship(
-        back_populates="follower", foreign_keys="UserSubscriptionModel.follower_id",
+        back_populates="follower", foreign_keys="UserSubscriptionModel.follower_id", cascade="all, delete",
     )
     subscriptions_as_following: Mapped[list["UserSubscriptionModel"]] = relationship(
-        back_populates="following", foreign_keys="UserSubscriptionModel.following_id",
+        back_populates="following", foreign_keys="UserSubscriptionModel.following_id", cascade="all, delete",
     )
 
     def __repr__(self) -> str:

@@ -125,7 +125,7 @@ async def decode_token(
     response_model=UserResponseDTO,
     tags=["auth"],
     summary="Sync user from JWT",
-    description="Decodes JWT, creates or updates user in DB from payload data.",
+    description="Decodes JWT and updates existing user data from payload. User must already exist (created by auth-service on email confirmation).",
     responses={
         400: {"model": ErrorResponse, "description": "Invalid token or missing fields"},
         401: {"model": ErrorResponse, "description": "Token has expired"},
@@ -152,6 +152,12 @@ async def sync_user(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid token",
+        )
+
+    if data.get("token_type") != "access":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid token type",
         )
 
     user_id = data.get("sub")

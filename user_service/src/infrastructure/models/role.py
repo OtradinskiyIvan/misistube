@@ -16,14 +16,14 @@ class UserRoleModel(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False,
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False,
     )
     role: Mapped[str] = mapped_column(String(50), nullable=False)
     assigned_at: Mapped[datetime] = mapped_column(
         DateTime(), server_default=func.now(), nullable=False,
     )
     assigned_by: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True,
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True,
     )
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
 

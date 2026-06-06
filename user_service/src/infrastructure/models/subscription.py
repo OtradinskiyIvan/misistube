@@ -15,10 +15,10 @@ class UserSubscriptionModel(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
     )
     follower_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False,
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False,
     )
     following_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False,
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False,
     )
     subscribed_at: Mapped[datetime] = mapped_column(
         DateTime(), server_default=func.now(), nullable=False,
