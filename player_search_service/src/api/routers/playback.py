@@ -1,5 +1,7 @@
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, Path
+
 from src.api.deps import get_playback_usecase
 from src.api.schemas import PlaybackUrl
 from src.usecases.playback import GetPlaybackUrlUseCase

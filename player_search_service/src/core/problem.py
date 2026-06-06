@@ -1,6 +1,7 @@
+from typing import Any
+
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any
 
 
 class ProblemDetail(BaseModel):
@@ -46,7 +47,7 @@ def problem_response(
         title=title,
         status=status_code,
         detail=detail,
-        errors=errors, 
+        errors=errors,
         instance=instance
     ).model_dump(exclude_none=True)
 

@@ -4,6 +4,7 @@ from fastapi import Depends
 from shared.database.session import get_async_session
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.config import PlayerSearchSettings, get_settings
 from src.infrastructure.cache.protocol import CachePort
 from src.infrastructure.cache.redis import RedisCacheAdapter
 from src.infrastructure.search.protocol import SearchPort
@@ -13,8 +14,6 @@ from src.infrastructure.storage.s3 import S3StorageAdapter
 from src.usecases.playback import GetPlaybackUrlUseCase
 from src.usecases.search import SearchVideoUseCase
 
-from src.core.config import PlayerSearchSettings
-from src.core.config import get_settings
 
 @lru_cache
 def get_cache_adapter() -> CachePort:
@@ -46,7 +45,7 @@ async def get_playback_usecase(
     settings: PlayerSearchSettings = Depends(get_settings)
 ) -> GetPlaybackUrlUseCase:
     search_port = SQLAlchemyVideoRepository(session=session)
-    
+
     return GetPlaybackUrlUseCase(
         storage=storage,
         search_port=search_port,

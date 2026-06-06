@@ -1,13 +1,12 @@
 import pytest
 import pytest_asyncio
+from shared.database.session import Base
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from shared.database.session import Base
 from src.infrastructure.database.models import Video, VideoStatus
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
-
 
 # ─── ФИКСТУРЫ ─────────────────────────────────────────────────────────────
 
@@ -22,12 +21,12 @@ def postgres_container():
 async def db_engine(postgres_container):
     """Создаёт engine для каждого теста"""
     engine = create_async_engine(postgres_container, echo=False)
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
-    
+
     await engine.dispose()
 
 
@@ -39,14 +38,14 @@ async def db_session(db_engine):
         class_=AsyncSession,
         expire_on_commit=False
     )
-    
+
     async with session_factory() as session:
         # Очищаем таблицу перед каждым тестом
         await session.execute(text("TRUNCATE TABLE videos CASCADE"))
         await session.commit()
-        
+
         yield session
-        
+
         # Очищаем таблицу после теста
         await session.execute(text("TRUNCATE TABLE videos CASCADE"))
         await session.commit()

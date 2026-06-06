@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock
 
 import pytest
@@ -57,10 +57,10 @@ class TestSearchVideoUseCase:
         mock_video = AsyncMock()
         mock_video.storage_key = "video-123/master.m3u8"
         mock_search_port.get_by_id.return_value = mock_video
-        
+
         mock_storage.generate_presigned_url.return_value = (
             "https://fake-s3.url/video.m3u8",
-            datetime.now(timezone.utc) + timedelta(minutes=15)
+            datetime.now(UTC) + timedelta(minutes=15)
         )
 
         uc = GetPlaybackUrlUseCase(

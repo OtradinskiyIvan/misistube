@@ -2,10 +2,10 @@ import logging
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.core.config import get_settings
 from src.core.problem import problem_response
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = logging.getLogger("player_search_service")
 

@@ -20,12 +20,12 @@ class RedisCacheAdapter(CachePort):
         self.redis_url = redis_url or settings.REDIS_URL
         self.default_ttl = settings.REDIS_CACHE_TTL
         self._client: redis.Redis | None = None
-        
+
         self._failures = 0
         self._last_failure_time = 0.0
         self._circuit_open = False
-        self._failure_threshold = 3  
-        self._recovery_timeout = 60.0 
+        self._failure_threshold = 3
+        self._recovery_timeout = 60.0
 
     @property
     def client(self) -> redis.Redis:
@@ -34,37 +34,37 @@ class RedisCacheAdapter(CachePort):
                 self.redis_url,
                 encoding="utf-8",
                 decode_responses=True,
-                socket_connect_timeout=1, 
-                socket_timeout=1,          
-                retry_on_timeout=False    
+                socket_connect_timeout=1,
+                socket_timeout=1,
+                retry_on_timeout=False
             )
         return self._client
-    
+
     def _is_circuit_open(self) -> bool:
         """Проверяем, открыт ли circuit breaker"""
         if not self._circuit_open:
             return False
-        
+
         if time.time() - self._last_failure_time > self._recovery_timeout:
             logger.info("Redis circuit breaker: attempting recovery")
             self._circuit_open = False
             self._failures = 0
             return False
-        
+
         return True
-    
+
     def _record_failure(self):
         """Записываем неудачу и возможно открываем circuit breaker"""
         self._failures += 1
         self._last_failure_time = time.time()
-        
+
         if self._failures >= self._failure_threshold:
             self._circuit_open = True
             logger.warning(
                 f"Redis circuit breaker OPEN: {self._failures} failures, "
                 f"will retry in {self._recovery_timeout}s"
             )
-    
+
     def _record_success(self):
         """Записываем успех и сбрасываем счётчик"""
         if self._failures > 0:
@@ -75,8 +75,8 @@ class RedisCacheAdapter(CachePort):
     async def get(self, key: str) -> Any | None:
         """Получить и десериализовать JSON"""
         if self._is_circuit_open():
-            return None 
-        
+            return None
+
         try:
             data = await self.client.get(key)
             self._record_success()
@@ -95,7 +95,7 @@ class RedisCacheAdapter(CachePort):
         """Сохранить значение с указанием TTL"""
         if self._is_circuit_open():
             return
-        
+
         try:
             ttl = ttl or self.default_ttl
             serialized = json.dumps(value) if not isinstance(value, str) else value

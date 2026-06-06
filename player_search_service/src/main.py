@@ -9,16 +9,15 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from shared.database.session import Base, init_engine 
-from core.logger import correlation_id_var
+from shared.database.session import init_engine
 
+from core.logger import correlation_id_var
+from src.api.deps import get_storage_adapter
 from src.api.routers import playback, search
 from src.core.config import get_settings
 from src.core.exceptions import register_rfc7807_handlers
 from src.core.logger import setup_service_logger
 from src.core.middleware import CorrelationIdMiddleware
-from src.api.deps import get_storage_adapter
-
 
 settings = get_settings()
 logger = setup_service_logger("player_search_service", level=settings.LOG_LEVEL)
@@ -33,13 +32,13 @@ async def lifespan(app: FastAPI):
     - Startup: инициализация БД, создание таблиц (в dev), подключение к инфраструктуре
     - Shutdown: корректное закрытие соединений
     """
-    global _db_engine 
-    
+    global _db_engine
+
     correlation_id_var.set("startup")
     logger.info("Starting Player & Searching Service... [env=%s]", settings.APP_ENV)
 
-    _db_engine = init_engine( 
-        database_url=str(settings.DATABASE_URL),  
+    _db_engine = init_engine(
+        database_url=str(settings.DATABASE_URL),
         echo=settings.APP_ENV == "development"
     )
     # if settings.APP_ENV == "development":
@@ -56,7 +55,7 @@ async def lifespan(app: FastAPI):
         logger.info("Closing database connections...")
         await _db_engine.dispose()
         logger.info("Database connections closed.")
-    
+
     storage = get_storage_adapter()
     await storage.close()
 

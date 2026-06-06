@@ -1,11 +1,11 @@
 import logging
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
 import aiobotocore.session
 from aiobotocore.session import AioSession
-from botocore.exceptions import ClientError
 
 from src.core.config import get_settings
+
 from .protocol import StoragePort
 
 logger = logging.getLogger(__name__)
@@ -24,7 +24,7 @@ class S3StorageAdapter(StoragePort):
         self.endpoint_url = endpoint_url or settings.S3_ENDPOINT_URL
         self.access_key = access_key or settings.S3_ACCESS_KEY.get_secret_value()
         self.secret_key = secret_key or settings.S3_SECRET_KEY.get_secret_value()
-        
+
         self.session: AioSession = aiobotocore.session.get_session()
         self._client = None
         self._client_context = None
@@ -56,7 +56,7 @@ class S3StorageAdapter(StoragePort):
     ) -> tuple[str, datetime]:
         """Генерирует presigned GET URL"""
         client = await self._get_client()
-        
+
         url = await client.generate_presigned_url(
             "get_object",
             Params={
@@ -65,7 +65,7 @@ class S3StorageAdapter(StoragePort):
             },
             ExpiresIn=expires_in
         )
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+        expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
         return url, expires_at
 
     async def upload_file(

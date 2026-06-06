@@ -3,12 +3,11 @@ from unittest.mock import AsyncMock
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
+from shared.database.session import Base
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from shared.database.session import Base
-from src.api.deps import get_cache_adapter, get_storage_adapter, get_async_session
-
+from src.api.deps import get_async_session, get_cache_adapter, get_storage_adapter
 
 # ─── ФИКСТУРЫ C МОКАМИ (нужны только для unit-тестов) ──────────────────
 
@@ -65,12 +64,12 @@ def postgres_container():
 async def db_engine(postgres_container):
     """Создаёт engine для каждого теста"""
     engine = create_async_engine(postgres_container, echo=False)
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield engine
-    
+
     await engine.dispose()
 
 
@@ -82,7 +81,7 @@ async def db_session(db_engine):
         class_=AsyncSession,
         expire_on_commit=False
     )
-    
+
     async with session_factory() as session:
         yield session
 
@@ -92,7 +91,7 @@ def override_db_session(db_session: AsyncSession):
     """Подменяет сессию БД в зависимостях FastAPI"""
     async def _get_session():
         yield db_session
-    
+
     from src.main import app
     app.dependency_overrides[get_async_session] = _get_session
     yield

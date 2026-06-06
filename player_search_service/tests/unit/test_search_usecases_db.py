@@ -1,13 +1,14 @@
+from unittest.mock import AsyncMock
+
 import pytest
 import pytest_asyncio
-from unittest.mock import AsyncMock
+from shared.database.session import Base
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from shared.database.session import Base
-from src.api.schemas import SearchQuery, VideoResult
-from src.usecases.search import SearchVideoUseCase
+from src.api.schemas import SearchQuery
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
+from src.usecases.search import SearchVideoUseCase
 
 
 @pytest.fixture(scope="module")
@@ -36,7 +37,7 @@ async def db_session(db_engine):
 async def test_search_with_db_port(db_session: AsyncSession):
     """Тест поиска с реальной БД (testcontainers)"""
     from src.infrastructure.database.models import Video, VideoStatus
-    
+
     video = Video(
         title="Test Video",
         storage_key="videos/test/master.m3u8",
@@ -45,15 +46,15 @@ async def test_search_with_db_port(db_session: AsyncSession):
     )
     db_session.add(video)
     await db_session.commit()
-    
+
     repo = SQLAlchemyVideoRepository(session=db_session)
     mock_cache = AsyncMock()
     mock_cache.get.return_value = None
-    
+
     uc = SearchVideoUseCase(cache=mock_cache, search_port=repo)
     query = SearchQuery(q="Test", offset=0, limit=10)
-    
+
     result = await uc.execute(query)
-    
+
     assert result.total >= 1
     assert any("Test Video" in item.title for item in result.items)

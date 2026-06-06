@@ -1,12 +1,12 @@
-from typing import Protocol, Optional
-from src.infrastructure.database.models import Video
+from typing import Protocol
 
 from src.api.schemas import VideoResult
+from src.infrastructure.database.models import Video
 
 
 class SearchPort(Protocol):
     """Контракт поиска видео. UseCase зависит только от него."""
-    
+
     async def search(
         self,
         query: str,
@@ -17,6 +17,6 @@ class SearchPort(Protocol):
         """Возвращает (список результатов, общее количество)"""
         ...
 
-    async def get_by_id(self, video_id: str) -> Optional[Video]:
+    async def get_by_id(self, video_id: str) -> Video | None:
         """Получить видео по ID"""
         ...  # 🔹 Только сигнатура, без реализации
