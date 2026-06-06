@@ -13,6 +13,7 @@ from src.infrastructure.storage.s3 import S3StorageAdapter
 from src.usecases.playback import GetPlaybackUrlUseCase
 from src.usecases.search import SearchVideoUseCase
 
+from src.core.config import PlayerSearchSettings
 from src.core.config import get_settings
 
 @lru_cache
@@ -42,7 +43,7 @@ def get_search_usecase(
 async def get_playback_usecase(
     session: AsyncSession = Depends(get_async_session),
     storage: StoragePort = Depends(get_storage_adapter),
-    settings: Settings = Depends(get_settings)
+    settings: PlayerSearchSettings = Depends(get_settings)
 ) -> GetPlaybackUrlUseCase:
     search_port = SQLAlchemyVideoRepository(session=session)
     
