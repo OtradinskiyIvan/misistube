@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: misistube
-      POSTGRES_PASSWORD: misistube_secret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: misistube_users
     ports:
       - "5432:5432"
@@ -29,7 +29,7 @@ services:
     env_file:
       - authorization_service/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@postgres:5432/misistube_auth
+      DATABASE_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@postgres:5432/misistube_auth
       APP_NAME: "Authorization Service"
       APP_ENV: development
       USER_SERVICE_URL: http://user-service:8000
@@ -50,7 +50,7 @@ services:
     env_file:
       - user_service/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@postgres:5432/misistube_users
+      DATABASE_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@postgres:5432/misistube_users
     volumes:
       - ./logs:/app/logs:z
     depends_on:
@@ -68,7 +68,7 @@ services:
     env_file:
       - interaction_service/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@postgres:5432/misistube_interactions
+      DATABASE_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@postgres:5432/misistube_interactions
       USER_SERVICE_URL: http://user-service:8000
     volumes:
       - ./logs:/app/logs:z

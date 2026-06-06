@@ -35,7 +35,6 @@ RUN cd /app/frontend/interaction_service && npm install
 
 COPY frontend/ /app/frontend/
 
-COPY .env.example /app/.env
 COPY start-dev.sh /app/start-dev.sh
 RUN chmod +x /app/start-dev.sh
 

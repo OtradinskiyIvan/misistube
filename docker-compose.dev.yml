@@ -8,7 +8,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: misistube
-      POSTGRES_PASSWORD: misistube_secret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: misistube_auth
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_auth"]
@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: misistube
-      POSTGRES_PASSWORD: misistube_secret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: misistube_users
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_users"]
@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: misistube
-      POSTGRES_PASSWORD: misistube_secret
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: misistube_interactions
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_interactions"]
@@ -61,16 +61,18 @@ services:
       - "5175:5175"
     volumes:
       - ./logs:/app/logs:z
+    env_file:
+      - authorization_service/.env
+      - user_service/.env
+      - interaction_service/.env
     environment:
       APP_ENV: development
       DATABASE_ECHO: "false"
       LOG_LEVEL: INFO
-      JWT_SECRET: S3kHqVopMSog8ayFoHNpsaSGAiQOVV+8G3A0ZvjMIZg=
-      AUTH_DB_URL: postgresql+asyncpg://misistube:misistube_secret@auth-db:5432/misistube_auth
-      USER_DB_URL: postgresql+asyncpg://misistube:misistube_secret@user-db:5432/misistube_users
-      INTERACTION_DB_URL: postgresql+asyncpg://misistube:misistube_secret@interaction-db:5432/misistube_interactions
+      AUTH_DB_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@auth-db:5432/misistube_auth
+      USER_DB_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@user-db:5432/misistube_users
+      INTERACTION_DB_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@interaction-db:5432/misistube_interactions
       USER_SERVICE_URL: http://localhost:8001
-      ADMIN_KEY: misistube-admin-secret-2026
       VITE_AUTH_PROXY_TARGET: http://localhost:8000
       VITE_USER_PROXY_TARGET: http://localhost:8001
       VITE_INTERACTION_PROXY_TARGET: http://localhost:8002
