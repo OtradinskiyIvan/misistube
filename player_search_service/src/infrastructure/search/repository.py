@@ -24,7 +24,7 @@ class SQLAlchemyVideoRepository(SearchPort):
         """
         Поиск видео с фильтрацией по тексту и тегам.
         """
-        stmt = select(Video).where(Video.status == VideoStatus.READY)   # UPLOADING можно заменить для тестов
+        stmt = select(Video).where(Video.status == VideoStatus.READY)
 
         if query:
             stmt = stmt.where(
@@ -34,11 +34,8 @@ class SQLAlchemyVideoRepository(SearchPort):
                 )
             )
 
-        # if tags:
-        #    tags_list = tags if isinstance(tags, list) else [tags]
-        #    stmt = stmt.where(Video.tags.op('&&')(cast(tags_list, ARRAY(String))))
 
-        count_stmt = select(func.count()).select_from(stmt.subquery())
+        count_stmt = select(func.count()).select_from(stmt.order_by(None))
         total_result = await self.session.execute(count_stmt)
         total = total_result.scalar() or 0
 
