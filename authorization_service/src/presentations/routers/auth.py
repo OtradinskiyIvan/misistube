@@ -40,7 +40,7 @@ async def register(
     return {"detail": "confirmation_sent"}
 
 
-@router.post("/confirm", status_code=status.HTTP_200_OK)
+@router.post("/confirm", response_model=UserOut, status_code=status.HTTP_200_OK)
 async def confirm_email(
     payload: ConfirmRequest,
     auth_service: AuthService = Depends(get_auth_service),
@@ -73,7 +73,13 @@ async def confirm_email(
 
     await auth_service.sync_user_to_user_service(created)
     logger.info("Confirm: user %s confirmed", payload.email)
-    return created
+    return UserOut(
+        id=created.id,
+        username=created.username,
+        email=created.email,
+        is_active=created.is_active,
+        created_at=created.created_at,
+    )
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
