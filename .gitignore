@@ -21,6 +21,7 @@ env/
 .vscode/
 
 # Файлы проекта
+logs/
 *.log
 logs/
 .DS_Store
@@ -28,3 +29,6 @@ logs/
 # Coverage reports
 .coverage
 coverage.xml
+
+node_modules/
+.vite/
