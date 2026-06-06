@@ -53,6 +53,7 @@ export function AuthProvider({ children, initialHash = "" }) {
 
     const hash = initialHash || window.location.hash;
     if (hash && hash.includes("access_token=")) {
+      window.location.hash = "";
       const params = new URLSearchParams(hash.slice(1));
       const accessToken = params.get("access_token");
       const refreshToken = params.get("refresh_token");
@@ -61,11 +62,7 @@ export function AuthProvider({ children, initialHash = "" }) {
         saveUser(null);
         setAuthLoading(true);
         loginWithToken(accessToken)
-          .then(() => window.location.hash = "")
-          .catch(() => {
-            window.location.hash = "";
-            saveUser(null);
-          })
+          .catch(() => saveUser(null))
           .finally(() => setAuthLoading(false));
         return;
       }

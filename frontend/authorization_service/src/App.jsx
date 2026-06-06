@@ -86,7 +86,7 @@ function App() {
       const tokenData = await response.json()
       setStatusType('success')
       setStatus('Вход выполнен. Идет перенаправление...')
-      window.location.href = `http://localhost:5173/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`
+      window.location.replace(`http://localhost:5173/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`)
     } catch (error) {
       setStatusType('error')
       setStatus(error.message || 'Не удалось выполнить запрос. Попробуйте позже.')
@@ -157,7 +157,7 @@ function App() {
       setShowConfirm(false)
       setStatusType('success')
       setStatus('Регистрация и вход выполнены. Идет перенаправление...')
-      window.location.href = `http://localhost:5173/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`
+      window.location.replace(`http://localhost:5173/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`)
     } catch (error) {
       setConfirmStatusType('error')
       setConfirmStatus(error.message || 'Не удалось выполнить запрос. Попробуйте позже.')
