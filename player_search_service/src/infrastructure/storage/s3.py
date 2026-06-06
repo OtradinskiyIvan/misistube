@@ -83,23 +83,3 @@ class S3StorageAdapter(StoragePort):
             "Этот сервис (player_search) имеет права только на чтение. "
             "Загрузка файлов запрещена. Используйте video_upload_service."
         )
-
-        client = await self._get_client()
-        
-        try:
-            await client.head_bucket(Bucket=bucket)
-        except ClientError as e:
-            error_code = e.response.get("Error", {}).get("Code")
-            if error_code in ("404", "403", "NoSuchBucket"):
-                logger.info(f"Bucket '{bucket}' not found, creating...")
-                await client.create_bucket(Bucket=bucket)
-            else:
-                logger.error(f"Error checking bucket '{bucket}': {e}")
-                raise
-
-        await client.put_object(
-            Bucket=bucket,
-            Key=object_key,
-            Body=file_bytes,
-            ContentType=content_type
-        )
