@@ -1,0 +1,15 @@
+.env
+.env.*
+__pycache__/
+*.py[cod]
+.venv
+venv/
+node_modules/
+logs/
+.git/
+.gitignore
+*.md
+.DS_Store
+.ruff_cache/
+**/.ruff_cache/
+.idea/
