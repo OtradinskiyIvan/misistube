@@ -17,12 +17,13 @@ class Video:
     description: str
     storage_key: str
     status: VideoStatus
-    duration: int          # <-- новое поле (секунды)
+    duration: int
+    user_id: UUID | None
     created_at: datetime
     updated_at: datetime
 
     @staticmethod
-    def create(title: str, description: str, storage_key: str, duration: int) -> "Video":
+    def create(title: str, description: str, storage_key: str, duration: int, user_id: UUID | None = None) -> "Video":
         now = datetime.now(timezone.utc)
         return Video(
             id=uuid4(),
@@ -31,6 +32,7 @@ class Video:
             storage_key=storage_key,
             status=VideoStatus.UPLOADING,
             duration=duration,
+            user_id=user_id,
             created_at=now,
             updated_at=now,
         )

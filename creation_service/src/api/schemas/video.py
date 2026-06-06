@@ -7,6 +7,7 @@ from src.domain.entities.video import VideoStatus
 class VideoCreateRequest(BaseModel):
     title: str
     description: str
+    user_id: UUID | None = None
 
 class VideoUploadResponse(BaseModel):
     id: UUID
@@ -14,6 +15,7 @@ class VideoUploadResponse(BaseModel):
     description: str
     status: VideoStatus
     duration: int
+    user_id: UUID | None = None
     created_at: datetime
     updated_at: datetime
 
