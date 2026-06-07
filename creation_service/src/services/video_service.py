@@ -15,7 +15,7 @@ class VideoService:
         self._repo = repo
         self._storage = storage
 
-    async def upload_video(self, title: str, description: str, file_bytes: bytes, filename: str, user_id: UUID | None = None) -> Video:
+    async def upload_video(self, title: str, description: str, file_bytes: bytes, filename: str, user_id: UUID) -> Video:
         with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
             tmp.write(file_bytes)
             tmpname = tmp.name

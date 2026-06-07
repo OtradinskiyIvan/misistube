@@ -10,13 +10,15 @@ pytestmark = pytest.mark.asyncio(loop_scope="function")
 
 class TestVideoService:
     async def test_upload_video(self, mock_repo, mock_storage):
+        user_id = uuid4()
         service = VideoService(mock_repo, mock_storage)
-        video = await service.upload_video("Title", "Desc", b"fake_video_data", "test.mp4")
+        video = await service.upload_video("Title", "Desc", b"fake_video_data", "test.mp4", user_id)
         assert isinstance(video, Video)
         assert video.title == "Title"
         assert video.description == "Desc"
         assert video.status == VideoStatus.READY
         assert video.duration >= 0
+        assert video.user_id == user_id
         mock_storage.upload_file.assert_awaited_once()
         mock_repo.add.assert_awaited_once()
 
@@ -24,12 +26,12 @@ class TestVideoService:
         mock_storage.upload_file.side_effect = Exception("S3 error")
         service = VideoService(mock_repo, mock_storage)
         with pytest.raises(VideoUploadError, match="S3 upload failed"):
-            await service.upload_video("T", "D", b"data", "f.mp4")
+            await service.upload_video("T", "D", b"data", "f.mp4", uuid4())
         mock_repo.add.assert_not_awaited()
 
     async def test_get_video_metadata_found(self, mock_repo, mock_storage):
         video_id = uuid4()
-        expected = Video.create("T", "D", "k.mp4", 10)
+        expected = Video.create("T", "D", "k.mp4", 10, uuid4())
         mock_repo.get.return_value = expected
         service = VideoService(mock_repo, mock_storage)
         result = await service.get_video_metadata(video_id)
@@ -42,7 +44,7 @@ class TestVideoService:
             await service.get_video_metadata(uuid4())
 
     async def test_get_video_list(self, mock_repo, mock_storage):
-        video = Video.create("T", "D", "k.mp4", 10)
+        video = Video.create("T", "D", "k.mp4", 10, uuid4())
         mock_repo.list.return_value = [video]
         mock_repo.count.return_value = 5
         service = VideoService(mock_repo, mock_storage)
@@ -54,7 +56,7 @@ class TestVideoService:
         mock_repo.add.side_effect = Exception("DB error")
         service = VideoService(mock_repo, mock_storage)
         with pytest.raises(Exception, match="DB error"):
-            await service.upload_video("T", "D", b"data", "f.mp4")
+            await service.upload_video("T", "D", b"data", "f.mp4", uuid4())
         mock_storage.delete_file.assert_awaited_once()
 
     async def test_get_presigned_url(self, mock_repo, mock_storage):

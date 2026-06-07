@@ -26,6 +26,16 @@ async def lifespan(app: FastAPI):
     from src.infrastructure.database.session import engine
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        from sqlalchemy import text
+        await conn.execute(
+            text("UPDATE videos SET user_id = '00000000-0000-0000-0000-000000000000' WHERE user_id IS NULL")
+        )
+        try:
+            await conn.execute(
+                text("ALTER TABLE videos ALTER COLUMN user_id SET NOT NULL")
+            )
+        except Exception:
+            pass
     yield
     await engine.dispose()
 

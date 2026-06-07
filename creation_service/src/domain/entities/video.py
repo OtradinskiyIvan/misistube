@@ -18,12 +18,12 @@ class Video:
     storage_key: str
     status: VideoStatus
     duration: int
-    user_id: UUID | None
+    user_id: UUID
     created_at: datetime
     updated_at: datetime
 
     @staticmethod
-    def create(title: str, description: str, storage_key: str, duration: int, user_id: UUID | None = None) -> "Video":
+    def create(title: str, description: str, storage_key: str, duration: int, user_id: UUID) -> "Video":
         now = datetime.now(timezone.utc)
         return Video(
             id=uuid4(),
