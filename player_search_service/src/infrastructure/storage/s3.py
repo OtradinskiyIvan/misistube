@@ -17,11 +17,13 @@ class S3StorageAdapter(StoragePort):
     def __init__(
         self,
         endpoint_url: str | None = None,
+        public_endpoint_url: str | None = None,
         access_key: str | None = None,
         secret_key: str | None = None,
     ):
         settings = get_settings()
         self.endpoint_url = endpoint_url or settings.S3_ENDPOINT_URL
+        self.public_endpoint_url = public_endpoint_url or settings.S3_PUBLIC_ENDPOINT_URL
         self.access_key = access_key or settings.S3_ACCESS_KEY.get_secret_value()
         self.secret_key = secret_key or settings.S3_SECRET_KEY.get_secret_value()
 
@@ -65,6 +67,8 @@ class S3StorageAdapter(StoragePort):
             },
             ExpiresIn=expires_in
         )
+        if self.public_endpoint_url:
+            url = url.replace(self.endpoint_url, self.public_endpoint_url)
         expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
         return url, expires_at
 

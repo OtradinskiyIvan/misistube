@@ -1,3 +1,6 @@
+# Использовать из корня проекта: docker compose -f user_service/docker-compose.yml up
+# Порты параметризованы через .env в корне проекта
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -8,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: misistube_users
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:${POSTGRES_CONTAINER_PORT:-5432}"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

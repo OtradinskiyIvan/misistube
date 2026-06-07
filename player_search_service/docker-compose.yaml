@@ -1,11 +1,13 @@
+# Использовать из корня проекта: docker compose -f player_search_service/docker-compose.yaml up
+# Порты параметризованы через .env в корне проекта
+
 services:
-  # Redis (всегда запускается)
   redis:
     image: redis:7-alpine
     container_name: misistube-redis
     command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "${REDIS_HOST_PORT:-6379}:${REDIS_CONTAINER_PORT:-6379}"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -17,17 +19,16 @@ services:
       - misistube-network
     restart: unless-stopped
 
-  # PostgreSQL (только для профиля 'testing')
   postgres:
     image: postgres:15-alpine
     container_name: misistube-postgres-test
-    profiles: ["testing"]  # Запускается только с --profile testing
+    profiles: ["testing"]
     environment:
       POSTGRES_USER: player
       POSTGRES_PASSWORD: player_pass
       POSTGRES_DB: player_db
     ports:
-      - "5433:5432"
+      - "${POSTGRES_HOST_PORT:-5433}:${POSTGRES_CONTAINER_PORT:-5432}"
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
     healthcheck:
@@ -39,22 +40,21 @@ services:
       - misistube-network
     restart: unless-stopped
 
-  # MinIO (только для профиля 'testing')
   minio:
     image: minio/minio:latest
     container_name: misistube-minio-test
-    profiles: ["testing"]  # 🔹 Запускается только с --profile testing
+    profiles: ["testing"]
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data --console-address ":9001"
+    command: server /data --console-address ":${MINIO_CONSOLE_CONTAINER_PORT:-9001}"
     ports:
-      - "9002:9000"  # API
-      - "9003:9001"  # Console UI
+      - "${MINIO_API_HOST_PORT:-9002}:${MINIO_API_CONTAINER_PORT:-9000}"
+      - "${MINIO_CONSOLE_HOST_PORT:-9003}:${MINIO_CONSOLE_CONTAINER_PORT:-9001}"
     volumes:
       - minio_test_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://localhost:${MINIO_API_CONTAINER_PORT:-9000}/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -62,7 +62,6 @@ services:
       - misistube-network
     restart: unless-stopped
 
-  # Init-контейнер для создания бакета MinIO (только для 'testing')
   create-buckets:
     image: minio/mc:latest
     container_name: misistube-minio-init
@@ -72,7 +71,7 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      mc alias set myminio http://minio:${MINIO_API_CONTAINER_PORT:-9000} minioadmin minioadmin;
       mc mb --ignore-existing myminio/videos;
       mc anonymous set download myminio/videos;
       echo 'Bucket videos created';
@@ -81,65 +80,42 @@ services:
     networks:
       - misistube-network
 
-  # Player Search Service
   player_search_service:
     build:
       context: ..
       dockerfile: player_search_service/Dockerfile
     container_name: misistube-player-search
-    
-    # Для Linux: разрешаем доступ к хосту (нужно, если БД/MinIO внешние)
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    
     environment:
-      # Redis — всегда внутри сети
-      REDIS_URL: redis://redis:6379/0
-      
-      # Гибкая настройка БД:
-      # - В профиле 'testing': используем внутренний postgres
-      # - Без профиля: берём из .env (внешняя БД)
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://player:player_pass@postgres:5432/player_db}
-      
-      # Гибкая настройка S3:
-      # - В профиле 'testing': используем внутренний minio
-      # - Без профиля: берём из .env (внешний MinIO/S3)
-      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      REDIS_URL: redis://redis:${REDIS_CONTAINER_PORT:-6379}/0
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://player:player_pass@postgres:${POSTGRES_CONTAINER_PORT:-5432}/player_db}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:${MINIO_API_CONTAINER_PORT:-9000}}
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minioadmin}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME:-videos}
       S3_PRESIGNED_URL_EXPIRES: ${S3_PRESIGNED_URL_EXPIRES:-900}
-      
-      # App config
       APP_NAME: "Player & Searching Service"
       APP_ENV: ${APP_ENV:-production}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
-    
     ports:
-      - "8001:8000"
-    
+      - "${PLAYER_BACK_HOST_PORT:-8001}:${PLAYER_BACK_CONTAINER_PORT:-8000}"
     volumes:
-      # Логи сохраняются на хост-машине
       - ../logs:/app/logs
-    
     depends_on:
       redis:
         condition: service_healthy
-      # В профиле 'testing' ждём ещё и БД/MinIO
       postgres:
         condition: service_healthy
-        required: false  # Не ошибка, если сервиса нет
+        required: false
       minio:
         condition: service_healthy
-        required: false  # Не ошибка, если сервиса нет
-    
+        required: false
     networks:
       - misistube-network
-    
     restart: unless-stopped
-    
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${PLAYER_BACK_CONTAINER_PORT:-8000}/health"]
       interval: 30s
       timeout: 10s
       retries: 3

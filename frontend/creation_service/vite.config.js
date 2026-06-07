@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path'; // 👈 обязательно добавить
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
@@ -8,5 +8,8 @@ export default defineConfig({
     alias: {
       '@shared': path.resolve(__dirname, '../shared'),
     },
+  },
+  server: {
+    port: 5173,
   },
 });

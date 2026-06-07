@@ -1,43 +1,121 @@
 services:
-  postgres:
+  # ── Databases ──────────────────────────────────────────
+
+  auth-db:
     image: postgres:16-alpine
-    container_name: misistube-db
+    container_name: misistube-auth-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: misistube
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: misistube_auth
+    ports:
+      - "${POSTGRES_HOST_PORT}:${POSTGRES_CONTAINER_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  user-db:
+    image: postgres:16-alpine
+    container_name: misistube-user-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: misistube
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: misistube_users
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./scripts/init-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U misistube"]
+      test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_users"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  auth-service:
-    build:
-      context: .
-      dockerfile: authorization_service/Dockerfile
-    container_name: misistube-auth
+  interaction-db:
+    image: postgres:16-alpine
+    container_name: misistube-interaction-db
     restart: unless-stopped
-    ports:
-      - "8001:8001"
-    env_file:
-      - authorization_service/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@postgres:5432/misistube_auth
-      APP_NAME: "Authorization Service"
-      APP_ENV: development
-      USER_SERVICE_URL: http://user-service:8000
+      POSTGRES_USER: misistube
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: misistube_interactions
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U misistube -d misistube_interactions"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  creation-db:
+    image: postgres:15-alpine
+    container_name: misistube-creation-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: video_db
     volumes:
-      - ./logs:/app/logs:z
+      - creation_db_data:/var/lib/postgresql/data
+      - ./creation_service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d video_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Cache & Storage ────────────────────────────────────
+
+  redis:
+    image: redis:7-alpine
+    container_name: misistube-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_HOST_PORT}:${REDIS_CONTAINER_PORT}"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    container_name: misistube-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":${MINIO_CONSOLE_CONTAINER_PORT}"
+    ports:
+      - "${MINIO_API_HOST_PORT}:${MINIO_API_CONTAINER_PORT}"
+      - "${MINIO_CONSOLE_HOST_PORT}:${MINIO_CONSOLE_CONTAINER_PORT}"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${MINIO_API_CONTAINER_PORT}/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+  minio-setup-buckets:
+    image: minio/mc:latest
+    container_name: misistube-minio-setup
     depends_on:
-      postgres:
+      minio:
         condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:${MINIO_API_CONTAINER_PORT} minioadmin minioadmin123;
+      mc mb --ignore-existing myminio/videos;
+      mc anonymous set download myminio/videos;
+      mc mb --ignore-existing myminio/thumbnails;
+      echo 'Buckets created';
+      exit 0;
+      "
+    restart: "no"
+
+  # ── Backend Services ───────────────────────────────────
 
   user-service:
     build:
@@ -46,16 +124,45 @@ services:
     container_name: misistube-user
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${USER_BACK_HOST_PORT}:${USER_BACK_CONTAINER_PORT}"
     env_file:
       - user_service/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@postgres:5432/misistube_users
+      DATABASE_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@user-db:${POSTGRES_CONTAINER_PORT}/misistube_users
+      S3_ENDPOINT_URL: http://minio:${MINIO_API_CONTAINER_PORT}
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET_NAME: videos
     volumes:
       - ./logs:/app/logs:z
     depends_on:
-      postgres:
+      user-db:
         condition: service_healthy
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: authorization_service/Dockerfile
+    container_name: misistube-auth
+    restart: unless-stopped
+    ports:
+      - "${AUTH_BACK_HOST_PORT}:${AUTH_BACK_CONTAINER_PORT}"
+    env_file:
+      - authorization_service/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@auth-db:${POSTGRES_CONTAINER_PORT}/misistube_auth
+      USER_SERVICE_URL: http://user-service:${USER_BACK_CONTAINER_PORT}
+      S3_ENDPOINT_URL: http://minio:${MINIO_API_CONTAINER_PORT}
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET_NAME: videos
+    volumes:
+      - ./logs:/app/logs:z
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      user-service:
+        condition: service_started
 
   interaction-service:
     build:
@@ -64,17 +171,206 @@ services:
     container_name: misistube-interaction
     restart: unless-stopped
     ports:
-      - "8002:8002"
+      - "${INTERACTION_BACK_HOST_PORT}:${INTERACTION_BACK_CONTAINER_PORT}"
     env_file:
       - interaction_service/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@postgres:5432/misistube_interactions
-      USER_SERVICE_URL: http://user-service:8000
+      DATABASE_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@interaction-db:${POSTGRES_CONTAINER_PORT}/misistube_interactions
+      USER_SERVICE_URL: http://user-service:${USER_BACK_CONTAINER_PORT}
+      S3_ENDPOINT_URL: http://minio:${MINIO_API_CONTAINER_PORT}
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET_NAME: videos
     volumes:
       - ./logs:/app/logs:z
     depends_on:
-      postgres:
+      interaction-db:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+
+  creation-service:
+    build:
+      context: ./creation_service
+      dockerfile: Dockerfile
+    container_name: misistube-creation
+    restart: unless-stopped
+    ports:
+      - "${CREATION_BACK_HOST_PORT}:${CREATION_BACK_CONTAINER_PORT}"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:pass@creation-db:${POSTGRES_CONTAINER_PORT}/video_db
+      S3_ENDPOINT_URL: http://minio:${MINIO_API_CONTAINER_PORT}
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET_NAME: videos
+      LOG_DIR: /app/logs
+      CORS_ORIGINS: http://localhost:${CREATION_FRONT_HOST_PORT}
+    volumes:
+      - ./logs:/app/logs:z
+    depends_on:
+      creation-db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-setup-buckets:
+        condition: service_completed_successfully
+
+  player-search-service:
+    build:
+      context: .
+      dockerfile: player_search_service/Dockerfile
+    container_name: misistube-player-search
+    restart: unless-stopped
+    ports:
+      - "${PLAYER_BACK_HOST_PORT}:${PLAYER_BACK_CONTAINER_PORT}"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://player_search_reader:player_search_password@creation-db:${POSTGRES_CONTAINER_PORT}/video_db
+      REDIS_URL: redis://redis:${REDIS_CONTAINER_PORT}/0
+      S3_ENDPOINT_URL: http://minio:${MINIO_API_CONTAINER_PORT}
+      S3_PUBLIC_ENDPOINT_URL: http://localhost:${MINIO_API_HOST_PORT}
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET_NAME: videos
+      S3_BUCKET_THUMBNAILS: thumbnails
+      S3_PRESIGNED_URL_EXPIRES: 900
+      APP_ENV: development
+      LOG_LEVEL: INFO
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      creation-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-setup-buckets:
+        condition: service_completed_successfully
+
+  # ── Frontend Services ──────────────────────────────────
+
+  user-frontend:
+    build:
+      context: ./frontend/user_service
+      dockerfile: Dockerfile
+    container_name: misistube-user-frontend
+    restart: unless-stopped
+    ports:
+      - "${USER_FRONT_HOST_PORT}:${USER_FRONT_CONTAINER_PORT}"
+    environment:
+      VITE_AUTH_PROXY_TARGET: http://auth-service:${AUTH_BACK_CONTAINER_PORT}
+      VITE_USER_PROXY_TARGET: http://user-service:${USER_BACK_CONTAINER_PORT}
+    volumes:
+      - ./frontend/shared:/shared
+    depends_on:
+      - auth-service
+      - user-service
+
+  auth-frontend:
+    build:
+      context: ./frontend/authorization_service
+      dockerfile: Dockerfile
+    container_name: misistube-auth-frontend
+    restart: unless-stopped
+    ports:
+      - "${AUTH_FRONT_HOST_PORT}:${AUTH_FRONT_CONTAINER_PORT}"
+    environment:
+      VITE_AUTH_PROXY_TARGET: http://auth-service:${AUTH_BACK_CONTAINER_PORT}
+    volumes:
+      - ./frontend/shared:/shared
+    depends_on:
+      - auth-service
+
+  interaction-frontend:
+    build:
+      context: ./frontend/interaction_service
+      dockerfile: Dockerfile
+    container_name: misistube-interaction-frontend
+    restart: unless-stopped
+    ports:
+      - "${INTERACTION_FRONT_HOST_PORT}:${INTERACTION_FRONT_CONTAINER_PORT}"
+    environment:
+      VITE_INTERACTION_PROXY_TARGET: http://interaction-service:${INTERACTION_BACK_CONTAINER_PORT}
+    volumes:
+      - ./frontend/shared:/shared
+    depends_on:
+      - interaction-service
+
+  creation-frontend:
+    build:
+      context: ./frontend/creation_service
+      dockerfile: Dockerfile
+    container_name: misistube-creation-frontend
+    restart: unless-stopped
+    ports:
+      - "${CREATION_FRONT_HOST_PORT}:${CREATION_FRONT_CONTAINER_PORT}"
+    environment:
+      VITE_API_BASE_URL: http://localhost:${CREATION_BACK_HOST_PORT}
+    volumes:
+      - ./frontend/shared:/shared
+    depends_on:
+      - creation-service
+
+  player-search-frontend:
+    build:
+      context: ./frontend/player_search_service
+      dockerfile: Dockerfile
+    container_name: misistube-player-search-frontend
+    restart: unless-stopped
+    ports:
+      - "${PLAYER_FRONT_HOST_PORT}:${PLAYER_FRONT_CONTAINER_PORT}"
+    environment:
+      VITE_PLAYER_API_TARGET: http://player-search-service:${PLAYER_BACK_CONTAINER_PORT}
+    volumes:
+      - ./frontend/shared:/shared
+    depends_on:
+      - player-search-service
+
+  # ── Dev helper (опционально, для обратной совместимости) ──
+  app:
+    profiles: ["legacy"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: misistube-dev
+    restart: unless-stopped
+    ports:
+      - "${USER_BACK_HOST_PORT}:${USER_BACK_CONTAINER_PORT}"
+      - "${AUTH_BACK_HOST_PORT}:${AUTH_BACK_CONTAINER_PORT}"
+      - "${INTERACTION_BACK_HOST_PORT}:${INTERACTION_BACK_CONTAINER_PORT}"
+      - "${USER_FRONT_HOST_PORT}:${USER_FRONT_CONTAINER_PORT}"
+      - "${AUTH_FRONT_HOST_PORT}:${AUTH_FRONT_CONTAINER_PORT}"
+      - "${INTERACTION_FRONT_HOST_PORT}:${INTERACTION_FRONT_CONTAINER_PORT}"
+    volumes:
+      - ./logs:/app/logs:z
+    env_file:
+      - authorization_service/.env
+      - user_service/.env
+      - interaction_service/.env
+    environment:
+      APP_ENV: development
+      DATABASE_ECHO: "false"
+      LOG_LEVEL: INFO
+      AUTH_DB_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@auth-db:${POSTGRES_CONTAINER_PORT}/misistube_auth
+      USER_DB_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@user-db:${POSTGRES_CONTAINER_PORT}/misistube_users
+      INTERACTION_DB_URL: postgresql+asyncpg://misistube:${POSTGRES_PASSWORD}@interaction-db:${POSTGRES_CONTAINER_PORT}/misistube_interactions
+      S3_ENDPOINT_URL: http://minio:${MINIO_API_CONTAINER_PORT}
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET_NAME: videos
+      USER_SERVICE_URL: http://auth-service:${AUTH_BACK_CONTAINER_PORT}
+      VITE_AUTH_PROXY_TARGET: http://auth-service:${AUTH_BACK_CONTAINER_PORT}
+      VITE_USER_PROXY_TARGET: http://user-service:${USER_BACK_CONTAINER_PORT}
+      VITE_INTERACTION_PROXY_TARGET: http://interaction-service:${INTERACTION_BACK_CONTAINER_PORT}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      user-db:
+        condition: service_healthy
+      interaction-db:
         condition: service_healthy
 
 volumes:
-  pgdata:
+  creation_db_data:
+  redis_data:
+  minio_data:
