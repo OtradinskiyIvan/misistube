@@ -1,4 +1,5 @@
 # infrastructure/repositories/video_repository.py
+from typing import Optional
 from uuid import UUID
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,17 +39,19 @@ class SQLAlchemyVideoRepository(VideoRepositoryProtocol):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def list(self, limit: int, offset: int) -> list[Video]:
-        result = await self._session.execute(
-            select(VideoModel).order_by(VideoModel.created_at.desc()).limit(limit).offset(offset)
-        )
+    async def list(self, limit: int, offset: int, user_id: UUID | None = None) -> list[Video]:
+        stmt = select(VideoModel).order_by(VideoModel.created_at.desc())
+        if user_id is not None:
+            stmt = stmt.where(VideoModel.user_id == user_id)
+        result = await self._session.execute(stmt.limit(limit).offset(offset))
         models = result.scalars().all()
         return [self._to_entity(m) for m in models]
 
-    async def count(self) -> int:
-        result = await self._session.execute(
-            select(func.count()).select_from(VideoModel)
-        )
+    async def count(self, user_id: UUID | None = None) -> int:
+        stmt = select(func.count()).select_from(VideoModel)
+        if user_id is not None:
+            stmt = stmt.where(VideoModel.user_id == user_id)
+        result = await self._session.execute(stmt)
         return result.scalar()
 
     async def update(self, video: Video) -> None:

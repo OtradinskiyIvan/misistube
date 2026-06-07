@@ -204,6 +204,7 @@ services:
       S3_SECRET_KEY: minioadmin123
       S3_BUCKET_NAME: videos
       LOG_DIR: /app/logs
+      JWT_SECRET: ${JWT_SECRET:-}
       CORS_ORIGINS: http://localhost:${CREATION_FRONT_HOST_PORT}
     volumes:
       - ./logs:/app/logs:z
