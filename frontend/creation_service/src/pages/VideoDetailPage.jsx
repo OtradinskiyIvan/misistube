@@ -21,10 +21,6 @@ export const VideoDetailPage = () => {
   const navigate = useNavigate();
   const { video, loading, error } = useVideo(id);
 
-  const token = localStorage.getItem('token');
-  if (!token) {
-    return <div className="text-center p-10 text-gray-500">Требуется авторизация</div>;
-  }
   const userId = getUserIdFromToken();
   if (!userId) {
     return <div className="text-center p-10 text-gray-500">Требуется авторизация</div>;

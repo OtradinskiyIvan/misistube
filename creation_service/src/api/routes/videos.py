@@ -6,7 +6,6 @@ from src.api.schemas.video import VideoUploadResponse, VideoDetailResponse, Vide
 from src.services.video_service import VideoService
 from src.domain.exceptions import VideoNotFoundError, VideoUploadError
 from src.core.config import settings
-from shared.security import get_token_payload
 
 router = APIRouter(prefix="/videos", tags=["videos"])
 
@@ -45,7 +44,7 @@ async def list_videos(
     service: VideoService = Depends(get_video_service),
     user_id: UUID = Depends(get_current_user),
 ):
-    videos, total = await service.get_video_list(limit, offset)
+    videos, total = await service.get_video_list(limit, offset, user_id=user_id)
     video_items = [
         VideoUploadResponse(
             id=v.id,
@@ -88,17 +87,8 @@ async def stream_video(
     video_id: UUID,
     request: Request,
     service: VideoService = Depends(get_video_service),
-    token: str = Query(None),
+    _: UUID = Depends(get_current_user),
 ):
-    auth_header = request.headers.get("Authorization")
-    if not auth_header:
-        if not token:
-            raise HTTPException(status_code=401, detail="Missing authorization")
-        auth_header = f"Bearer {token}"
-    try:
-        await get_token_payload(auth_header, settings.JWT_SECRET, settings.JWT_ALGORITHM)
-    except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
 
     try:
         video = await service.get_video_metadata(video_id)
@@ -129,6 +119,7 @@ async def update_video_status(
     video_id: UUID,
     body: VideoStatusUpdate,
     service: VideoService = Depends(get_video_service),
+    user_id: UUID = Depends(get_current_user),
 ):
     try:
         video = await service.update_video_status(video_id, body.status)

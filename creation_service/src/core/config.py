@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     VITE_API_BASE_URL: str = "http://localhost:5173"
 
     # JWT
-    JWT_SECRET: str = "super-secret-key-change-in-production"
+    JWT_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
     
     class Config:

@@ -59,6 +59,8 @@ services:
     container_name: misistube_creation_backend
     ports:
       - "${CREATION_BACK_HOST_PORT:-8000}:${CREATION_BACK_CONTAINER_PORT:-8000}"
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://user:pass@db:${POSTGRES_CONTAINER_PORT:-5432}/video_db
       S3_ENDPOINT_URL: http://minio:${MINIO_API_CONTAINER_PORT:-9000}

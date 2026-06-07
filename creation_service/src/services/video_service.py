@@ -66,9 +66,9 @@ class VideoService:
             raise VideoNotFoundError(video_id)
         return video
 
-    async def get_video_list(self, limit: int = 10, offset: int = 0) -> tuple[list[Video], int]:
-        videos = await self._repo.list(limit, offset)
-        total = await self._repo.count()
+    async def get_video_list(self, limit: int = 10, offset: int = 0, user_id: UUID | None = None) -> tuple[list[Video], int]:
+        videos = await self._repo.list(limit, offset, user_id=user_id)
+        total = await self._repo.count(user_id=user_id)
         return videos, total
 
     async def get_presigned_url(self, storage_key: str) -> str:
