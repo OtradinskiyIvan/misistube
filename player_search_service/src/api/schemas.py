@@ -20,6 +20,9 @@ class VideoResult(BaseModel):
     created_at: str
     updated_at: str
 
+    user_id: str
+    username: str
+
     tags: list[str] | None = None
     thumbnail_url: str | None = None
 

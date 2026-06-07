@@ -28,6 +28,8 @@ class PlayerSearchSettings(BaseSettings):
 
     CORS_ALLOW_ORIGINS: list[str] = ["*"]
 
+    USER_SERVICE_URL: str = "http://localhost:8002"
+
     @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, v: str) -> str:

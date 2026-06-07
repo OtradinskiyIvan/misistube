@@ -5,10 +5,12 @@ import pytest_asyncio
 from shared.database.session import Base
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
+import uuid
 
 from src.api.schemas import SearchQuery
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
 from src.usecases.search import SearchVideoUseCase
+from src.infrastructure.database.models import Video, VideoStatus
 
 
 @pytest.fixture(scope="module")
@@ -36,13 +38,14 @@ async def db_session(db_engine):
 @pytest.mark.asyncio
 async def test_search_with_db_port(db_session: AsyncSession):
     """Тест поиска с реальной БД (testcontainers)"""
-    from src.infrastructure.database.models import Video, VideoStatus
+    user_id = uuid.uuid4()
 
     video = Video(
         title="Test Video",
         storage_key="videos/test/master.m3u8",
         status=VideoStatus.READY,
-        duration_seconds=120
+        duration_seconds=120,
+        user_id=user_id 
     )
     db_session.add(video)
     await db_session.commit()
@@ -58,3 +61,4 @@ async def test_search_with_db_port(db_session: AsyncSession):
 
     assert result.total >= 1
     assert any("Test Video" in item.title for item in result.items)
+    assert any(item.user_id == str(user_id) for item in result.items)

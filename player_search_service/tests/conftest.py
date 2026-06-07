@@ -21,7 +21,6 @@ def mock_cache():
 @pytest.fixture
 def mock_search_port():
     port = AsyncMock()
-    # 🔹 Обновлен под новую схему: duration_seconds, storage_key, status, created_at, updated_at
     port.search.return_value = (
         [{
             "id": "mock-1",
@@ -32,12 +31,14 @@ def mock_search_port():
             "duration_seconds": 120,
             "created_at": "2026-06-05T10:00:00+00:00",
             "updated_at": "2026-06-05T10:00:00+00:00",
+            "user_id": "123e4567-e89b-12d3-a456-426614174000",
+            "username": "test_user",
+
             "tags": None,
             "thumbnail_url": None
         }],
         1
     )
-    # 🔹 Добавлен мок для get_by_id (нужен для playback usecase)
     mock_video = AsyncMock()
     mock_video.storage_key = "video-123/master.m3u8"
     port.get_by_id.return_value = mock_video
@@ -49,7 +50,6 @@ def mock_storage():
     storage = AsyncMock()
     storage.generate_presigned_url.return_value = ("https://fake-s3.url/video.m3u8", None)
     return storage
-
 
 # ─── ФИКСТУРЫ БД ДЛЯ ИНТЕГРАЦИОННЫХ ТЕСТОВ ──────────────────────────────
 

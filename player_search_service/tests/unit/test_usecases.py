@@ -37,6 +37,9 @@ class TestSearchVideoUseCase:
                 "duration_seconds": 60,
                 "created_at": "2026-06-05T10:00:00+00:00",
                 "updated_at": "2026-06-05T10:00:00+00:00",
+                "user_id": "123e4567-e89b-12d3-a456-426614174000",
+                "username": "cached_user",
+
                 "tags": None,
                 "thumbnail_url": None
             }],
@@ -49,6 +52,8 @@ class TestSearchVideoUseCase:
         mock_cache.get.assert_called_once()
         uc.search_port.search.assert_not_called()
         assert result.items[0].title == "Cached"
+        assert result.items[0].user_id == "123e4567-e89b-12d3-a456-426614174000"
+        assert result.items[0].username == "cached_user"  
 
     @pytest.mark.asyncio
     async def test_generate_url(self, mock_storage, mock_search_port):

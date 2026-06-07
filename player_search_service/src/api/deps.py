@@ -11,6 +11,7 @@ from src.infrastructure.search.protocol import SearchPort
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
 from src.infrastructure.storage.protocol import StoragePort
 from src.infrastructure.storage.s3 import S3StorageAdapter
+from src.infrastructure.user_service.client import UserServiceClient
 from src.usecases.playback import GetPlaybackUrlUseCase
 from src.usecases.search import SearchVideoUseCase
 
@@ -22,6 +23,13 @@ def get_cache_adapter() -> CachePort:
 @lru_cache
 def get_storage_adapter() -> StoragePort:
     return S3StorageAdapter()
+
+@lru_cache
+def get_user_service_client() -> UserServiceClient:
+    """Фабрика клиента User сервиса"""
+    settings = get_settings()
+    return UserServiceClient(base_url=settings.USER_SERVICE_URL)
+
 
 def get_search_repository(session: AsyncSession = Depends(get_async_session)) -> SearchPort: # noqa: B008
     """

@@ -39,6 +39,9 @@ class Video(Base):
         server_default=text("'uploading'::video_status")
     )
     duration_seconds = Column(Integer, nullable=True, server_default=text("0"))
+
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("NOW()"))
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=text("NOW()"))
 
