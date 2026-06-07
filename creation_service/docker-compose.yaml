@@ -53,7 +53,7 @@ services:
     restart: "no"
 
   backend:
-    build: . 
+    build: .
     container_name: misistube_backend
     ports:
       - "8000:8000"
@@ -70,13 +70,13 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - ./creation_service:/app
-      - ./shared:/app/shared
-      - ./logs:/logs
+      - .:/app
+      - ../shared:/app/shared
+      - ../logs:/logs
 
   frontend:
     build:
-      context: ../frontend/creation_service  
+      context: ../frontend/creation_service
       dockerfile: Dockerfile
     container_name: misistube_frontend
     ports:
@@ -84,9 +84,9 @@ services:
     environment:
       VITE_WATCH_USE_POLLING: "true"
     volumes:
-      - ../frontend/creation_service:/app 
+      - ../frontend/creation_service:/app
       - /app/node_modules
-      - ../frontend/shared:/shared 
+      - ../frontend/shared:/shared
 
 volumes:
   postgres_data:
