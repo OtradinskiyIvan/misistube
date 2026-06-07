@@ -191,8 +191,8 @@ services:
 
   creation-service:
     build:
-      context: ./creation_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: creation_service/Dockerfile
     container_name: misistube-creation
     restart: unless-stopped
     ports:
@@ -206,7 +206,8 @@ services:
       LOG_DIR: /app/logs
       CORS_ORIGINS: http://localhost:${CREATION_FRONT_HOST_PORT}
     volumes:
-      - ./creation_service:/app:z
+      - ./creation_service:/app/creation_service:z
+      - ./shared:/app/shared:z
       - ./logs:/app/logs:z
     depends_on:
       creation-db:
