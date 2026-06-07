@@ -191,8 +191,8 @@ services:
 
   creation-service:
     build:
-      context: ./creation_service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: creation_service/Dockerfile
     container_name: misistube-creation
     restart: unless-stopped
     ports:
