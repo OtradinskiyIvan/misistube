@@ -70,8 +70,9 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - ./:/app  
-      - ../logs:/logs 
+      - ./creation_service:/app
+      - ./shared:/app/shared
+      - ./logs:/logs
 
   frontend:
     build:
