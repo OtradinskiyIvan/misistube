@@ -5,6 +5,11 @@ import { api } from "../api/users.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 
 function InfoTab({ user, isAdmin, isOwner, logout }) {
+  const goToUpload = () => {
+    const token = user.token;
+    window.location.href = `http://localhost:5176#access_token=${encodeURIComponent(token)}`;
+  };
+
   return (
     <div className="card" style={{ padding: "1.5rem" }}>
       <div className="detail-grid">
@@ -35,7 +40,10 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
           </span>
         </div>
       </div>
-      <div style={{ marginTop: "1.5rem" }}>
+      <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.5rem" }}>
+        <button className="btn btn-primary" onClick={goToUpload}>
+          Загрузить видео
+        </button>
         <button className="btn btn-secondary" onClick={logout}>
           Выйти
         </button>
