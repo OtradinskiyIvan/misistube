@@ -1,15 +1,16 @@
-version: '3.8'
+# Использовать из корня проекта: docker compose -f creation_service/docker-compose.yaml up
+# Порты параметризованы через .env в корне проекта
 
 services:
   db:
     image: postgres:15-alpine
-    container_name: misistube_db
+    container_name: misistube_creation_db
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: video_db
     ports:
-      - "5432:5432"
+      - "${POSTGRES_HOST_PORT:-5432}:${POSTGRES_CONTAINER_PORT:-5432}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -21,18 +22,18 @@ services:
 
   minio:
     image: minio/minio:latest
-    container_name: misistube_minio
+    container_name: misistube_creation_minio
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_API_HOST_PORT:-9000}:${MINIO_API_CONTAINER_PORT:-9000}"
+      - "${MINIO_CONSOLE_HOST_PORT:-9001}:${MINIO_CONSOLE_CONTAINER_PORT:-9001}"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
-    command: server /data --console-address ":9001"
+    command: server /data --console-address ":${MINIO_CONSOLE_CONTAINER_PORT:-9001}"
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "curl", "-f", "http://localhost:${MINIO_API_CONTAINER_PORT:-9000}/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -40,11 +41,12 @@ services:
   setup-minio:
     image: minio/mc:latest
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     entrypoint: >
       /bin/sh -c "
       sleep 5;
-      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin123;
+      /usr/bin/mc alias set myminio http://minio:${MINIO_API_CONTAINER_PORT:-9000} minioadmin minioadmin123;
       /usr/bin/mc mb myminio/videos --ignore-existing 2>/dev/null;
       /usr/bin/mc anonymous set download myminio/videos 2>/dev/null;
       /usr/bin/mc ilm rule add myminio/videos --expire-days 365 2>/dev/null;
@@ -54,12 +56,12 @@ services:
 
   backend:
     build: .
-    container_name: misistube_backend
+    container_name: misistube_creation_backend
     ports:
-      - "8000:8000"
+      - "${CREATION_BACK_HOST_PORT:-8000}:${CREATION_BACK_CONTAINER_PORT:-8000}"
     environment:
-      DATABASE_URL: postgresql+asyncpg://user:pass@db:5432/video_db
-      S3_ENDPOINT_URL: http://minio:9000
+      DATABASE_URL: postgresql+asyncpg://user:pass@db:${POSTGRES_CONTAINER_PORT:-5432}/video_db
+      S3_ENDPOINT_URL: http://minio:${MINIO_API_CONTAINER_PORT:-9000}
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadmin123
       S3_BUCKET_NAME: videos
@@ -70,17 +72,16 @@ services:
       minio:
         condition: service_healthy
     volumes:
-      - .:/app
-      - ../shared:/app/shared
+      - ./:/app
       - ../logs:/logs
 
   frontend:
     build:
       context: ../frontend/creation_service
       dockerfile: Dockerfile
-    container_name: misistube_frontend
+    container_name: misistube_creation_frontend
     ports:
-      - "5173:5173"
+      - "${CREATION_FRONT_HOST_PORT:-5173}:${CREATION_FRONT_CONTAINER_PORT:-5173}"
     environment:
       VITE_WATCH_USE_POLLING: "true"
     volumes:

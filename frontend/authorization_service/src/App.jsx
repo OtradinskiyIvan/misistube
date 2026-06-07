@@ -1,19 +1,27 @@
 import { useState } from 'react'
-import './App.css'
+import Layout from './components/Layout.jsx'
 
-const AUTH_API = 'http://127.0.0.1:8000/api/v1/auth'
+const AUTH_API = '/api/v1/auth'
 
 function App() {
   const [email, setEmail] = useState('')
+  const [login, setLogin] = useState('')
   const [password, setPassword] = useState('')
   const [status, setStatus] = useState('')
   const [statusType, setStatusType] = useState('')
+  const [showAdminField, setShowAdminField] = useState(false)
+  const [adminKey, setAdminKey] = useState('')
   const [showRegister, setShowRegister] = useState(false)
+  const [registerUsername, setRegisterUsername] = useState('')
   const [registerEmail, setRegisterEmail] = useState('')
   const [registerPassword, setRegisterPassword] = useState('')
   const [registerConfirm, setRegisterConfirm] = useState('')
   const [registerStatus, setRegisterStatus] = useState('')
   const [registerStatusType, setRegisterStatusType] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [confirmCode, setConfirmCode] = useState('')
+  const [confirmStatus, setConfirmStatus] = useState('')
+  const [confirmStatusType, setConfirmStatusType] = useState('')
 
   const saveTokens = (data) => {
     localStorage.setItem('access_token', data.access_token)
@@ -61,7 +69,11 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          login: login || email,
+          password,
+          ...(showAdminField && adminKey ? { admin_key: adminKey } : {}),
+        }),
       })
 
       if (!response.ok) {
@@ -72,10 +84,9 @@ function App() {
       }
 
       const tokenData = await response.json()
-      saveTokens(tokenData)
       setStatusType('success')
       setStatus('Вход выполнен. Идет перенаправление...')
-      window.location.href = '/?authenticated=1'
+      window.location.replace(`http://localhost:5173/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`)
     } catch (error) {
       setStatusType('error')
       setStatus(error.message || 'Не удалось выполнить запрос. Попробуйте позже.')
@@ -83,6 +94,7 @@ function App() {
   }
 
   const openRegister = () => {
+    setRegisterUsername('')
     setRegisterEmail('')
     setRegisterPassword('')
     setRegisterConfirm('')
@@ -93,6 +105,63 @@ function App() {
 
   const closeRegister = () => {
     setShowRegister(false)
+  }
+
+  const closeConfirm = () => {
+    setShowConfirm(false)
+    setConfirmCode('')
+    setConfirmStatus('')
+    setConfirmStatusType('')
+  }
+
+  const handleConfirm = async (event) => {
+    event.preventDefault()
+    setConfirmStatusType('')
+    setConfirmStatus('Проверка кода...')
+
+    try {
+      const response = await fetch(`${AUTH_API}/confirm`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: registerEmail, code: confirmCode }),
+      })
+
+      if (!response.ok) {
+        const message = await parseError(response)
+        setConfirmStatusType('error')
+        setConfirmStatus(message)
+        return
+      }
+
+      // on success, perform login
+      setConfirmStatusType('success')
+      setConfirmStatus('Код подтверждён. Выполняется вход...')
+
+      const loginResponse = await fetch(`${AUTH_API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: registerUsername || registerEmail, password: registerPassword }),
+      })
+
+      if (!loginResponse.ok) {
+        const loginMessage = await parseError(loginResponse)
+        setConfirmStatusType('error')
+        setConfirmStatus(`Подтверждение прошло, но вход не удался: ${loginMessage}`)
+        setEmail(registerEmail)
+        setPassword(registerPassword)
+        setShowConfirm(false)
+        return
+      }
+
+      const tokenData = await loginResponse.json()
+      setShowConfirm(false)
+      setStatusType('success')
+      setStatus('Регистрация и вход выполнены. Идет перенаправление...')
+      window.location.replace(`http://localhost:5173/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`)
+    } catch (error) {
+      setConfirmStatusType('error')
+      setConfirmStatus(error.message || 'Не удалось выполнить запрос. Попробуйте позже.')
+    }
   }
 
   const handleRegister = async (event) => {
@@ -114,9 +183,10 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: registerEmail,
-          password: registerPassword,
-        }),
+            username: registerUsername,
+            email: registerEmail,
+            password: registerPassword,
+          }),
       })
 
       if (!response.ok) {
@@ -128,35 +198,9 @@ function App() {
 
       await response.json()
       setRegisterStatusType('success')
-      setRegisterStatus('Регистрация прошла успешно. Выполняется вход...')
-
-      const loginResponse = await fetch(`${AUTH_API}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: registerEmail,
-          password: registerPassword,
-        }),
-      })
-
-      if (!loginResponse.ok) {
-        const loginMessage = await parseError(loginResponse)
-        setRegisterStatusType('error')
-        setRegisterStatus(`Регистрация выполнена, но вход не удался: ${loginMessage}`)
-        setEmail(registerEmail)
-        setPassword(registerPassword)
-        setShowRegister(false)
-        return
-      }
-
-      const tokenData = await loginResponse.json()
-      saveTokens(tokenData)
+      setRegisterStatus('Регистрация прошла успешно. На вашу почту отправлен код подтверждения.')
+      setShowConfirm(true)
       setShowRegister(false)
-      setStatusType('success')
-      setStatus('Регистрация и вход выполнены. Идет перенаправление...')
-      window.location.href = '/?authenticated=1'
     } catch (error) {
       setRegisterStatusType('error')
       setRegisterStatus(error.message || 'Не удалось выполнить запрос. Попробуйте позже.')
@@ -164,81 +208,134 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
-      <div className="auth-card card shadow">
-        <div className="card__content">
-          <div className="brand mb-4">
-            <h1>Авторизация</h1>
-            <p className="card__description">
-              Тестовый frontend auth сервиса с импортом общего стиля.
-            </p>
-          </div>
-
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label className="label" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                className="input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ivan@example.com"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="label" htmlFor="password">
-                Пароль
-              </label>
-              <input
-                id="password"
-                type="password"
-                className="input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <div className="auth-actions">
-              <button type="submit" className="btn btn-primary btn-lg">
-                Войти
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary btn-lg"
-                onClick={openRegister}
-              >
-                Зарегистрироваться
-              </button>
-            </div>
-
-            {status && (
-              <p className={`status mt-4 ${statusType === 'error' ? 'status-error' : ''} ${statusType === 'success' ? 'status-success' : ''}`}>
-                {status}
+    <Layout>
+      <div className="fade-in">
+        <div className="auth-card card shadow">
+          <div className="card__content">
+            <div className="brand mb-4">
+              <h1>Авторизация</h1>
+              <p className="card__description">
+                Тестовый frontend auth сервиса с импортом общего стиля.
               </p>
-            )}
-          </form>
+            </div>
+
+            <form onSubmit={handleLogin}>
+              <div className="form-group">
+                <label className="label" htmlFor="login">
+                  Логин (username или email)
+                </label>
+                <input
+                  id="login"
+                  type="text"
+                  className="input"
+                  value={login}
+                  onChange={(e) => setLogin(e.target.value)}
+                  placeholder="ivan или ivan@example.com"
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="label" htmlFor="password">
+                  Пароль
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  className="input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              {showAdminField && (
+                <div className="form-group">
+                  <label className="label" htmlFor="adminKey">
+                    Ключ подтверждения
+                  </label>
+                  <input
+                    id="adminKey"
+                    type="password"
+                    className="input"
+                    value={adminKey}
+                    onChange={(e) => setAdminKey(e.target.value)}
+                    placeholder="Введите ключ администратора"
+                  />
+                </div>
+              )}
+
+              <div
+                className="admin-hint"
+                onClick={() => {
+                  setShowAdminField(!showAdminField)
+                  if (showAdminField) setAdminKey('')
+                }}
+                style={{
+                  textAlign: 'center',
+                  marginTop: '0.75rem',
+                  marginBottom: '0.5rem',
+                  cursor: 'pointer',
+                  opacity: showAdminField ? 1 : 0.5,
+                  fontWeight: showAdminField ? 700 : 400,
+                  fontSize: '0.85rem',
+                  userSelect: 'none',
+                }}
+              >
+                войти как админ
+              </div>
+
+              <div className="auth-actions">
+                <button type="submit" className="btn btn-primary btn-lg">
+                  Войти
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-lg"
+                  onClick={openRegister}
+                >
+                  Зарегистрироваться
+                </button>
+              </div>
+
+              {status && (
+                <p className={`status mt-4 ${statusType === 'error' ? 'status-error' : ''} ${statusType === 'success' ? 'status-success' : ''}`}>
+                  {status}
+                </p>
+              )}
+            </form>
+          </div>
         </div>
-      </div>
 
       {showRegister && (
         <div className="modal-overlay">
           <div className="modal-card card shadow">
             <div className="card__content">
-              <div className="brand mb-3">
+                <div className="brand mb-3">
                 <h2>Регистрация</h2>
                 <p className="card__description">
-                  Введите email, пароль и подтвердите пароль.
+                  Введите username, email, пароль и подтвердите пароль.
                 </p>
               </div>
 
               <form onSubmit={handleRegister}>
+                <div className="form-group">
+                  <label className="label" htmlFor="registerUsername">
+                    Введите username
+                  </label>
+                  <input
+                    id="registerUsername"
+                    type="text"
+                    className="input"
+                    value={registerUsername}
+                    onChange={(e) => setRegisterUsername(e.target.value)}
+                    placeholder="ivan"
+                    minLength={3}
+                    required
+                  />
+                </div>
+
                 <div className="form-group">
                   <label className="label" htmlFor="registerEmail">
                     Введите email
@@ -307,7 +404,60 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+      {showConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-card card shadow">
+            <div className="card__content">
+              <div className="brand mb-3">
+                <h2>Подтвердите почту</h2>
+                <p className="card__description">
+                  Введите 6-значный код, отправленный на вашу почту.
+                </p>
+              </div>
+
+              <form onSubmit={handleConfirm}>
+                <div className="form-group">
+                  <label className="label" htmlFor="confirmCode">
+                    Код подтверждения
+                  </label>
+                  <input
+                    id="confirmCode"
+                    type="text"
+                    className="input"
+                    value={confirmCode}
+                    onChange={(e) => setConfirmCode(e.target.value)}
+                    placeholder="000000"
+                    minLength={6}
+                    maxLength={6}
+                    required
+                  />
+                </div>
+
+                <div className="auth-actions">
+                  <button type="submit" className="btn btn-primary btn-lg">
+                    Подтвердить
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-lg"
+                    onClick={closeConfirm}
+                  >
+                    Отмена
+                  </button>
+                </div>
+
+                {confirmStatus && (
+                  <p className={`status mt-4 ${confirmStatusType === 'error' ? 'status-error' : ''} ${confirmStatusType === 'success' ? 'status-success' : ''}`}>
+                    {confirmStatus}
+                  </p>
+                )}
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      </div>
+    </Layout>
   )
 }
 

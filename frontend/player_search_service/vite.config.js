@@ -1,15 +1,17 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import React from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
+const PLAYER_API_TARGET = process.env.VITE_PLAYER_API_TARGET || 'http://localhost:8001'
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [React()],
   server: {
+    port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8001', // твой backend
+        target: PLAYER_API_TARGET,
         changeOrigin: true,
-      }
-    }
-  }
+      },
+    },
+  },
 })

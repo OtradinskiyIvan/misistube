@@ -1,0 +1,76 @@
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.comment {
+  border: 1px solid var(--misis-gray-200);
+  border-radius: var(--misis-radius-md);
+  padding: 1rem;
+  background: var(--misis-bg);
+}
+
+.comment--reply {
+  margin-left: 2rem;
+}
+
+.comment__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.comment__author {
+  font-weight: 600;
+  color: var(--misis-dark);
+}
+
+.comment__date {
+  color: var(--misis-text-dark);
+  opacity: 0.6;
+  font-size: 0.75rem;
+}
+
+.comment__content {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.comment__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  transition: var(--misis-transition);
+  font-size: 0.875rem;
+}
+
+.like-button--active {
+  color: var(--misis-light);
+  font-weight: 600;
+}
+
+.like-button:hover {
+  color: var(--misis-accent);
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.interactions-page {
+  max-width: 768px;
+  margin: 0 auto;
+}
