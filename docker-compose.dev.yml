@@ -197,6 +197,8 @@ services:
     restart: unless-stopped
     ports:
       - "${CREATION_BACK_HOST_PORT}:${CREATION_BACK_CONTAINER_PORT}"
+    env_file:
+      - creation_service/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://user:pass@creation-db:${POSTGRES_CONTAINER_PORT}/video_db
       S3_ENDPOINT_URL: http://minio:${MINIO_API_CONTAINER_PORT}
