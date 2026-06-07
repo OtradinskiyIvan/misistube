@@ -1,9 +1,15 @@
 import { Link } from 'react-router-dom';
 import { useVideos } from '../hooks/useVideos';
 import { VideoCard } from '../components/VideoCard';
+import { getUserIdFromToken } from '../api/videos';
 
 export const VideoListPage = () => {
   const { videos, loading, error } = useVideos();
+
+  const userId = getUserIdFromToken();
+  if (!userId) {
+    return <div className="text-center p-10 text-gray-500">Требуется авторизация</div>;
+  }
 
   if (loading) return <div className="text-center p-10">Загрузка...</div>;
   if (error) return <div className="text-red-600 p-10">Ошибка: {error}</div>;

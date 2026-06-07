@@ -1,5 +1,5 @@
 # infrastructure/database/models.py
-from sqlalchemy import String, Enum, DateTime, Integer, Uuid, Index, text
+from sqlalchemy import String, Enum, DateTime, Integer, Uuid, Index
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
