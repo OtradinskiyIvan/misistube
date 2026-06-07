@@ -27,8 +27,9 @@ export const VideoDetailPage = () => {
   const timeAgo = video.created_at
     ? formatDistanceToNow(new Date(video.created_at), { addSuffix: true })
     : '';
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
   const streamUrl = video.storage_url?.startsWith('/')
-    ? `http://localhost:8000${video.storage_url}`
+    ? `${apiBaseUrl}${video.storage_url}`
     : video.storage_url;
 
   return (
