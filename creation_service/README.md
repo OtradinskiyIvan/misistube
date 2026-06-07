@@ -16,11 +16,9 @@ VITE_API_BASE_URL=http://localhost:8000
 ## Запуск
 
 ```bash
-# Всё сразу (Docker Compose)
+# Из папки creation_service (там лежит docker-compose.yaml)
+cd creation_service
 docker compose up -d
-
-# Только БД + MinIO (для разработки вне Docker)
-docker compose up db minio setup-minio -d
 ```
 
 ## Пользователи БД

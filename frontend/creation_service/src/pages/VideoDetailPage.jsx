@@ -1,7 +1,8 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useVideo } from '../hooks/useVideos';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
+import { getUserIdFromToken } from '../api/videos';
 
 const STATUS_ICONS = {
   uploading: '⏳ ',
@@ -17,7 +18,17 @@ const STATUS_CLASSES = {
 
 export const VideoDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { video, loading, error } = useVideo(id);
+
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return <div className="text-center p-10 text-gray-500">Требуется авторизация</div>;
+  }
+  const userId = getUserIdFromToken();
+  if (!userId) {
+    return <div className="text-center p-10 text-gray-500">Требуется авторизация</div>;
+  }
 
   if (loading) return <div className="text-center p-10">Загрузка...</div>;
   if (error || !video) return <div className="text-red-600 p-10">Видео не найдено</div>;

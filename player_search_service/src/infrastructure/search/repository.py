@@ -55,6 +55,9 @@ class SQLAlchemyVideoRepository(SearchPort):
                 created_at=v.created_at.isoformat() if v.created_at else None,
                 updated_at=v.updated_at.isoformat() if v.updated_at else None,
 
+                user_id=str(v.user_id),
+                username=str(v.user_id),
+
                 # Безопасное получение отсутствующих полей
                 tags=getattr(v, 'tags', None),
                 thumbnail_url=getattr(v, 'thumbnail_url', None)

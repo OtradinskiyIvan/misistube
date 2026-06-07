@@ -21,26 +21,29 @@ class TestVideoStatus:
 
 class TestVideo:
     def test_create_minimal(self):
-        video = Video.create("Title", "Description", "key.mp4", 0)
+        uid = uuid4()
+        video = Video.create("Title", "Description", "key.mp4", 0, uid)
         assert isinstance(video.id, UUID)
         assert video.title == "Title"
         assert video.description == "Description"
         assert video.storage_key == "key.mp4"
         assert video.status == VideoStatus.UPLOADING
         assert video.duration == 0
+        assert video.user_id == uid
         assert isinstance(video.created_at, datetime)
         assert isinstance(video.updated_at, datetime)
 
     def test_create_with_duration(self):
-        video = Video.create("T", "D", "k.mp4", 300)
+        video = Video.create("T", "D", "k.mp4", 300, uuid4())
         assert video.duration == 300
 
     def test_dataclass_fields(self, sample_video):
         assert isinstance(sample_video.id, UUID)
         assert sample_video.title == "Test Video"
+        assert isinstance(sample_video.user_id, UUID)
 
     def test_dataclass_mutable(self):
-        video = Video.create("A", "B", "c.mp4", 10)
+        video = Video.create("A", "B", "c.mp4", 10, uuid4())
         video.title = "Updated"
         assert video.title == "Updated"
         video.status = VideoStatus.READY

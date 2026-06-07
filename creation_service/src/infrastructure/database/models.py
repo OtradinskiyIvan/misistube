@@ -1,5 +1,5 @@
 # infrastructure/database/models.py
-from sqlalchemy import String, Enum, DateTime, Integer, Uuid, Index, text
+from sqlalchemy import String, Enum, DateTime, Integer, Uuid, Index
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
@@ -20,7 +20,7 @@ class VideoModel(Base):
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4, comment="Уникальный идентификатор видео")
-    user_id: Mapped[UUID | None] = mapped_column(Uuid, nullable=True, comment="UUID пользователя, загрузившего видео")
+    user_id: Mapped[UUID] = mapped_column(Uuid, nullable=False, comment="UUID пользователя, загрузившего видео")
     title: Mapped[str] = mapped_column(String(255), comment="Название видео")
     duration_seconds: Mapped[int] = mapped_column(Integer, default=0, comment="Длительность в секундах")
     description: Mapped[str] = mapped_column(String(1000), comment="Описание видео")
