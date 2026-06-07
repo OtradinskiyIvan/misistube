@@ -1,0 +1,97 @@
+# ==================== PYTHON / PIP ====================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-wheel-metadata/
+
+# ==================== VIRTUAL ENVIRONMENTS ====================
+# Не копировать локальный venv в образ — зависимости ставятся заново
+venv/
+ENV/
+env/
+.venv/
+
+# ==================== TESTING & COVERAGE ====================
+.pytest_cache/
+.coverage
+coverage.xml
+coverage_html/
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+
+# ==================== LOGS & RUNTIME DATA ====================
+# Логи генерируются внутри контейнера, не копируем с хоста
+logs/
+*.log
+tmp/
+temp/
+
+# ==================== IDE & EDITORS ====================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-*
+
+# ==================== GIT & DOCKER CONFIGS ====================
+.git/
+.gitignore
+.dockerignore
+docker-compose*.yml
+docker-compose*.yaml
+Dockerfile*
+*.dockerfile
+
+# ==================== DOCUMENTATION & MISC ====================
+*.md
+LICENSE
+LICENSE.txt
+Makefile
+README.md
+docs/
+CONTRIBUTING.md
+
+# ==================== LOCAL SECRETS & CONFIGS ====================
+# Никогда не включать секреты в образ!
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+
+# ==================== PROJECT-SPECIFIC (твоя структура) ====================
+# Кэш pytest внутри tests/
+tests/**/__pycache__/
+tests/**/*.pyc
+
+# Egg-info (генерируется при pip install -e .)
+src/player_search_service.egg-info/
+
+# Локальные конфиги тестов, если есть
+testconfig.py
+.pytest.ini

@@ -1,0 +1,88 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "player-search-service"
+version = "0.1.0"
+description = "Player & Searching Service: HLS playback, video search, caching"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "pydantic-settings>=2.2.0",
+    "pydantic[email]>=2.7.0",
+    "sqlalchemy[asyncio]>=2.0.30",
+    "asyncpg>=0.29.0",
+    "redis>=7.4.0",
+    "aiobotocore>=3.7.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["src*"]
+namespaces = false     
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[project.optional-dependencies]
+dev = [
+    "httpx>=0.27.0",
+    "pytest>=8.1.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.4.0",
+    "testcontainers[postgres,redis]>=4.0.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 99
+lint.select = ["E", "W", "F", "I", "UP", "B", "SIM", "RUF"]
+lint.ignore = ["E501"]
+
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/main.py" = ["E402"]
+"src/core/logger.py" = ["E402"]
+"src/api/routers/*.py" = ["B008"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", ".", ".."]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = """
+  -v
+  --cov=src
+  --cov-report=term-missing
+  --cov-report=xml:coverage.xml
+  --cov-report=html:coverage_html
+  --cov-fail-under=75
+"""
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/site-packages/*",
+    "src/main.py",
+    "src/core/exceptions.py",
+    "src/core/logger.py",
+    "src/infrastructure/cache/*",
+    "src/infrastructure/storage/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
