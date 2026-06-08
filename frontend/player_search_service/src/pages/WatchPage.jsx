@@ -34,7 +34,6 @@ export default function WatchPage() {
         if (foundVideo) {
           setVideo(foundVideo)
           
-          // 🔹 Получаем информацию об авторе из user service
           if (foundVideo.user_id) {
             const userData = await userService.getUserById(foundVideo.user_id)
             setAuthor(userData)

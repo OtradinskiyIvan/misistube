@@ -323,12 +323,11 @@ services:
       - "${PLAYER_FRONT_HOST_PORT}:${PLAYER_FRONT_CONTAINER_PORT}"
     environment:
       VITE_PLAYER_API_TARGET: http://player-search-service:${PLAYER_BACK_CONTAINER_PORT}
+      VITE_USER_API_TARGET: http://user-service:${USER_BACK_CONTAINER_PORT}
     volumes:
       - ./frontend/shared:/shared
     depends_on:
       - player-search-service
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
   # ── Dev helper (опционально, для обратной совместимости) ──
   app:
