@@ -20,7 +20,6 @@ class UserProfileModel(Base):
     )
     avatar_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
     bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    website: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
     location: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(), server_default=func.now(), nullable=False,

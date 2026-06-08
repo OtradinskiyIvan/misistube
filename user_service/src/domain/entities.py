@@ -31,7 +31,6 @@ class UserProfile:
         user_id: UUID,
         avatar_url: Optional[str] = None,
         bio: Optional[str] = None,
-        website: Optional[str] = None,
         location: Optional[str] = None,
         created_at: Optional[datetime] = None,
         updated_at: Optional[datetime] = None,
@@ -40,7 +39,6 @@ class UserProfile:
         self.user_id = user_id
         self.avatar_url = avatar_url
         self.bio = bio
-        self.website = website
         self.location = location
         self.created_at = created_at or datetime.utcnow()
         self.updated_at = updated_at or datetime.utcnow()
