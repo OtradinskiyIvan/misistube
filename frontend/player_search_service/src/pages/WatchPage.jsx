@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AuthorCard from '../components/AuthorCard'
 import { userService } from '../services/userService'
+import { commentsService } from '../services/commentsService'
 
 export default function WatchPage() {
   const { id } = useParams()
@@ -10,6 +11,11 @@ export default function WatchPage() {
   const [author, setAuthor] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [comments, setComments] = useState([])
+  const [commentsTotal, setCommentsTotal] = useState(0)
+  const [newComment, setNewComment] = useState('')
+  const [sendingComment, setSendingComment] = useState(false)
+  const token = localStorage.getItem('auth_user')
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -38,6 +44,10 @@ export default function WatchPage() {
             const userData = await userService.getUserById(foundVideo.user_id)
             setAuthor(userData)
           }
+
+          const commentsData = await commentsService.getVideoComments(id)
+          setComments(commentsData.comments || [])
+          setCommentsTotal(commentsData.total || 0)
         }
       } catch (err) {
         setError(err.message)
@@ -148,6 +158,65 @@ export default function WatchPage() {
 
           {/* Плашка автора */}
           <AuthorCard author={author} />
+
+          {/* Комментарии */}
+          <div className="card" style={{ padding: '1.5rem', marginTop: '1rem' }}>
+            <h3 style={{ marginBottom: '1rem' }}>Комментарии ({commentsTotal})</h3>
+
+            {token ? (
+              <div style={{ marginBottom: '1rem' }}>
+                <textarea
+                  className="input"
+                  style={{ width: '100%', minHeight: '80px', resize: 'vertical' }}
+                  placeholder="Напишите комментарий..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                />
+                <button
+                  className="btn btn-primary"
+                  style={{ marginTop: '0.5rem' }}
+                  disabled={!newComment.trim() || sendingComment}
+                  onClick={async () => {
+                    setSendingComment(true)
+                    await commentsService.createComment(id, newComment.trim())
+                    setNewComment('')
+                    setSendingComment(false)
+                    const updated = await commentsService.getVideoComments(id)
+                    setComments(updated.comments || [])
+                    setCommentsTotal(updated.total || 0)
+                  }}
+                >
+                  {sendingComment ? 'Отправка...' : 'Отправить'}
+                </button>
+              </div>
+            ) : (
+              <p style={{ color: 'var(--misis-gray-300)', marginBottom: '1rem' }}>
+                <Link to="http://localhost:5174">Войдите</Link>, чтобы оставить комментарий
+              </p>
+            )}
+
+            {comments.length === 0 ? (
+              <p style={{ color: 'var(--misis-gray-300)' }}>Пока нет комментариев</p>
+            ) : (
+              comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  style={{
+                    padding: '0.75rem 0',
+                    borderBottom: '1px solid var(--misis-gray-200)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <strong style={{ fontSize: '0.875rem' }}>{comment.user_id?.slice(0, 8) || 'Аноним'}</strong>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--misis-gray-300)' }}>
+                      {comment.created_at ? new Date(comment.created_at).toLocaleDateString() : ''}
+                    </span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.875rem' }}>{comment.content}</p>
+                </div>
+              ))
+            )}
+          </div>
         </>
       )}
 
