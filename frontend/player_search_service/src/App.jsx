@@ -11,8 +11,12 @@ function App() {
       window.location.hash = '';
       const params = new URLSearchParams(hash.slice(1));
       const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
       if (accessToken) {
         localStorage.setItem('auth_user', JSON.stringify({ token: accessToken }));
+        if (refreshToken) {
+          localStorage.setItem('auth_refresh', refreshToken);
+        }
         window.location.reload();
       }
     }

@@ -15,6 +15,7 @@ export default function WatchPage() {
   const [commentsTotal, setCommentsTotal] = useState(0)
   const [newComment, setNewComment] = useState('')
   const [sendingComment, setSendingComment] = useState(false)
+  const [commentError, setCommentError] = useState(null)
   const token = localStorage.getItem('auth_user')
 
   useEffect(() => {
@@ -177,17 +178,28 @@ export default function WatchPage() {
                   style={{ marginTop: '0.5rem' }}
                   disabled={!newComment.trim() || sendingComment}
                   onClick={async () => {
+                    setCommentError(null)
                     setSendingComment(true)
-                    await commentsService.createComment(id, newComment.trim())
-                    setNewComment('')
-                    setSendingComment(false)
-                    const updated = await commentsService.getVideoComments(id)
-                    setComments(updated.comments || [])
-                    setCommentsTotal(updated.total || 0)
+                    try {
+                      await commentsService.createComment(id, newComment.trim())
+                      setNewComment('')
+                      const updated = await commentsService.getVideoComments(id)
+                      setComments(updated.comments || [])
+                      setCommentsTotal(updated.total || 0)
+                    } catch (err) {
+                      setCommentError(err.message)
+                    } finally {
+                      setSendingComment(false)
+                    }
                   }}
                 >
                   {sendingComment ? 'Отправка...' : 'Отправить'}
                 </button>
+                {commentError && (
+                  <p style={{ color: '#e53e3e', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                    {commentError}
+                  </p>
+                )}
               </div>
             ) : (
               <p style={{ color: 'var(--misis-gray-300)', marginBottom: '1rem' }}>
