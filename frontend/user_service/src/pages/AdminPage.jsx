@@ -40,16 +40,6 @@ export default function AdminPage() {
     );
   }
 
-  const handleDelete = async (targetUser) => {
-    if (!window.confirm(`Удалить пользователя ${targetUser.username}?`)) return;
-    try {
-      await api.deleteUser(targetUser.id);
-      await loadUsers();
-    } catch (err) {
-      alert(err.detail || "Failed to delete user");
-    }
-  };
-
   const handleStatusChange = async (targetUser, newStatus) => {
     try {
       await api.updateUser(targetUser.id, { status: newStatus });
@@ -182,22 +172,7 @@ export default function AdminPage() {
                         Разбанить
                       </button>
                     )}
-                    {u.status !== "suspended" && (
-                      <button
-                        className="btn btn-sm btn-outline"
-                        style={{ borderColor: "#F59E0B", color: "#F59E0B", fontSize: "0.75rem" }}
-                        onClick={() => handleStatusChange(u, "suspended")}
-                      >
-                        Заморозить
-                      </button>
-                    )}
-                    <button
-                      className="btn btn-sm btn-outline"
-                      style={{ borderColor: "#EF4444", color: "#EF4444", fontSize: "0.75rem" }}
-                      onClick={() => handleDelete(u)}
-                    >
-                      Удалить
-                    </button>
+
                   </div>
                 </td>
               </tr>
