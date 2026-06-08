@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { Link } from 'react-router-dom'
 
 const VideoCard = memo(function VideoCard({ video }) {
   const formatDuration = (sec) => {
@@ -55,9 +56,9 @@ const VideoCard = memo(function VideoCard({ video }) {
       </div>
 
       <div style={{ padding: '1rem', paddingTop: 0 }}>
-        <a href={`/watch/${video.id}`} className="btn btn-outline" style={{ width: '100%' }}>
+        <Link to={`/watch/${video.id}`} className="btn btn-outline" style={{ width: '100%' }}>
           ▶ Смотреть
-        </a>
+        </Link>
       </div>
     </article>
   )

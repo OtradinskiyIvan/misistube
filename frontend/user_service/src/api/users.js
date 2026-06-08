@@ -1,5 +1,5 @@
 const BASE = "/api/v1";
-const INTERACTION_BASE = "http://localhost:8002/api/v1";
+const INTERACTION_BASE = "/api/v1";
 
 class ApiError extends Error {
   constructor(code, detail, status) {

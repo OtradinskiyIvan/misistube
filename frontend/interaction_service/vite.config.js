@@ -5,6 +5,7 @@ const INTERACTION_TARGET = process.env.VITE_INTERACTION_PROXY_TARGET || "http://
 
 export default defineConfig({
   plugins: [react()],
+  base: '/interaction/',
   server: {
     port: 5175,
     proxy: {

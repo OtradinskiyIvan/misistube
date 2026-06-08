@@ -23,7 +23,7 @@ export const userService = {
         username: data.username,
         email: data.email,
         status: data.status,
-        channelUrl: `http://localhost:5173/users/${data.id}`
+        channelUrl: `/user/users/${data.id}`
       }
     } catch (error) {
       console.error('Error fetching user:', error)

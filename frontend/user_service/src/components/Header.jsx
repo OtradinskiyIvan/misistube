@@ -54,7 +54,7 @@ export default function Header() {
                 onClick={() => {
                   const token = user.token;
                   const refreshToken = localStorage.getItem('refresh_token') || '';
-                  window.location.href = `http://localhost:5177/#access_token=${encodeURIComponent(token)}&refresh_token=${encodeURIComponent(refreshToken)}`;
+                  window.location.href = `/player/#access_token=${encodeURIComponent(token)}&refresh_token=${encodeURIComponent(refreshToken)}`;
                 }}
                 className="btn btn-sm btn-outline"
                 style={{ color: "white", borderColor: "white", marginRight: "0.5rem" }}
@@ -71,7 +71,7 @@ export default function Header() {
             </>
           ) : (
             <a
-              href="http://localhost:5174"
+              href="/auth/"
               className="btn btn-sm btn-outline"
               style={{ color: "white", borderColor: "white" }}
             >

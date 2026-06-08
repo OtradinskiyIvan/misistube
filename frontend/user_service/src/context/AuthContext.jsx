@@ -8,7 +8,10 @@ const STORAGE_KEY = "auth_user";
 function loadUser() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.token) return null;
+    return parsed;
   } catch {
     return null;
   }
@@ -91,11 +94,11 @@ export function AuthProvider({ children, initialHash = "" }) {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     setUser(null);
-    window.location.href = "http://localhost:5174";
+    window.location.href = "/auth/";
   }, []);
 
   const hasRole = useCallback(
-    (role) => user && user.roles.includes(role),
+    (role) => user && Array.isArray(user.roles) && user.roles.includes(role),
     [user],
   );
 
@@ -104,8 +107,8 @@ export function AuthProvider({ children, initialHash = "" }) {
       user,
       isAuthenticated: !!user,
       authLoading,
-      isAdmin: user ? user.roles.includes("admin") : false,
-      isOwner: user ? user.roles.includes("owner") : false,
+      isAdmin: user ? (Array.isArray(user.roles) && user.roles.includes("admin")) : false,
+      isOwner: user ? (Array.isArray(user.roles) && user.roles.includes("owner")) : false,
       hasRole,
       loginWithToken,
       logout,

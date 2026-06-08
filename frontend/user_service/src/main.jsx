@@ -10,7 +10,7 @@ const initialHash = window.location.hash;
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/user">
       <AuthProvider initialHash={initialHash}>
         <App />
       </AuthProvider>

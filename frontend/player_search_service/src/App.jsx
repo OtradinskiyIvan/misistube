@@ -23,7 +23,7 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/player">
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Header />
         <main style={{ flex: 1 }}>
@@ -32,7 +32,6 @@ function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/watch/:id" element={<WatchPage />} />
             <Route path="/profile" element={<div className="container p-6">Страница профиля</div>} />
-            <Route path="/upload" element={<div className="container p-6">Страница загрузки</div>} />
           </Routes>
         </main>
       </div>

@@ -7,7 +7,7 @@ export default function Header() {
         <Link to="/" className="logo">MISIS Tube</Link>
         <nav className="nav">
           <Link to="/search" className="nav-link">Поиск</Link>
-          <Link to="/upload" className="nav-link">Загрузить</Link>
+          <a href="/creation/upload" className="nav-link">Загрузить</a>
           <Link to="/profile" className="nav-link">Профиль</Link>
         </nav>
       </div>

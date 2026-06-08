@@ -33,7 +33,7 @@ function StatsCards({ userId }) {
 function InfoTab({ user, isAdmin, isOwner, logout }) {
   const goToUpload = () => {
     const token = user.token;
-    window.location.href = `http://localhost:5176#access_token=${encodeURIComponent(token)}`;
+    window.location.href = `/creation/#access_token=${encodeURIComponent(token)}`;
   };
 
   return (
@@ -222,7 +222,7 @@ export default function ProfilePage() {
             Для доступа к личному кабинету необходимо авторизоваться
           </p>
           <a
-            href="http://localhost:5174"
+            href="/auth/"
             className="btn btn-primary btn-lg"
             style={{ display: "block", textAlign: "center" }}
           >

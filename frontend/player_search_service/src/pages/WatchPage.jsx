@@ -222,7 +222,7 @@ export default function WatchPage() {
               </div>
             ) : (
               <p style={{ color: 'var(--misis-gray-300)', marginBottom: '1rem' }}>
-                <Link to="http://localhost:5174">Войдите</Link>, чтобы оставить комментарий
+                <a href="/auth/">Войдите</a>, чтобы оставить комментарий
               </p>
             )}
 

@@ -206,7 +206,7 @@ services:
       S3_SECRET_KEY: minioadmin123
       S3_BUCKET_NAME: videos
       LOG_DIR: /app/logs
-      CORS_ORIGINS: http://localhost:${CREATION_FRONT_HOST_PORT}
+      CORS_ORIGINS: http://localhost:${CREATION_FRONT_HOST_PORT},http://localhost:8080
     volumes:
       - ./logs:/app/logs:z
     depends_on:
@@ -307,7 +307,7 @@ services:
     ports:
       - "${CREATION_FRONT_HOST_PORT}:${CREATION_FRONT_CONTAINER_PORT}"
     environment:
-      VITE_API_BASE_URL: http://localhost:${CREATION_BACK_HOST_PORT}
+      VITE_API_BASE_URL: /api/v1
     volumes:
       - ./frontend/shared:/shared
     depends_on:
@@ -330,6 +330,22 @@ services:
       - ./frontend/shared:/shared:z
     depends_on:
       - player-search-service
+
+  # ── Reverse proxy ──────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: misistube-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HOST_PORT}:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:z
+    depends_on:
+      - user-frontend
+      - auth-frontend
+      - creation-frontend
+      - interaction-frontend
+      - player-search-frontend
 
   # ── Dev helper (опционально, для обратной совместимости) ──
   app:

@@ -36,7 +36,7 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/creation">
       <Header />
       <main className="container py-6">
         <Routes>

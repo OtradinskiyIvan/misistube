@@ -137,7 +137,7 @@ export default function VideoInteractionsPage() {
           >
             {liked ? "❤️" : "🤍"} {likesCount} {likesCount === 1 ? "like" : "likes"}
           </div>
-          {authorId && isAuthenticated && (
+          {authorId && isAuthenticated && user?.id !== authorId && (
             <button
               className={`btn btn-sm ${following ? "btn-secondary" : "btn-primary"}`}
               onClick={handleFollow}
