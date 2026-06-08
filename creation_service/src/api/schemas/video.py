@@ -15,6 +15,7 @@ class VideoUploadResponse(BaseModel):
     description: str = ""
     status: VideoStatus
     duration: int
+    thumbnail_url: str | None = None
     user_id: UUID
     created_at: datetime
     updated_at: datetime

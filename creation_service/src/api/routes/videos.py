@@ -19,18 +19,22 @@ async def upload_video(
     title: str = Form(..., min_length=1, max_length=255),
     description: str = Form("", max_length=1000),
     file: UploadFile = File(...),
+    thumbnail: UploadFile = File(None),
     service: VideoService = Depends(get_video_service),
     user_id: UUID = Depends(get_current_user),
 ):
     content = await file.read()
+    thumbnail_bytes = await thumbnail.read() if thumbnail else None
     try:
-        video = await service.upload_video(title, description, content, file.filename, user_id)
+        video = await service.upload_video(title, description, content, file.filename, user_id, thumbnail_bytes)
     except VideoUploadError as e:
         raise HTTPException(status_code=502, detail=str(e))
+    thumbnail_url = f"/videos/{video.id}/thumbnail" if video.thumbnail_key else None
     return VideoUploadResponse(
         id=video.id,
         title=video.title,
         description=video.description,
+        thumbnail_url=thumbnail_url,
         status=video.status.value,
         duration=video.duration,
         user_id=video.user_id,
@@ -51,6 +55,7 @@ async def list_videos(
             id=v.id,
             title=v.title,
             description=v.description,
+            thumbnail_url=f"/videos/{v.id}/thumbnail" if v.thumbnail_key else None,
             status=v.status.value,
             duration=v.duration,
             user_id=v.user_id,
@@ -75,6 +80,7 @@ async def get_video(
             id=video.id,
             title=video.title,
             description=video.description,
+            thumbnail_url=f"/videos/{video.id}/thumbnail" if video.thumbnail_key else None,
             status=video.status.value,
             duration=video.duration,
             user_id=video.user_id,
@@ -117,6 +123,30 @@ async def stream_video(
         return Response(content=body, status_code=206, headers=headers, media_type=content_type)
 
     return Response(content=body, status_code=200, headers=headers, media_type=content_type)
+
+
+@router.get("/{video_id}/thumbnail")
+async def get_thumbnail(
+    video_id: UUID,
+    service: VideoService = Depends(get_video_service),
+):
+    try:
+        video = await service.get_video_metadata(video_id)
+        if video.status == VideoStatus.DELETED or not video.thumbnail_key:
+            raise VideoNotFoundError(video_id)
+    except VideoNotFoundError:
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
+
+    s3_data = await service.stream_thumbnail(video.thumbnail_key)
+    return Response(
+        content=s3_data["Body"],
+        media_type=s3_data["ContentType"],
+        headers={
+            "Content-Length": str(s3_data["ContentLength"]),
+            "Cache-Control": "public, max-age=31536000",
+        },
+    )
+
 
 @router.patch("/{video_id}/status")
 async def update_video_status(

@@ -1,6 +1,8 @@
+import io
 import logging
 import tempfile
 from moviepy import VideoFileClip
+from PIL import Image
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from src.domain.entities.video import Video, VideoStatus
@@ -15,7 +17,7 @@ class VideoService:
         self._repo = repo
         self._storage = storage
 
-    async def upload_video(self, title: str, description: str, file_bytes: bytes, filename: str, user_id: UUID) -> Video:
+    async def upload_video(self, title: str, description: str, file_bytes: bytes, filename: str, user_id: UUID, thumbnail_bytes: bytes | None = None) -> Video:
         with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
             tmp.write(file_bytes)
             tmpname = tmp.name
@@ -35,11 +37,38 @@ class VideoService:
             except Exception as e:
                 raise VideoUploadError(f"S3 upload failed: {e}") from e
 
-            video = Video.create(title, storage_key, duration, user_id, description)
+            thumbnail_key = None
+            if thumbnail_bytes:
+                img = Image.open(io.BytesIO(thumbnail_bytes))
+                w, h = img.size
+                target_ratio = 16 / 9
+                if w / h > target_ratio:
+                    new_w = int(h * target_ratio)
+                    offset = (w - new_w) // 2
+                    img = img.crop((offset, 0, offset + new_w, h))
+                else:
+                    new_h = int(w / target_ratio)
+                    offset = (h - new_h) // 2
+                    img = img.crop((0, offset, w, offset + new_h))
+                img = img.resize((1280, 720), Image.LANCZOS)
+                buf = io.BytesIO()
+                img.convert("RGB").save(buf, format="JPEG", quality=85)
+                thumbnail_bytes = buf.getvalue()
+                thumbnail_key = f"thumbnails/{uuid4()}.jpg"
+                try:
+                    await self._storage.upload_thumbnail_file(thumbnail_key, thumbnail_bytes)
+                except Exception:
+                    if storage_key:
+                        await self._try_cleanup_s3(storage_key)
+                    raise
+
+            video = Video.create(title, storage_key, duration, user_id, description, thumbnail_key=thumbnail_key)
             try:
                 await self._repo.add(video)
             except Exception:
                 await self._try_cleanup_s3(storage_key)
+                if thumbnail_key:
+                    await self._try_cleanup_s3_thumbnail(thumbnail_key)
                 raise
 
             video.status = VideoStatus.READY
@@ -59,6 +88,12 @@ class VideoService:
             await self._storage.delete_file(key)
         except Exception:
             logger.warning("Failed to clean up S3 object %s", key)
+
+    async def _try_cleanup_s3_thumbnail(self, key: str):
+        try:
+            await self._storage.delete_thumbnail_file(key)
+        except Exception:
+            logger.warning("Failed to clean up S3 thumbnail %s", key)
 
     async def get_video_metadata(self, video_id: UUID) -> Video:
         video = await self._repo.get(video_id)
@@ -93,4 +128,9 @@ class VideoService:
         if video.status == VideoStatus.DELETED:
             raise VideoNotFoundError(video_id)
         await self._storage.delete_file(video.storage_key)
+        if video.thumbnail_key:
+            await self._storage.delete_thumbnail_file(video.thumbnail_key)
         await self._repo.update_status(video_id, VideoStatus.DELETED)
+
+    async def stream_thumbnail(self, thumbnail_key: str):
+        return await self._storage.get_thumbnail_stream(thumbnail_key)

@@ -1,4 +1,5 @@
 # infrastructure/database/models.py
+from typing import Optional
 from sqlalchemy import String, Enum, DateTime, Integer, Uuid, Index
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from uuid import UUID, uuid4
@@ -23,6 +24,7 @@ class VideoModel(Base):
     user_id: Mapped[UUID] = mapped_column(Uuid, nullable=False, comment="UUID пользователя, загрузившего видео")
     title: Mapped[str] = mapped_column(String(255), comment="Название видео")
     duration_seconds: Mapped[int] = mapped_column(Integer, default=0, comment="Длительность в секундах")
+    thumbnail_key: Mapped[Optional[str]] = mapped_column(String(500), nullable=True, default=None, comment="Ключ объекта в S3 (путь к превью)")
     description: Mapped[str] = mapped_column(String(1000), default="", comment="Описание видео")
     storage_key: Mapped[str] = mapped_column(String(500), comment="Ключ объекта в S3 (путь к файлу)")
     status: Mapped[VideoStatus] = mapped_column(

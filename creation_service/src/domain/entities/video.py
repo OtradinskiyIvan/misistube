@@ -22,14 +22,16 @@ class Video:
     created_at: datetime
     updated_at: datetime
     description: str = ""
-
+    thumbnail_key: str | None = None
+    
     @staticmethod
-    def create(title: str, storage_key: str, duration: int, user_id: UUID, description: str = "") -> "Video":
+    def create(title: str, storage_key: str, duration: int, user_id: UUID, description: str = "", thumbnail_key: str | None = None) -> "Video":
         now = datetime.now(timezone.utc)
         return Video(
             id=uuid4(),
             title=title,
             description=description,
+            thumbnail_key=thumbnail_key,
             storage_key=storage_key,
             status=VideoStatus.UPLOADING,
             duration=duration,
