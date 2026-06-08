@@ -133,7 +133,7 @@ services:
       S3_BUCKET_NAME: videos
     volumes:
       - ./user_service:/app/user_service:z
-      - ./shared:/app/shared:z
+      - ./shared:/shared:z
       - ./logs:/app/logs:z
     depends_on:
       user-db:
@@ -158,7 +158,7 @@ services:
       S3_BUCKET_NAME: videos
     volumes:
       - ./authorization_service:/app/authorization_service:z
-      - ./shared:/app/shared:z
+      - ./shared:/shared:z
       - ./logs:/app/logs:z
     depends_on:
       auth-db:
@@ -183,7 +183,7 @@ services:
       S3_BUCKET_NAME: videos
     volumes:
       - ./interaction_service:/app/interaction_service:z
-      - ./shared:/app/shared:z
+      - ./shared:/shared:z
       - ./logs:/app/logs:z
     depends_on:
       interaction-db:
@@ -209,7 +209,7 @@ services:
       CORS_ORIGINS: http://localhost:${CREATION_FRONT_HOST_PORT}
     volumes:
       - ./creation_service:/app/creation_service:z
-      - ./shared:/app/shared:z
+      - ./shared:/shared:z
       - ./logs:/app/logs:z
     depends_on:
       creation-db:
@@ -268,7 +268,7 @@ services:
       VITE_USER_PROXY_TARGET: http://user-service:${USER_BACK_CONTAINER_PORT}
     volumes:
       - ./frontend/user_service:/app:z
-      - ./frontend/shared:/shared
+      - ./frontend/shared:/shared:z
       - /app/node_modules
     depends_on:
       - auth-service
@@ -286,7 +286,7 @@ services:
       VITE_AUTH_PROXY_TARGET: http://auth-service:${AUTH_BACK_CONTAINER_PORT}
     volumes:
       - ./frontend/authorization_service:/app:z
-      - ./frontend/shared:/shared
+      - ./frontend/shared:/shared:z
       - /app/node_modules
     depends_on:
       - auth-service
@@ -303,7 +303,7 @@ services:
       VITE_INTERACTION_PROXY_TARGET: http://interaction-service:${INTERACTION_BACK_CONTAINER_PORT}
     volumes:
       - ./frontend/interaction_service:/app:z
-      - ./frontend/shared:/shared
+      - ./frontend/shared:/shared:z
       - /app/node_modules
     depends_on:
       - interaction-service
@@ -338,7 +338,7 @@ services:
       VITE_USER_API_TARGET: http://user-service:${USER_BACK_CONTAINER_PORT}
     volumes:
       - ./frontend/player_search_service:/app:z
-      - ./frontend/shared:/shared
+      - ./frontend/shared:/shared:z
       - /app/node_modules
     depends_on:
       - player-search-service
