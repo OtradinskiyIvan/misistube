@@ -3,7 +3,7 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, func
+from sqlalchemy import select, update, delete, func
 from src.domain.entities.video import Video, VideoStatus
 from src.domain.exceptions import VideoNotFoundError
 from src.domain.interfaces.video_repository import VideoRepositoryProtocol
@@ -41,6 +41,7 @@ class SQLAlchemyVideoRepository(VideoRepositoryProtocol):
 
     async def list(self, limit: int, offset: int, user_id: UUID | None = None) -> list[Video]:
         stmt = select(VideoModel).order_by(VideoModel.created_at.desc())
+        stmt = stmt.where(VideoModel.status != VideoStatus.DELETED.value)
         if user_id is not None:
             stmt = stmt.where(VideoModel.user_id == user_id)
         result = await self._session.execute(stmt.limit(limit).offset(offset))
@@ -49,6 +50,7 @@ class SQLAlchemyVideoRepository(VideoRepositoryProtocol):
 
     async def count(self, user_id: UUID | None = None) -> int:
         stmt = select(func.count()).select_from(VideoModel)
+        stmt = stmt.where(VideoModel.status != VideoStatus.DELETED.value)
         if user_id is not None:
             stmt = stmt.where(VideoModel.user_id == user_id)
         result = await self._session.execute(stmt)
@@ -75,6 +77,14 @@ class SQLAlchemyVideoRepository(VideoRepositoryProtocol):
             update(VideoModel)
             .where(VideoModel.id == video_id)
             .values(status=status, updated_at=datetime.now(timezone.utc))
+        )
+        if result.rowcount == 0:
+            raise VideoNotFoundError(video_id)
+        await self._session.commit()
+
+    async def delete(self, video_id: UUID) -> None:
+        result = await self._session.execute(
+            delete(VideoModel).where(VideoModel.id == video_id)
         )
         if result.rowcount == 0:
             raise VideoNotFoundError(video_id)

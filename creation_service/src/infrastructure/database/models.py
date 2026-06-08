@@ -26,7 +26,7 @@ class VideoModel(Base):
     description: Mapped[str] = mapped_column(String(1000), comment="Описание видео")
     storage_key: Mapped[str] = mapped_column(String(500), comment="Ключ объекта в S3 (путь к файлу)")
     status: Mapped[VideoStatus] = mapped_column(
-        Enum("uploading", "processing", "ready", "failed", name="video_status", create_type=True, create_constraint=True),
+        Enum("uploading", "processing", "ready", "failed", "deleted", name="video_status", create_type=True, create_constraint=True),
         comment="Текущий статус обработки видео",
     )
     created_at: Mapped[datetime] = mapped_column(

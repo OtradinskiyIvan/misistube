@@ -9,6 +9,7 @@ class VideoStatus(str, Enum):
     PROCESSING = "processing"
     READY = "ready"
     FAILED = "failed"
+    DELETED = "deleted"
 
 @dataclass
 class Video:
