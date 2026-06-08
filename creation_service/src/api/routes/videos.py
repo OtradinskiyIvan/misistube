@@ -87,7 +87,6 @@ async def stream_video(
     video_id: UUID,
     request: Request,
     service: VideoService = Depends(get_video_service),
-    _: UUID = Depends(get_current_user),
 ):
 
     try:

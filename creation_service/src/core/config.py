@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     APP_NAME: str = "Video Studio"
     APP_ENV: str = "development"
+    LOG_LEVEL: str = "INFO"
     
     # PostgreSQL (async)
     DATABASE_URL: str = "postgresql+asyncpg://user:pass@localhost:5432/video_db"
@@ -23,5 +24,6 @@ class Settings(BaseSettings):
     
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()
