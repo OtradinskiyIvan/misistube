@@ -5,6 +5,7 @@ from src.api.deps import get_video_service, get_current_user
 from src.api.schemas.video import VideoUploadResponse, VideoDetailResponse, VideoListResponse, VideoStatusUpdate
 from src.services.video_service import VideoService
 from src.domain.exceptions import VideoNotFoundError, VideoUploadError
+from src.domain.entities.video import VideoStatus
 from src.core.config import settings
 
 router = APIRouter(prefix="/videos", tags=["videos"])
@@ -68,6 +69,8 @@ async def get_video(
 ):
     try:
         video = await service.get_video_metadata(video_id)
+        if video.status == VideoStatus.DELETED:
+            raise VideoNotFoundError(video_id)
         return VideoDetailResponse(
             id=video.id,
             title=video.title,
@@ -91,6 +94,8 @@ async def stream_video(
 
     try:
         video = await service.get_video_metadata(video_id)
+        if video.status == VideoStatus.DELETED:
+            raise VideoNotFoundError(video_id)
     except VideoNotFoundError:
         raise HTTPException(status_code=404, detail="Video not found")
 
@@ -134,3 +139,17 @@ async def update_video_status(
         created_at=video.created_at,
         updated_at=video.updated_at,
     )
+
+@router.delete("/{video_id}")
+async def delete_video(
+    video_id: UUID,
+    service: VideoService = Depends(get_video_service),
+    user_id: UUID = Depends(get_current_user),
+):
+    try:
+        await service.delete_video(video_id, user_id)
+    except VideoNotFoundError:
+        raise HTTPException(status_code=404, detail="Video not found")
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    return Response(status_code=204)

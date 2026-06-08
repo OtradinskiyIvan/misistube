@@ -62,3 +62,7 @@ export const fetchVideoById = async (id, signal) => {
   const response = await api.get(`/videos/${id}`, { signal });
   return response.data;
 };
+
+export const deleteVideo = async (id) => {
+  await api.delete(`/videos/${id}`);
+};

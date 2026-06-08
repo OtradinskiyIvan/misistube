@@ -2,18 +2,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useVideo } from '../hooks/useVideos';
 import { VideoPlayer } from '../components/VideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
-import { getUserIdFromToken } from '../api/videos';
+import { getUserIdFromToken, deleteVideo } from '../api/videos';
 
 const STATUS_ICONS = {
   uploading: '⏳ ',
   processing: '⚙️ ',
   ready: '✅ ',
   failed: '❌ ',
+  deleted: '🗑 ',
 };
 
 const STATUS_CLASSES = {
   ready: 'success',
   failed: 'error',
+  deleted: 'error',
 };
 
 export const VideoDetailPage = () => {
@@ -22,6 +24,18 @@ export const VideoDetailPage = () => {
   const { video, loading, error } = useVideo(id);
 
   const userId = getUserIdFromToken();
+  const isOwner = video?.user_id === userId;
+
+  const handleDelete = async () => {
+    if (!window.confirm('Удалить видео?')) return;
+    try {
+      await deleteVideo(id);
+      navigate('/');
+    } catch {
+      alert('Ошибка при удалении');
+    }
+  };
+
   if (!userId) {
     return <div className="text-center p-10 text-gray-500">Требуется авторизация</div>;
   }
@@ -60,6 +74,20 @@ export const VideoDetailPage = () => {
           </span>
         )}
       </div>
+      {isOwner && video.status === 'ready' && (
+        <button onClick={handleDelete} style={{
+          backgroundColor: '#dc3545',
+          color: '#fff',
+          border: 'none',
+          padding: '10px 20px',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          marginTop: '16px',
+          fontSize: '0.9rem'
+        }}>
+          🗑 Удалить видео
+        </button>
+      )}
     </div>
   );
 };

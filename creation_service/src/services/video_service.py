@@ -85,3 +85,12 @@ class VideoService:
         video.updated_at = datetime.now(timezone.utc)
         await self._repo.update_status(video_id, status)
         return video
+
+    async def delete_video(self, video_id: UUID, user_id: UUID) -> None:
+        video = await self.get_video_metadata(video_id)
+        if video.user_id != user_id:
+            raise PermissionError("You can only delete your own videos")
+        if video.status == VideoStatus.DELETED:
+            raise VideoNotFoundError(video_id)
+        await self._storage.delete_file(video.storage_key)
+        await self._repo.update_status(video_id, VideoStatus.DELETED)
