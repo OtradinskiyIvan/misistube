@@ -6,13 +6,15 @@ import logging
 import os
 from pathlib import Path
 
+from src.core.config import settings
+
 LOG_DIR = Path(os.getenv("LOG_DIR", "logs"))
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 SENSITIVE_HEADERS = frozenset({"authorization", "cookie", "x-api-key", "set-cookie"})
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[
         logging.FileHandler(LOG_DIR / "creation_service.log", encoding="utf-8"),
