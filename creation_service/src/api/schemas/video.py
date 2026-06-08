@@ -6,13 +6,13 @@ from src.domain.entities.video import VideoStatus
 
 class VideoCreateRequest(BaseModel):
     title: str
-    description: str
+    description: str = ""
     user_id: UUID
 
 class VideoUploadResponse(BaseModel):
     id: UUID
     title: str
-    description: str
+    description: str = ""
     status: VideoStatus
     duration: int
     user_id: UUID

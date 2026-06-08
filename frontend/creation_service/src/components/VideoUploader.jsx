@@ -41,13 +41,12 @@ export const VideoUploader = () => {
         />
       </div>
       <div className="form-group">
-        <label className="label">Описание *</label>
+        <label className="label">Описание</label>
         <textarea
           className="textarea"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          required
         />
       </div>
       <div className="form-group">

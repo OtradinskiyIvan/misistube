@@ -15,16 +15,16 @@ class VideoStatus(str, Enum):
 class Video:
     id: UUID
     title: str
-    description: str
     storage_key: str
     status: VideoStatus
     duration: int
     user_id: UUID
     created_at: datetime
     updated_at: datetime
+    description: str = ""
 
     @staticmethod
-    def create(title: str, description: str, storage_key: str, duration: int, user_id: UUID) -> "Video":
+    def create(title: str, storage_key: str, duration: int, user_id: UUID, description: str = "") -> "Video":
         now = datetime.now(timezone.utc)
         return Video(
             id=uuid4(),

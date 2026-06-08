@@ -35,7 +35,7 @@ class VideoService:
             except Exception as e:
                 raise VideoUploadError(f"S3 upload failed: {e}") from e
 
-            video = Video.create(title, description, storage_key, duration, user_id)
+            video = Video.create(title, storage_key, duration, user_id, description)
             try:
                 await self._repo.add(video)
             except Exception:

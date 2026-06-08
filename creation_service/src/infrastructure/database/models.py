@@ -23,7 +23,7 @@ class VideoModel(Base):
     user_id: Mapped[UUID] = mapped_column(Uuid, nullable=False, comment="UUID пользователя, загрузившего видео")
     title: Mapped[str] = mapped_column(String(255), comment="Название видео")
     duration_seconds: Mapped[int] = mapped_column(Integer, default=0, comment="Длительность в секундах")
-    description: Mapped[str] = mapped_column(String(1000), comment="Описание видео")
+    description: Mapped[str] = mapped_column(String(1000), default="", comment="Описание видео")
     storage_key: Mapped[str] = mapped_column(String(500), comment="Ключ объекта в S3 (путь к файлу)")
     status: Mapped[VideoStatus] = mapped_column(
         Enum("uploading", "processing", "ready", "failed", "deleted", name="video_status", create_type=True, create_constraint=True),

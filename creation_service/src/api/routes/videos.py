@@ -17,7 +17,7 @@ async def get_upload_info():
 @router.post("/upload", response_model=VideoUploadResponse)
 async def upload_video(
     title: str = Form(..., min_length=1, max_length=255),
-    description: str = Form(..., min_length=1, max_length=1000),
+    description: str = Form("", max_length=1000),
     file: UploadFile = File(...),
     service: VideoService = Depends(get_video_service),
     user_id: UUID = Depends(get_current_user),
