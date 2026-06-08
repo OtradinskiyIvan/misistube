@@ -123,6 +123,12 @@ export const api = {
   deleteAvatar: (userId) =>
     request(`/users/${userId}/profile/avatar`, { method: "DELETE" }),
 
+  getProfile: (userId) =>
+    request(`/users/${userId}/profile`),
+
+  updateProfile: (userId, data) =>
+    request(`/users/${userId}/profile`, { method: "PUT", body: JSON.stringify(data) }),
+
   getLikedVideos: async (userId) => {
     const token = getToken();
     const headers = { "Content-Type": "application/json" };

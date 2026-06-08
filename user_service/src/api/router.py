@@ -16,6 +16,8 @@ from .schemas import (
     ErrorResponse,
     FollowStatusResponse,
     HealthResponse,
+    ProfileResponse,
+    ProfileUpdateRequest,
     RoleAssignDTO,
     RoleResponse,
     StatsUpdateRequest,
@@ -713,3 +715,46 @@ async def delete_avatar(
     await profile.delete_avatar(user_id)
     logger.info("profile.avatar.deleted", extra={"user_id": str(user_id)})
     return {"detail": "Avatar deleted"}
+
+
+@router.get(
+    "/users/{user_id}/profile",
+    response_model=ProfileResponse,
+    summary="Get user profile",
+)
+async def get_profile(
+    user_id: UUID,
+    profile: ProfileService = Depends(get_profile_service),
+):
+    p = await profile.get_profile(user_id)
+    if p is None:
+        p = await profile.update_profile(user_id)
+    return ProfileResponse(
+        avatar_url=p.avatar_url,
+        bio=p.bio,
+        location=p.location,
+        created_at=p.created_at,
+        updated_at=p.updated_at,
+    )
+
+
+@router.put(
+    "/users/{user_id}/profile",
+    response_model=ProfileResponse,
+    summary="Update user profile (bio, location)",
+)
+async def update_profile(
+    user_id: UUID,
+    body: ProfileUpdateRequest,
+    profile: ProfileService = Depends(get_profile_service),
+    logger=Depends(get_logger_dep),
+):
+    p = await profile.update_profile(user_id, bio=body.bio, location=body.location)
+    logger.info("profile.updated", extra={"user_id": str(user_id)})
+    return ProfileResponse(
+        avatar_url=p.avatar_url,
+        bio=p.bio,
+        location=p.location,
+        created_at=p.created_at,
+        updated_at=p.updated_at,
+    )

@@ -155,6 +155,17 @@ class StatsUpdateRequest(BaseModel):
 class AvatarResponse(BaseModel):
     avatar_url: str
 
+class ProfileResponse(BaseModel):
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
+    location: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+class ProfileUpdateRequest(BaseModel):
+    bio: Optional[str] = None
+    location: Optional[str] = None
+
 class HealthResponse(BaseModel):
     status: str = Field(default="ok", description="Service health status")
     service: str = Field(default="user-service", description="Service name")

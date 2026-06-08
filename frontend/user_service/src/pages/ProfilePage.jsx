@@ -31,12 +31,19 @@ function StatsCards({ userId }) {
 }
 
 function InfoTab({ user, isAdmin, isOwner, logout }) {
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editBio, setEditBio] = useState("");
+  const [editLocation, setEditLocation] = useState("");
   const fileRef = useRef(null);
 
+  const loadProfile = () => {
+    api.getProfile(user.id).then(setProfile).catch(() => {});
+  };
+
   useEffect(() => {
-    api.getUserBrief(user.id).then((d) => setAvatarUrl(d.avatar_url)).catch(() => {});
+    loadProfile();
   }, [user.id]);
 
   const handleFileChange = async (e) => {
@@ -45,7 +52,7 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
     setUploading(true);
     try {
       const res = await api.uploadAvatar(user.id, file);
-      setAvatarUrl(res.avatar_url);
+      setProfile((p) => ({ ...p, avatar_url: res.avatar_url }));
     } catch (err) {
       alert(err.detail || "Ошибка загрузки");
     } finally {
@@ -54,13 +61,36 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteAvatar = async () => {
     if (!confirm("Удалить аватар?")) return;
     try {
       await api.deleteAvatar(user.id);
-      setAvatarUrl(null);
+      setProfile((p) => ({ ...p, avatar_url: null }));
     } catch (err) {
       alert(err.detail || "Ошибка удаления");
+    }
+  };
+
+  const startEdit = () => {
+    setEditBio(profile?.bio || "");
+    setEditLocation(profile?.location || "");
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+  };
+
+  const saveProfile = async () => {
+    try {
+      const res = await api.updateProfile(user.id, {
+        bio: editBio || null,
+        location: editLocation || null,
+      });
+      setProfile(res);
+      setEditing(false);
+    } catch (err) {
+      alert(err.detail || "Ошибка сохранения");
     }
   };
 
@@ -75,8 +105,8 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
       <div className="card" style={{ padding: "1.5rem", marginTop: "1rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem" }}>
           <div style={{ position: "relative", width: 80, height: 80, borderRadius: "50%", overflow: "hidden", background: "var(--misis-gray-200)", flexShrink: 0 }}>
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", fontWeight: 600, color: "var(--misis-text-dark)" }}>
                 {user.username.charAt(0).toUpperCase()}
@@ -89,14 +119,60 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
               <button className="btn btn-sm btn-primary" onClick={() => fileRef.current?.click()} disabled={uploading}>
                 {uploading ? "Загрузка…" : "Загрузить"}
               </button>
-              {avatarUrl && (
-                <button className="btn btn-sm btn-outline" onClick={handleDelete}>
+              {profile?.avatar_url && (
+                <button className="btn btn-sm btn-outline" onClick={handleDeleteAvatar}>
                   Удалить
                 </button>
               )}
             </div>
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" style={{ display: "none" }} onChange={handleFileChange} />
           </div>
+        </div>
+
+        <div style={{ marginBottom: "1rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+            <h4 style={{ margin: 0 }}>О себе</h4>
+            {!editing && (
+              <button className="btn btn-sm btn-outline" onClick={startEdit}>
+                Редактировать
+              </button>
+            )}
+          </div>
+          {editing ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <textarea
+                className="input"
+                rows={3}
+                placeholder="Расскажите о себе…"
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                style={{ resize: "vertical" }}
+              />
+              <input
+                className="input"
+                placeholder="Город / страна"
+                value={editLocation}
+                onChange={(e) => setEditLocation(e.target.value)}
+              />
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button className="btn btn-primary btn-sm" onClick={saveProfile}>
+                  Сохранить
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={cancelEdit}>
+                  Отмена
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <p style={{ margin: "0 0 0.25rem", opacity: profile?.bio ? 1 : 0.4 }}>
+                {profile?.bio || "Bio не указано"}
+              </p>
+              <p style={{ margin: 0, opacity: profile?.location ? 1 : 0.4, fontSize: "0.9rem" }}>
+                {profile?.location ? `📍 ${profile.location}` : "Локация не указана"}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="detail-grid">

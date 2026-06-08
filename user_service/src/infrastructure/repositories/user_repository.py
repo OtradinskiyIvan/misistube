@@ -1,11 +1,12 @@
 from typing import Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...domain.entities import User
 from ...domain.exceptions import UserNotFoundError, UserAlreadyExistsError, UserDeletionError
+from ..models.profile import UserProfileModel
 from ..models.user import UserModel
 
 
@@ -99,6 +100,9 @@ class UserRepositoryImpl:
             status=user.status,
         )
         sync_session.add(model)
+        sync_session.flush()
+        profile = UserProfileModel(id=uuid4(), user_id=model.id)
+        sync_session.add(profile)
         sync_session.flush()
         return self._to_domain(model)
 
