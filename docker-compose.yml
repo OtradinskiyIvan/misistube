@@ -327,6 +327,8 @@ services:
       - ./frontend/shared:/shared
     depends_on:
       - player-search-service
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # ── Dev helper (опционально, для обратной совместимости) ──
   app:

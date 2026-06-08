@@ -1,15 +1,43 @@
 export default function AuthorCard({ author }) {
-  if (!author || !author.user_id) return null
+  if (!author) {
+    return (
+      <div className="card" style={{ padding: '1.5rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div
+            style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--misis-gray-200)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.25rem',
+              fontWeight: 'bold',
+              color: 'var(--misis-gray-400)'
+            }}
+          >
+            ?
+          </div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.25rem' }}>
+              Автор не найден
+            </h3>
+            <p style={{ color: 'var(--misis-gray-300)', fontSize: '0.875rem', margin: 0 }}>
+              Информация об авторе недоступна
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-  const { user_id, username } = author
+  const { username, channelUrl } = author
 
   // Генерируем инициалы для аватара
   const initials = username 
-    ? username.slice(0, 2).toUpperCase()
-    : user_id.slice(0, 2).toUpperCase()
-
-  // URL страницы автора в другом сервисе
-  const channelUrl = `${import.meta.env.VITE_USER_SERVICE_URL || 'http://localhost:8002'}/channel/${user_id}`
+    ? username.slice(0, 1).toUpperCase()
+    : '?'
 
   return (
     <div 
@@ -28,8 +56,8 @@ export default function AuthorCard({ author }) {
           width: '60px',
           height: '60px',
           borderRadius: '50%',
-          backgroundColor: 'var(--misis-primary)',
-          color: 'white',
+          backgroundColor: 'var(--misis-gray-200);',
+          color: 'var(--misis-text-dark)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -44,7 +72,7 @@ export default function AuthorCard({ author }) {
       {/* Информация об авторе */}
       <div style={{ flex: 1 }}>
         <h3 style={{ fontSize: '1.125rem', marginBottom: '0.25rem' }}>
-          {username || 'Автор'}
+          {username}
         </h3>
         <p style={{ color: 'var(--misis-gray-300)', fontSize: '0.875rem', margin: 0 }}>
           Автор видео

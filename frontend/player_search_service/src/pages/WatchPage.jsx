@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AuthorCard from '../components/AuthorCard'
+import { userService } from '../services/userService'
 
 export default function WatchPage() {
   const { id } = useParams()
   const [videoUrl, setVideoUrl] = useState(null)
   const [video, setVideo] = useState(null)
+  const [author, setAuthor] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -13,22 +15,30 @@ export default function WatchPage() {
     const fetchVideo = async () => {
       try {
         setLoading(true)
-        // Получаем presigned URL для видео
-        const response = await fetch(`/api/v1/playback/${id}`)
         
-        if (!response.ok) {
+        // Получаем presigned URL для видео
+        const playbackResponse = await fetch(`/api/v1/playback/${id}`)
+        
+        if (!playbackResponse.ok) {
           throw new Error('Видео не найдено')
         }
         
-        const data = await response.json()
-        setVideoUrl(data.hls_master_url)
+        const playbackData = await playbackResponse.json()
+        setVideoUrl(playbackData.hls_master_url)
         
-        // Дополнительно получаем информацию о видео
+        // Получаем информацию о видео
         const searchResponse = await fetch(`/api/v1/search?q=&limit=100`)
         const searchData = await searchResponse.json()
         const foundVideo = searchData.items?.find(v => v.id === id)
+        
         if (foundVideo) {
           setVideo(foundVideo)
+          
+          // 🔹 Получаем информацию об авторе из user service
+          if (foundVideo.user_id) {
+            const userData = await userService.getUserById(foundVideo.user_id)
+            setAuthor(userData)
+          }
         }
       } catch (err) {
         setError(err.message)
@@ -138,12 +148,7 @@ export default function WatchPage() {
           </div>
 
           {/* Плашка автора */}
-          <AuthorCard 
-            author={{
-              user_id: video.user_id,
-              username: video.username
-            }} 
-          />
+          <AuthorCard author={author} />
         </>
       )}
 
