@@ -127,20 +127,3 @@
   margin-top: 0.25rem;
 }
 
-.input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--misis-gray-200);
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  background: var(--misis-white);
-  color: var(--misis-text-dark);
-  box-sizing: border-box;
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--misis-primary);
-  box-shadow: 0 0 0 2px rgba(42, 106, 221, 0.15);
-}
