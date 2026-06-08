@@ -12,8 +12,11 @@ from .infrastructure.database.manager import DatabaseManager
 from .infrastructure.database.uow import UnitOfWorkImpl
 from .infrastructure.repositories.comment_repository import CommentRepositoryImpl
 from .infrastructure.repositories.like_repository import LikeRepositoryImpl
+from .infrastructure.repositories.view_repository import ViewRepositoryImpl
 from .services.comment_service import CommentService
 from .services.like_service import LikeService
+from .services.view_service import ViewService
+from .infrastructure.clients.creation_service_client import CreationServiceClient
 from .infrastructure.clients.user_service_client import UserServiceClient
 
 configure_logging(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
@@ -69,6 +72,25 @@ async def get_user_service_client(
     s: InteractionSettings = Depends(get_settings),
 ) -> UserServiceClient:
     return UserServiceClient(base_url=s.USER_SERVICE_URL)
+
+
+async def get_creation_service_client(
+    s: InteractionSettings = Depends(get_settings),
+) -> CreationServiceClient:
+    return CreationServiceClient(base_url=s.CREATION_SERVICE_URL)
+
+
+async def get_view_service(
+    session: AsyncSession = Depends(get_session),
+    creation_client: CreationServiceClient = Depends(get_creation_service_client),
+    user_client: UserServiceClient = Depends(get_user_service_client),
+) -> ViewService:
+    return ViewService(
+        ViewRepositoryImpl(session),
+        UnitOfWorkImpl(session),
+        creation_client,
+        user_client,
+    )
 
 
 async def get_current_user_id(

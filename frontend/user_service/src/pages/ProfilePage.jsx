@@ -4,6 +4,32 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/users.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 
+function StatsCards({ userId }) {
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    api.getUserStats(userId).then(setStats).catch(() => {});
+  }, [userId]);
+
+  const cards = [
+    { label: "Подписчиков", value: stats?.total_subscribers ?? "—" },
+    { label: "Просмотров", value: stats?.total_views ?? "—" },
+    { label: "Лайков", value: stats?.total_likes_received ?? "—" },
+    { label: "Комментариев", value: stats?.total_comments_received ?? "—" },
+  ];
+
+  return (
+    <div className="stats-grid">
+      {cards.map((c) => (
+        <div key={c.label} className="card stats-card">
+          <div className="stats-card-value">{c.value}</div>
+          <div className="stats-card-label">{c.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function InfoTab({ user, isAdmin, isOwner, logout }) {
   const goToUpload = () => {
     const token = user.token;
@@ -11,44 +37,47 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
   };
 
   return (
-    <div className="card" style={{ padding: "1.5rem" }}>
-      <div className="detail-grid">
-        <div className="detail-row">
-          <span className="detail-label">ID</span>
-          <span className="detail-value">{user.id}</span>
+    <>
+      <StatsCards userId={user.id} />
+      <div className="card" style={{ padding: "1.5rem", marginTop: "1rem" }}>
+        <div className="detail-grid">
+          <div className="detail-row">
+            <span className="detail-label">ID</span>
+            <span className="detail-value">{user.id}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Username</span>
+            <span className="detail-value">{user.username}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Email</span>
+            <span className="detail-value">{user.email}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Роли</span>
+            <span className="detail-value">
+              {user.roles.length > 0 ? user.roles.join(", ") : "—"}
+            </span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Права</span>
+            <span className="detail-value">
+              {isAdmin && "Администратор"}
+              {isOwner && (isAdmin ? ", Владелец" : "Владелец")}
+              {!isAdmin && !isOwner && "Обычный пользователь"}
+            </span>
+          </div>
         </div>
-        <div className="detail-row">
-          <span className="detail-label">Username</span>
-          <span className="detail-value">{user.username}</span>
-        </div>
-        <div className="detail-row">
-          <span className="detail-label">Email</span>
-          <span className="detail-value">{user.email}</span>
-        </div>
-        <div className="detail-row">
-          <span className="detail-label">Роли</span>
-          <span className="detail-value">
-            {user.roles.length > 0 ? user.roles.join(", ") : "—"}
-          </span>
-        </div>
-        <div className="detail-row">
-          <span className="detail-label">Права</span>
-          <span className="detail-value">
-            {isAdmin && "Администратор"}
-            {isOwner && (isAdmin ? ", Владелец" : "Владелец")}
-            {!isAdmin && !isOwner && "Обычный пользователь"}
-          </span>
+        <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.5rem" }}>
+          <button className="btn btn-primary" onClick={goToUpload}>
+            Загрузить видео
+          </button>
+          <button className="btn btn-secondary" onClick={logout}>
+            Выйти
+          </button>
         </div>
       </div>
-      <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.5rem" }}>
-        <button className="btn btn-primary" onClick={goToUpload}>
-          Загрузить видео
-        </button>
-        <button className="btn btn-secondary" onClick={logout}>
-          Выйти
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
 

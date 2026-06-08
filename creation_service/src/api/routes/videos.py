@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Response, Query, Request
 from fastapi.responses import Response
+from pydantic import BaseModel
 from uuid import UUID
 from src.api.deps import get_video_service, get_current_user
 from src.api.schemas.video import VideoUploadResponse, VideoDetailResponse, VideoListResponse, VideoStatusUpdate
@@ -81,6 +82,21 @@ async def get_video(
         )
     except VideoNotFoundError:
         raise HTTPException(status_code=404, detail="Video not found")
+
+class VideoOwnerResponse(BaseModel):
+    user_id: UUID
+
+@router.get("/{video_id}/owner", response_model=VideoOwnerResponse)
+async def get_video_owner(
+    video_id: UUID,
+    service: VideoService = Depends(get_video_service),
+):
+    try:
+        video = await service.get_video_metadata(video_id)
+        return VideoOwnerResponse(user_id=video.user_id)
+    except VideoNotFoundError:
+        raise HTTPException(status_code=404, detail="Video not found")
+
 
 @router.get("/{video_id}/stream")
 async def stream_video(

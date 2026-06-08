@@ -36,6 +36,7 @@ class InteractionSettings(shared_config.BaseSettings):
     JWT_ALGORITHM: str = Field(default="HS256", validation_alias=AliasChoices("JWT_ALGORITHM", "JWT_ALGORITHM"))
 
     USER_SERVICE_URL: str = "http://user-service:8000"
+    CREATION_SERVICE_URL: str = "http://creation-service:8000"
 
     S3_ENDPOINT: Optional[str] = None
     S3_ACCESS_KEY: Optional[shared_config.SecretStr] = None

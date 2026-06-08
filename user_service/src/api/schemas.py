@@ -138,6 +138,20 @@ class UserBriefResponse(BaseModel):
 class BatchUserRequest(BaseModel):
     ids: list[UUID]
 
+class UserStatsResponse(BaseModel):
+    user_id: UUID
+    total_videos: int
+    total_views: int
+    total_subscribers: int
+    total_likes_received: int
+    total_comments_received: int
+    updated_at: datetime
+
+class StatsUpdateRequest(BaseModel):
+    field: str
+    amount: int = 1
+
+
 class HealthResponse(BaseModel):
     status: str = Field(default="ok", description="Service health status")
     service: str = Field(default="user-service", description="Service name")

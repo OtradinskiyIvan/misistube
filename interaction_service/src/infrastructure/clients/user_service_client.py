@@ -100,3 +100,19 @@ class UserServiceClient:
                 json={"status": status},
             )
             return resp.status_code == 200
+
+    async def increment_stat(self, user_id: UUID, field: str, amount: int = 1) -> bool:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            resp = await client.post(
+                f"{self._base_url}/api/v1/users/{user_id}/stats/increment",
+                json={"field": field, "amount": amount},
+            )
+            return resp.status_code == 200
+
+    async def decrement_stat(self, user_id: UUID, field: str, amount: int = 1) -> bool:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            resp = await client.post(
+                f"{self._base_url}/api/v1/users/{user_id}/stats/decrement",
+                json={"field": field, "amount": amount},
+            )
+            return resp.status_code == 200

@@ -41,6 +41,12 @@ class CommentService:
         await self._uow.commit()
         return _to_dict(comment)
 
+    async def get_comment(self, comment_id: UUID) -> Optional[dict]:
+        comment = await self._comment_repo.get_by_id(comment_id)
+        if comment is None:
+            return None
+        return _to_dict(comment)
+
     async def get_video_comments(
         self,
         video_id: UUID,

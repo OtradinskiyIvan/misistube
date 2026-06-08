@@ -81,6 +81,19 @@ export default function UserPage() {
     }
   };
 
+  const [stats, setStats] = useState(null);
+
+  useEffect(() => {
+    api.getUserStats(userId).then(setStats).catch(() => {});
+  }, [userId]);
+
+  const statsCards = [
+    { label: "Подписчиков", value: stats?.total_subscribers ?? "—" },
+    { label: "Просмотров", value: stats?.total_views ?? "—" },
+    { label: "Лайков", value: stats?.total_likes_received ?? "—" },
+    { label: "Комментариев", value: stats?.total_comments_received ?? "—" },
+  ];
+
   if (loading) {
     return (
       <div className="fade-in" style={{ textAlign: "center", paddingTop: "4rem" }}>
@@ -137,7 +150,16 @@ export default function UserPage() {
           </span>
         </div>
 
-        <div className="detail-grid">
+        <div className="stats-grid">
+          {statsCards.map((c) => (
+            <div key={c.label} className="card stats-card">
+              <div className="stats-card-value">{c.value}</div>
+              <div className="stats-card-label">{c.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="detail-grid" style={{ marginTop: "1rem" }}>
           <div className="detail-row">
             <span className="detail-label">ID</span>
             <span className="detail-value">{target.id}</span>
