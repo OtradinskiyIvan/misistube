@@ -82,8 +82,6 @@ export default function AuthorCard({ author }) {
       {/* Кнопка перехода на канал (внешний редирект) */}
       <a 
         href={channelUrl}
-        target="_blank"
-        rel="noopener noreferrer"
         className="btn btn-primary"
         style={{ flexShrink: 0, textDecoration: 'none' }}
       >
