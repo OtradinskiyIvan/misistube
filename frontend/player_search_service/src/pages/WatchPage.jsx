@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import AuthorCard from '../components/AuthorCard'
 
 export default function WatchPage() {
   const { id } = useParams()
@@ -23,7 +24,7 @@ export default function WatchPage() {
         setVideoUrl(data.hls_master_url)
         
         // Дополнительно получаем информацию о видео
-        const searchResponse = await fetch(`/api/v1/search?q=&limit=1`)
+        const searchResponse = await fetch(`/api/v1/search?q=&limit=100`)
         const searchData = await searchResponse.json()
         const foundVideo = searchData.items?.find(v => v.id === id)
         if (foundVideo) {
@@ -97,43 +98,53 @@ export default function WatchPage() {
 
       {/* Информация о видео */}
       {video && (
-        <div className="card" style={{ padding: '1.5rem', marginBottom: '1rem' }}>
-          <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{video.title}</h1>
-          
-          {video.description && (
-            <p style={{ color: 'var(--misis-text-dark)', opacity: 0.8, marginBottom: '1rem' }}>
-              {video.description}
-            </p>
-          )}
-
-          <div style={{ 
-            display: 'flex', 
-            gap: '1rem', 
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            marginBottom: '1rem'
-          }}>
-            <span style={{ color: 'var(--misis-gray-300)', fontSize: '0.875rem' }}>
-              ⏱ {Math.floor((video.duration || 0) / 60)}:{String((video.duration || 0) % 60).padStart(2, '0')}
-            </span>
+        <>
+          <div className="card" style={{ padding: '1.5rem', marginBottom: '1rem' }}>
+            <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{video.title}</h1>
             
-            {video.status && (
-              <span className={`badge status-${video.status.toLowerCase()}`}>
-                {video.status}
+            {video.description && (
+              <p style={{ color: 'var(--misis-text-dark)', opacity: 0.8, marginBottom: '1rem' }}>
+                {video.description}
+              </p>
+            )}
+
+            <div style={{ 
+              display: 'flex', 
+              gap: '1rem', 
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              marginBottom: '1rem'
+            }}>
+              <span style={{ color: 'var(--misis-gray-300)', fontSize: '0.875rem' }}>
+                ⏱ {Math.floor((video.duration_seconds || 0) / 60)}:{String((video.duration_seconds || 0) % 60).padStart(2, '0')}
               </span>
+              
+              {video.status && (
+                <span className={`badge status-${video.status.toLowerCase()}`}>
+                  {video.status}
+                </span>
+              )}
+            </div>
+
+            {video.tags && video.tags.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {video.tags.map((tag, idx) => (
+                  <span key={idx} className="badge badge-info">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
 
-          {video.tags && video.tags.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {video.tags.map((tag, idx) => (
-                <span key={idx} className="badge badge-info">
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+          {/* Плашка автора */}
+          <AuthorCard 
+            author={{
+              user_id: video.user_id,
+              username: video.username
+            }} 
+          />
+        </>
       )}
 
       {/* Действия */}
