@@ -16,11 +16,12 @@ const STATUS_CLASSES = {
   deleted: 'error',
 };
 
-export const VideoCard = ({ video }) => {
+export const VideoCard = ({ video, showDescription = true }) => {
   if (!video || !video.id) return null;
 
   const userId = getUserIdFromToken();
   const isOwner = userId === video.user_id;
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003';
 
   const handleDelete = async (e) => {
     e.preventDefault();
@@ -41,9 +42,11 @@ export const VideoCard = ({ video }) => {
   const statusIcon = STATUS_ICONS[video.status] || '';
 
   return (
-    <Link to={`/videos/${video.id}`} className="card block hover:no-underline" style={{ position: 'relative' }}>
-      <div className="aspect-video bg-gray-200 flex items-center justify-center text-gray-400">
-        🎬 Превью
+    <Link to={`/videos/${video.id}`} className="card block hover:no-underline" style={{ position: 'relative', maxWidth: '400px' }}>
+      <div className="bg-gray-200 flex items-center justify-center text-gray-400" style={{ height: '180px', overflow: 'hidden' }}>
+        {video.thumbnail_url ? (
+          <img src={`${apiBaseUrl}${video.thumbnail_url}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        ) : null}
       </div>
       {isOwner && video.status === 'ready' && (
         <button
@@ -70,21 +73,23 @@ export const VideoCard = ({ video }) => {
           ✕
         </button>
       )}
-      <div className="card__content">
+      <div className="card__content" style={{ padding: '6px 10px', fontSize: '13px' }}>
         {video.duration > 0 && (
-          <span className="card__duration">
+          <span className="card__duration" style={{ position: 'absolute', bottom: '92px', right: '6px', fontSize: '11px', background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '1px 5px', borderRadius: '3px' }}>
             {Math.floor(video.duration / 60)}:{String(video.duration % 60).padStart(2, '0')}
           </span>
         )}
-        <h3 className="card__title">{video.title || ''}</h3>
-        <p className="card__description">
-          {typeof video.description === 'string' ? video.description.slice(0, 100) : ''}
-        </p>
-        <div className="card__meta">
-          <span className={`badge badge-${statusClass}`}>
+        <div style={{ fontWeight: 600, fontSize: '14px', color: '#1E2A3A', margin: '2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{video.title || ''}</div>
+        {showDescription && (
+          <div style={{ fontSize: '12px', color: '#6b6375', margin: '2px 0', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {typeof video.description === 'string' ? video.description.slice(0, 80) : ''}
+          </div>
+        )}
+        <div style={{ marginTop: '4px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span className={`badge badge-${statusClass}`} style={{ fontSize: '11px' }}>
             {statusIcon}{video.status}
           </span>
-          {timeAgo && <span className="card__time">{timeAgo}</span>}
+          {timeAgo && <span style={{ color: '#6b6375' }}>{timeAgo}</span>}
         </div>
       </div>
     </Link>
