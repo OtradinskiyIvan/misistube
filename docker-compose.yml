@@ -263,7 +263,7 @@ services:
       VITE_AUTH_PROXY_TARGET: http://auth-service:${AUTH_BACK_CONTAINER_PORT}
       VITE_USER_PROXY_TARGET: http://user-service:${USER_BACK_CONTAINER_PORT}
     volumes:
-      - ./frontend/shared:/shared
+      - ./frontend/shared:/shared:z
     depends_on:
       - auth-service
       - user-service
@@ -279,7 +279,7 @@ services:
     environment:
       VITE_AUTH_PROXY_TARGET: http://auth-service:${AUTH_BACK_CONTAINER_PORT}
     volumes:
-      - ./frontend/shared:/shared
+      - ./frontend/shared:/shared:z
     depends_on:
       - auth-service
 
@@ -294,7 +294,7 @@ services:
     environment:
       VITE_INTERACTION_PROXY_TARGET: http://interaction-service:${INTERACTION_BACK_CONTAINER_PORT}
     volumes:
-      - ./frontend/shared:/shared
+      - ./frontend/shared:/shared:z
     depends_on:
       - interaction-service
 
@@ -324,7 +324,7 @@ services:
     environment:
       VITE_PLAYER_API_TARGET: http://player-search-service:${PLAYER_BACK_CONTAINER_PORT}
     volumes:
-      - ./frontend/shared:/shared
+      - ./frontend/shared:/shared:z
     depends_on:
       - player-search-service
 
