@@ -16,7 +16,7 @@ const STATUS_CLASSES = {
   deleted: 'error',
 };
 
-export const VideoCard = ({ video }) => {
+export const VideoCard = ({ video, showDescription = true }) => {
   if (!video || !video.id) return null;
 
   const userId = getUserIdFromToken();
@@ -80,9 +80,11 @@ export const VideoCard = ({ video }) => {
           </span>
         )}
         <div style={{ fontWeight: 600, fontSize: '14px', color: '#1E2A3A', margin: '2px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{video.title || ''}</div>
-        <div style={{ fontSize: '12px', color: '#6b6375', margin: '2px 0', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {typeof video.description === 'string' ? video.description.slice(0, 80) : ''}
-        </div>
+        {showDescription && (
+          <div style={{ fontSize: '12px', color: '#6b6375', margin: '2px 0', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {typeof video.description === 'string' ? video.description.slice(0, 80) : ''}
+          </div>
+        )}
         <div style={{ marginTop: '4px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span className={`badge badge-${statusClass}`} style={{ fontSize: '11px' }}>
             {statusIcon}{video.status}
