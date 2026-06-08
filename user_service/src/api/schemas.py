@@ -152,6 +152,9 @@ class StatsUpdateRequest(BaseModel):
     amount: int = 1
 
 
+class AvatarResponse(BaseModel):
+    avatar_url: str
+
 class HealthResponse(BaseModel):
     status: str = Field(default="ok", description="Service health status")
     service: str = Field(default="user-service", description="Service name")

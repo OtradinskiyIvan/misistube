@@ -37,10 +37,11 @@ class UserServiceSettings(shared_config.BaseSettings):
 
     INTERNAL_API_KEY: str = ""
 
-    S3_ENDPOINT: Optional[str] = None
-    S3_ACCESS_KEY: Optional[shared_config.SecretStr] = None
-    S3_SECRET_KEY: Optional[shared_config.SecretStr] = None
-    S3_BUCKET_NAME: Optional[str] = None
+    S3_ENDPOINT_URL: str = Field(default="http://localhost:9000", validation_alias=AliasChoices("S3_ENDPOINT_URL", "S3_ENDPOINT"))
+    S3_PUBLIC_ENDPOINT_URL: str = Field(default="http://localhost:9002", validation_alias=AliasChoices("S3_PUBLIC_ENDPOINT_URL", "S3_PUBLIC_ENDPOINT"))
+    S3_ACCESS_KEY: shared_config.SecretStr = Field(default="minioadmin", validation_alias=AliasChoices("S3_ACCESS_KEY"))
+    S3_SECRET_KEY: shared_config.SecretStr = Field(default="minioadmin123", validation_alias=AliasChoices("S3_SECRET_KEY"))
+    S3_AVATAR_BUCKET: str = "avatars"
 
 
 settings = UserServiceSettings()
