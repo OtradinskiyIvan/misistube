@@ -16,7 +16,24 @@ export default function WatchPage() {
   const [newComment, setNewComment] = useState('')
   const [sendingComment, setSendingComment] = useState(false)
   const [commentError, setCommentError] = useState(null)
+  const [userNames, setUserNames] = useState({})
   const token = localStorage.getItem('auth_user')
+
+  async function resolveUserNames(comments) {
+    const userIds = [...new Set((comments || []).map(c => c.user_id).filter(Boolean))]
+    if (userIds.length === 0) return
+    const entries = await Promise.all(
+      userIds.map(async (id) => {
+        try {
+          const user = await userService.getUserById(id)
+          return [id, user?.username || id.slice(0, 8)]
+        } catch {
+          return [id, id.slice(0, 8)]
+        }
+      })
+    )
+    setUserNames(prev => ({ ...prev, ...Object.fromEntries(entries) }))
+  }
 
   useEffect(() => {
     const fetchVideo = async () => {
@@ -49,6 +66,7 @@ export default function WatchPage() {
           const commentsData = await commentsService.getVideoComments(id)
           setComments(commentsData.comments || [])
           setCommentsTotal(commentsData.total || 0)
+          resolveUserNames(commentsData.comments)
         }
       } catch (err) {
         setError(err.message)
@@ -186,6 +204,7 @@ export default function WatchPage() {
                       const updated = await commentsService.getVideoComments(id)
                       setComments(updated.comments || [])
                       setCommentsTotal(updated.total || 0)
+                      resolveUserNames(updated.comments)
                     } catch (err) {
                       setCommentError(err.message)
                     } finally {
@@ -219,7 +238,7 @@ export default function WatchPage() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <strong style={{ fontSize: '0.875rem' }}>{comment.user_id?.slice(0, 8) || 'Аноним'}</strong>
+                    <strong style={{ fontSize: '0.875rem' }}>{userNames[comment.user_id] || comment.user_id?.slice(0, 8) || 'Аноним'}</strong>
                     <span style={{ fontSize: '0.75rem', color: 'var(--misis-gray-300)' }}>
                       {comment.created_at ? new Date(comment.created_at).toLocaleDateString() : ''}
                     </span>
