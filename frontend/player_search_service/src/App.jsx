@@ -1,9 +1,27 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useEffect } from 'react'
 import Header from './components/Header'
 import SearchPage from './pages/SearchPage'
 import WatchPage from './pages/WatchPage'
 
 function App() {
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash && hash.includes('access_token=')) {
+      window.location.hash = '';
+      const params = new URLSearchParams(hash.slice(1));
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      if (accessToken) {
+        localStorage.setItem('auth_user', JSON.stringify({ token: accessToken }));
+        if (refreshToken) {
+          localStorage.setItem('auth_refresh', refreshToken);
+        }
+        window.location.reload();
+      }
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
