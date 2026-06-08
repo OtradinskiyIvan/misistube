@@ -337,6 +337,7 @@ services:
       VITE_PLAYER_API_TARGET: http://player-search-service:${PLAYER_BACK_CONTAINER_PORT}
       VITE_USER_API_TARGET: http://user-service:${USER_BACK_CONTAINER_PORT}
       VITE_INTERACTION_API_TARGET: http://interaction-service:${INTERACTION_BACK_CONTAINER_PORT}
+      VITE_AUTH_API_TARGET: http://auth-service:${AUTH_BACK_CONTAINER_PORT}
     volumes:
       - ./frontend/player_search_service:/app:z
       - ./frontend/shared:/shared:z
