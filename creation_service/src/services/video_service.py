@@ -54,7 +54,7 @@ class VideoService:
                 buf = io.BytesIO()
                 img.convert("RGB").save(buf, format="JPEG", quality=85)
                 thumbnail_bytes = buf.getvalue()
-                thumbnail_key = f"thumbnails/{uuid4()}.jpg"
+                thumbnail_key = f"{uuid4()}.jpg"
                 try:
                     await self._storage.upload_thumbnail_file(thumbnail_key, thumbnail_bytes)
                 except Exception:
