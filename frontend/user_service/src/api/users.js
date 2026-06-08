@@ -27,7 +27,13 @@ async function request(path, options = {}) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE}${path}`, { ...options, headers });
+  let res;
+  try {
+    res = await fetch(`${BASE}${path}`, { ...options, headers });
+  } catch (err) {
+    console.error("API request network error:", err);
+    throw new ApiError("NETWORK_ERROR", "Network error: " + err.message, 0);
+  }
 
   if (res.status === 204) return null;
 

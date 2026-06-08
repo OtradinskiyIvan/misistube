@@ -64,7 +64,10 @@ export default function SearchPage() {
   };
 
   useEffect(() => {
-    if (!user || results.length === 0) return;
+    if (!user || !user.id || results.length === 0) {
+      if (user && !user.id) console.warn("SearchPage: user exists but user.id is undefined", user);
+      return;
+    }
     (async () => {
       const statuses = {};
       await Promise.all(

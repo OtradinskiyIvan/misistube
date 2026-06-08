@@ -52,7 +52,10 @@ export default function UserPage() {
   }, [userId, navigate]);
 
   useEffect(() => {
-    if (!me || !target || target.id === me.id) return;
+    if (!me || !target || target.id === me.id) {
+      if (me && !me.id) console.warn("UserPage: me exists but me.id is undefined", me);
+      return;
+    }
     (async () => {
       try {
         const res = await api.isFollowing(me.id, target.id);

@@ -11,6 +11,10 @@ function loadUser() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || !parsed.token) return null;
+    if (!parsed.id) {
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
     return parsed;
   } catch {
     return null;
