@@ -206,6 +206,7 @@ export default function WatchPage() {
                       setCommentsTotal(updated.total || 0)
                       resolveUserNames(updated.comments)
                     } catch (err) {
+                      console.error("WatchPage comment error:", err)
                       setCommentError(err.message)
                     } finally {
                       setSendingComment(false)
