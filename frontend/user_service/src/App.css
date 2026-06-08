@@ -102,3 +102,27 @@
   color: var(--misis-text-dark);
   word-break: break-all;
 }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stats-card {
+  text-align: center;
+  padding: 1rem;
+}
+
+.stats-card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--misis-primary);
+}
+
+.stats-card-label {
+  font-size: 0.8rem;
+  opacity: 0.65;
+  margin-top: 0.25rem;
+}

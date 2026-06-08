@@ -17,6 +17,7 @@ from .schemas import (
     HealthResponse,
     RoleAssignDTO,
     RoleResponse,
+    StatsUpdateRequest,
     SubscriptionActionRequest,
     SubscriptionListResponse,
     SubscriptionResponse,
@@ -26,6 +27,7 @@ from .schemas import (
     UserCreateDTO,
     UserListResponse,
     UserResponseDTO,
+    UserStatsResponse,
     UserUpdateDTO,
 )
 from ..core.security import decode_jwt_token
@@ -37,6 +39,7 @@ from ..deps import (
     get_get_user_service,
     get_logger_dep,
     get_settings,
+    get_statistic_service,
     get_subscription_service,
     get_sync_user_service,
     get_update_user_service,
@@ -53,6 +56,7 @@ from ..services.delete_user import DeleteUserService
 from ..services.get_user import GetUserService
 from ..services.get_user_roles import GetUserRolesService
 from ..services.revoke_role import RevokeRoleService
+from ..services.statistic_service import StatisticService
 from ..services.subscription_service import SubscriptionService
 from ..services.sync_user import SyncUserService
 from ..services.update_user import UpdateUserService
@@ -589,3 +593,83 @@ async def is_following(
     logger.info("subscriptions.is_following.requested", extra={"follower": str(follower_id), "following": str(following_id)})
     result = await service.is_following(follower_id, following_id)
     return FollowStatusResponse(is_following=result)
+
+
+@router.get(
+    "/users/{user_id}/stats",
+    response_model=UserStatsResponse,
+    summary="Get user statistics",
+    description="Returns aggregated statistics for a user (views, likes, comments, subscribers, videos).",
+)
+async def get_user_stats(
+    user_id: UUID,
+    service: StatisticService = Depends(get_statistic_service),
+    sub_service: SubscriptionService = Depends(get_subscription_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.stats.get.requested", extra={"user_id": str(user_id)})
+    stats = await service.get_or_create(user_id)
+    subscribers = await sub_service.count_followers(user_id)
+    return UserStatsResponse(
+        user_id=stats.user_id,
+        total_videos=stats.total_videos,
+        total_views=stats.total_views,
+        total_subscribers=subscribers,
+        total_likes_received=stats.total_likes_received,
+        total_comments_received=stats.total_comments_received,
+        updated_at=stats.updated_at,
+    )
+
+
+@router.post(
+    "/users/{user_id}/stats/increment",
+    response_model=UserStatsResponse,
+    summary="Increment a stat counter",
+    description="Increments a specific stat field. Used by internal services.",
+)
+async def increment_user_stats(
+    user_id: UUID,
+    body: StatsUpdateRequest,
+    service: StatisticService = Depends(get_statistic_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.stats.increment.requested", extra={"user_id": str(user_id), "field": body.field, "amount": body.amount})
+    stats = await service.increment(user_id, body.field, body.amount)
+    if stats is None:
+        raise HTTPException(status_code=400, detail=f"Invalid field: {body.field}")
+    return UserStatsResponse(
+        user_id=stats.user_id,
+        total_videos=stats.total_videos,
+        total_views=stats.total_views,
+        total_subscribers=stats.total_subscribers,
+        total_likes_received=stats.total_likes_received,
+        total_comments_received=stats.total_comments_received,
+        updated_at=stats.updated_at,
+    )
+
+
+@router.post(
+    "/users/{user_id}/stats/decrement",
+    response_model=UserStatsResponse,
+    summary="Decrement a stat counter",
+    description="Decrements a specific stat field. Used by internal services.",
+)
+async def decrement_user_stats(
+    user_id: UUID,
+    body: StatsUpdateRequest,
+    service: StatisticService = Depends(get_statistic_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("users.stats.decrement.requested", extra={"user_id": str(user_id), "field": body.field, "amount": body.amount})
+    stats = await service.decrement(user_id, body.field, body.amount)
+    if stats is None:
+        raise HTTPException(status_code=400, detail=f"Invalid field: {body.field}")
+    return UserStatsResponse(
+        user_id=stats.user_id,
+        total_videos=stats.total_videos,
+        total_views=stats.total_views,
+        total_subscribers=stats.total_subscribers,
+        total_likes_received=stats.total_likes_received,
+        total_comments_received=stats.total_comments_received,
+        updated_at=stats.updated_at,
+    )

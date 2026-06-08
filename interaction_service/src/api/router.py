@@ -16,19 +16,25 @@ from .schemas import (
     LikeRequest,
     LikeResponse,
     PaginatedCommentsResponse,
+    ViewRequest,
+    ViewResponse,
 )
 from ..deps import (
     get_comment_service,
+    get_creation_service_client,
     get_current_user_id,
     get_like_service,
     get_logger_dep,
     get_settings,
     get_user_service_client,
+    get_view_service,
     require_admin,
 )
+from ..infrastructure.clients.creation_service_client import CreationServiceClient
 from ..infrastructure.clients.user_service_client import UserServiceClient
 from ..services.comment_service import CommentService
 from ..services.like_service import LikeService
+from ..services.view_service import ViewService
 
 
 router = APIRouter(tags=["interactions"])
@@ -72,9 +78,15 @@ async def like_video(
     user_id: UUID = Depends(get_current_user_id),
     service: LikeService = Depends(get_like_service),
     logger=Depends(get_logger_dep),
+    creation_client: CreationServiceClient = Depends(get_creation_service_client),
+    user_client: UserServiceClient = Depends(get_user_service_client),
 ):
     logger.info("likes.create.requested", extra={"user_id": str(user_id), "video_id": str(body.video_id)})
     liked = await service.like(user_id, body.video_id)
+    if liked:
+        owner_id = await creation_client.get_video_owner(body.video_id)
+        if owner_id is not None:
+            await user_client.increment_stat(owner_id, "total_likes_received", 1)
     return LikeResponse(liked=liked)
 
 
@@ -89,11 +101,17 @@ async def unlike_video(
     user_id: UUID = Depends(get_current_user_id),
     service: LikeService = Depends(get_like_service),
     logger=Depends(get_logger_dep),
+    creation_client: CreationServiceClient = Depends(get_creation_service_client),
+    user_client: UserServiceClient = Depends(get_user_service_client),
 ):
     logger.info("likes.delete.requested", extra={"user_id": str(user_id), "video_id": str(video_id)})
     removed = await service.unlike(user_id, video_id)
     if not removed:
         raise HTTPException(status_code=404, detail="Like not found")
+    if removed:
+        owner_id = await creation_client.get_video_owner(video_id)
+        if owner_id is not None:
+            await user_client.decrement_stat(owner_id, "total_likes_received", 1)
     return None
 
 
@@ -131,6 +149,24 @@ async def likes_count(
 
 
 @router.post(
+    "/views",
+    response_model=ViewResponse,
+    status_code=201,
+    summary="Record a video view",
+    responses={**_error_responses},
+)
+async def record_view(
+    body: ViewRequest,
+    user_id: UUID = Depends(get_current_user_id),
+    service: ViewService = Depends(get_view_service),
+    logger=Depends(get_logger_dep),
+):
+    logger.info("views.record.requested", extra={"user_id": str(user_id), "video_id": str(body.video_id)})
+    owner_id = await service.record_view(user_id, body.video_id)
+    return ViewResponse(recorded=owner_id is not None)
+
+
+@router.post(
     "/comments",
     response_model=CommentResponse,
     status_code=201,
@@ -142,6 +178,8 @@ async def create_comment(
     user_id: UUID = Depends(get_current_user_id),
     service: CommentService = Depends(get_comment_service),
     logger=Depends(get_logger_dep),
+    creation_client: CreationServiceClient = Depends(get_creation_service_client),
+    user_client: UserServiceClient = Depends(get_user_service_client),
 ):
     logger.info("comments.create.requested", extra={"user_id": str(user_id), "video_id": str(body.video_id)})
     comment = await service.create_comment(
@@ -150,6 +188,9 @@ async def create_comment(
         content=body.content,
         parent_id=body.parent_id,
     )
+    owner_id = await creation_client.get_video_owner(body.video_id)
+    if owner_id is not None:
+        await user_client.increment_stat(owner_id, "total_comments_received", 1)
     return map_comment_to_response(comment)
 
 
@@ -208,11 +249,19 @@ async def delete_comment(
     user_id: UUID = Depends(get_current_user_id),
     service: CommentService = Depends(get_comment_service),
     logger=Depends(get_logger_dep),
+    creation_client: CreationServiceClient = Depends(get_creation_service_client),
+    user_client: UserServiceClient = Depends(get_user_service_client),
 ):
     logger.info("comments.delete.requested", extra={"comment_id": str(comment_id), "user_id": str(user_id)})
+    comment = await service.get_comment(comment_id)
+    video_id = comment.get("video_id") if comment else None
     deleted = await service.delete_comment(comment_id, user_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Comment not found or not owned by user")
+    if deleted and video_id:
+        owner_id = await creation_client.get_video_owner(video_id)
+        if owner_id is not None:
+            await user_client.decrement_stat(owner_id, "total_comments_received", 1)
     return None
 
 

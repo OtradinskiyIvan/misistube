@@ -97,6 +97,9 @@ export const api = {
   isFollowing: (followerId, followingId) =>
     request(`/users/${followerId}/is-following/${followingId}`),
 
+  getUserStats: (userId) =>
+    request(`/users/${userId}/stats`),
+
   getLikedVideos: async (userId) => {
     const token = getToken();
     const headers = { "Content-Type": "application/json" };

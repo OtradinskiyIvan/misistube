@@ -11,7 +11,7 @@ from .core.logging import configure_logging, get_logger
 from .core.settings import settings, UserServiceSettings
 from .infrastructure.database.manager import DatabaseManager
 from .infrastructure.database.uow import UnitOfWorkImpl
-from .infrastructure.repositories import UserRepositoryImpl, RoleRepositoryImpl
+from .infrastructure.repositories import UserRepositoryImpl, RoleRepositoryImpl, StatisticRepositoryImpl
 from .services.create_user import CreateUserService
 from .services.delete_user import DeleteUserService
 from .services.get_user import GetUserService
@@ -20,6 +20,7 @@ from .services.update_user import UpdateUserService
 from .services.assign_role import AssignRoleService
 from .services.revoke_role import RevokeRoleService
 from .services.get_user_roles import GetUserRolesService
+from .services.statistic_service import StatisticService
 from .services.subscription_service import SubscriptionService
 from .services.brief_user import BriefUserService
 from .infrastructure.repositories.subscription_repository import SubscriptionRepositoryImpl
@@ -165,6 +166,12 @@ async def get_brief_user_service(
     session: AsyncSession = Depends(get_session),
 ) -> BriefUserService:
     return BriefUserService(session)
+
+
+async def get_statistic_service(
+    session: AsyncSession = Depends(get_session),
+) -> StatisticService:
+    return StatisticService(StatisticRepositoryImpl(session), UnitOfWorkImpl(session))
 
 
 _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)

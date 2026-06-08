@@ -1,7 +1,7 @@
 from typing import Optional, Protocol
 from uuid import UUID
 
-from .entities import User
+from .entities import User, UserStatistic
 
 
 class UserRepository(Protocol):
@@ -26,3 +26,13 @@ class UnitOfWork(Protocol):
     async def commit(self) -> None: ...
 
     async def rollback(self) -> None: ...
+
+
+class StatisticRepository(Protocol):
+    async def get_by_user_id(self, user_id: UUID) -> Optional[UserStatistic]: ...
+
+    async def create(self, user_id: UUID) -> UserStatistic: ...
+
+    async def increment_field(self, user_id: UUID, field: str, amount: int = 1) -> None: ...
+
+    async def decrement_field(self, user_id: UUID, field: str, amount: int = 1) -> None: ...

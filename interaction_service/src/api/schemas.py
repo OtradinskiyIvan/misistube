@@ -86,3 +86,11 @@ class AdminCommentActionResponse(BaseModel):
 class AdminActionResponse(BaseModel):
     success: bool
     detail: str
+
+
+class ViewRequest(BaseModel):
+    video_id: UUID
+
+
+class ViewResponse(BaseModel):
+    recorded: bool
