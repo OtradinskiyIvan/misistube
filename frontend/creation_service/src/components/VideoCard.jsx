@@ -2,6 +2,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { getUserIdFromToken, deleteVideo } from '../api/videos';
 
+const STATUS_LABELS = {
+  uploading: 'Загружается',
+  processing: 'Обрабатывается',
+  ready: 'Готово',
+  failed: 'Ошибка',
+  deleted: 'Удалено',
+};
+
 const STATUS_CLASSES = {
   ready: 'success',
   failed: 'error',
@@ -116,7 +124,7 @@ export const VideoCard = ({ video, showDescription = true, compact, onDelete }) 
         )}
         <div style={{ marginTop: '4px', fontSize: '11px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span className={`badge badge-${statusClass}`} style={{ fontSize: '11px', borderRadius: '6px' }}>
-            {video.status}
+            {STATUS_LABELS[video.status] || video.status}
           </span>
           {timeAgo && <span style={{ color: '#6b6375' }}>{timeAgo}</span>}
         </div>
