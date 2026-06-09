@@ -16,8 +16,14 @@ export default function Header() {
   return (
     <header className="header">
       <div className="container">
-        <Link to="/profile" style={{ textDecoration: "none", color: "inherit" }}>
-          <span className="logo">MISIS Tube</span>
+        <Link
+          to="/profile"
+          className="logo"
+          style={{ transition: "opacity 0.2s" }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.2")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+        >
+          MISIS Tube
         </Link>
         {user && (
           <form className="header-search" onSubmit={handleSearch}>
@@ -35,51 +41,27 @@ export default function Header() {
           {user ? (
             <>
               {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="btn btn-sm btn-outline"
-                  style={{ color: "white", borderColor: "white", marginRight: "0.5rem" }}
-                >
+                <Link to="/admin" className="nav-link" style={{ marginRight: "0.5rem" }}>
                   Управление
                 </Link>
               )}
               {canModerate && (
-                <a
-                  href="/interaction/admin/comments"
-                  className="btn btn-sm btn-outline"
-                  style={{ color: "white", borderColor: "white", marginRight: "0.5rem" }}
-                >
+                <a href="/interaction/admin/comments" className="nav-link" style={{ marginRight: "0.5rem" }}>
                   Модерация
                 </a>
               )}
-              <Link
-                to="/profile"
-                className="btn btn-sm btn-outline"
-                style={{ color: "white", borderColor: "white", marginRight: "0.5rem" }}
-              >
+              <Link to="/profile" className="nav-link" style={{ marginRight: "0.5rem" }}>
                 Профиль
               </Link>
-              <a
-                href="/player/"
-                className="btn btn-sm btn-outline"
-                style={{ color: "white", borderColor: "white", marginRight: "0.5rem" }}
-              >
+              <a href="/player/" className="nav-link" style={{ marginRight: "0.5rem" }}>
                 Смотреть
               </a>
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={logout}
-                style={{ color: "white", borderColor: "white" }}
-              >
+              <button className="nav-link" onClick={logout} style={{ cursor: "pointer", border: "none", background: "none", fontFamily: "inherit", fontSize: "inherit", padding: 0 }}>
                 Выйти
               </button>
             </>
           ) : (
-            <a
-              href="/auth/"
-              className="btn btn-sm btn-outline"
-              style={{ color: "white", borderColor: "white" }}
-            >
+            <a href="/auth/" className="nav-link">
               Войти
             </a>
           )}
