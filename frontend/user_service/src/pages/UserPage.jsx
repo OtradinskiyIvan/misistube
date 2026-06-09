@@ -11,6 +11,7 @@ export default function UserPage() {
   const navigate = useNavigate();
   const { user: me } = useAuth();
   const [target, setTarget] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -42,6 +43,8 @@ export default function UserPage() {
       try {
         const data = await api.getUserBrief(userId);
         if (!cancelled) setTarget(data);
+        const p = await api.getProfile(userId).catch(() => null);
+        if (!cancelled) setProfile(p);
       } catch (err) {
         if (!cancelled) setError(err.detail || "Пользователь не найден");
       } finally {
@@ -152,6 +155,13 @@ export default function UserPage() {
             {target.status}
           </span>
         </div>
+
+        {(profile?.bio || profile?.location) && (
+          <div style={{ marginBottom: "1rem", padding: "0.75rem", background: "var(--misis-gray-100)", borderRadius: "var(--misis-radius-md)" }}>
+            {profile?.bio && <p style={{ margin: "0 0 0.25rem" }}>{profile.bio}</p>}
+            {profile?.location && <p style={{ margin: 0, fontSize: "0.9rem", opacity: 0.7 }}>📍 {profile.location}</p>}
+          </div>
+        )}
 
         <div className="stats-grid">
           {statsCards.map((c) => (
