@@ -92,6 +92,7 @@ export default function WatchPage() {
             setAuthor({
               user_id: videoData.user_id,
               username: videoData.username,
+              avatar_url: videoData.avatar_url,
               channelUrl: `/user/users/${videoData.user_id}`
             })
           }
