@@ -287,11 +287,11 @@ async def block_comment(
     comment_id: UUID,
     service: CommentService = Depends(get_comment_service),
     logger=Depends(get_logger_dep),
-    admin_payload: dict = Depends(require_admin),
+    _mod: dict = Depends(require_moderator_or_admin),
 ):
     logger.info("admin.comments.block.requested", extra={"comment_id": str(comment_id)})
-    admin_id = UUID(admin_payload["sub"])
-    comment = await service.block_comment(comment_id, admin_id)
+    mod_id = UUID(_mod["sub"])
+    comment = await service.block_comment(comment_id, mod_id)
     if comment is None:
         raise HTTPException(status_code=404, detail="Comment not found")
     logger.info("admin.comments.block.success", extra={"comment_id": str(comment_id)})
@@ -308,7 +308,7 @@ async def unblock_comment(
     comment_id: UUID,
     service: CommentService = Depends(get_comment_service),
     logger=Depends(get_logger_dep),
-    _admin=Depends(require_admin),
+    _mod=Depends(require_moderator_or_admin),
 ):
     logger.info("admin.comments.unblock.requested", extra={"comment_id": str(comment_id)})
     comment = await service.unblock_comment(comment_id)
