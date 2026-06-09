@@ -84,9 +84,12 @@ async def like_video(
     logger.info("likes.create.requested", extra={"user_id": str(user_id), "video_id": str(body.video_id)})
     liked = await service.like(user_id, body.video_id)
     if liked:
-        owner_id = await creation_client.get_video_owner(body.video_id)
-        if owner_id is not None:
-            await user_client.increment_stat(owner_id, "total_likes_received", 1)
+        try:
+            owner_id = await creation_client.get_video_owner(body.video_id)
+            if owner_id is not None:
+                await user_client.increment_stat(owner_id, "total_likes_received", 1)
+        except Exception:
+            logger.exception("Failed to update like stats")
     return LikeResponse(liked=liked)
 
 
@@ -109,9 +112,12 @@ async def unlike_video(
     if not removed:
         raise HTTPException(status_code=404, detail="Like not found")
     if removed:
-        owner_id = await creation_client.get_video_owner(video_id)
-        if owner_id is not None:
-            await user_client.decrement_stat(owner_id, "total_likes_received", 1)
+        try:
+            owner_id = await creation_client.get_video_owner(video_id)
+            if owner_id is not None:
+                await user_client.decrement_stat(owner_id, "total_likes_received", 1)
+        except Exception:
+            logger.exception("Failed to update unlike stats")
     return None
 
 
@@ -188,9 +194,12 @@ async def create_comment(
         content=body.content,
         parent_id=body.parent_id,
     )
-    owner_id = await creation_client.get_video_owner(body.video_id)
-    if owner_id is not None:
-        await user_client.increment_stat(owner_id, "total_comments_received", 1)
+    try:
+        owner_id = await creation_client.get_video_owner(body.video_id)
+        if owner_id is not None:
+            await user_client.increment_stat(owner_id, "total_comments_received", 1)
+    except Exception:
+        logger.exception("Failed to update comment stats")
     return map_comment_to_response(comment)
 
 

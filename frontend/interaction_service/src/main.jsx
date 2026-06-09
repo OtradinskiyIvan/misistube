@@ -8,7 +8,7 @@ import "./App.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/interaction">
       <AuthProvider>
         <App />
       </AuthProvider>

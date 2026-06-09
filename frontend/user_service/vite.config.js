@@ -6,6 +6,7 @@ const USER_TARGET = process.env.VITE_USER_PROXY_TARGET || "http://localhost:8001
 
 export default defineConfig({
   plugins: [react()],
+  base: '/user/',
   server: {
     port: 5173,
     proxy: {

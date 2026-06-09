@@ -8,6 +8,7 @@ const AUTH_API_TARGET = process.env.VITE_AUTH_API_TARGET || 'http://localhost:80
 
 export default defineConfig({
   plugins: [React()],
+  base: '/player/',
   server: {
     port: 5173,
     proxy: {

@@ -206,6 +206,7 @@ export default function WatchPage() {
                       setCommentsTotal(updated.total || 0)
                       resolveUserNames(updated.comments)
                     } catch (err) {
+                      console.error("WatchPage comment error:", err)
                       setCommentError(err.message)
                     } finally {
                       setSendingComment(false)
@@ -222,7 +223,7 @@ export default function WatchPage() {
               </div>
             ) : (
               <p style={{ color: 'var(--misis-gray-300)', marginBottom: '1rem' }}>
-                <Link to="http://localhost:5174">Войдите</Link>, чтобы оставить комментарий
+                <a href="/auth/">Войдите</a>, чтобы оставить комментарий
               </p>
             )}
 

@@ -19,6 +19,7 @@ export default function AdminPage() {
       const data = await api.listUsers(0, 100);
       setUsers(data.users || []);
     } catch (err) {
+      console.error("AdminPage error:", err);
       setError(err.detail || "Failed to load users");
     } finally {
       setLoading(false);
