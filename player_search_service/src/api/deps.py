@@ -39,12 +39,14 @@ def get_search_repository(session: AsyncSession = Depends(get_async_session)) ->
     return SQLAlchemyVideoRepository(session=session)
 
 def get_search_usecase(
-    search_port: SearchPort = Depends(get_search_repository) # noqa: B008
+    search_port: SearchPort = Depends(get_search_repository),
+    cache: CachePort = Depends(get_cache_adapter),
+    storage: StoragePort = Depends(get_storage_adapter),
 ) -> SearchVideoUseCase:
-    """Фабрика UseCase поиска"""
     return SearchVideoUseCase(
-        cache=get_cache_adapter(),
-        search_port=search_port
+        cache=cache,
+        search_port=search_port,
+        storage=storage,
     )
 
 async def get_playback_usecase(

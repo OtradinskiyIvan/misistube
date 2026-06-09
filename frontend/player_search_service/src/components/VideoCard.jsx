@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import { Link } from 'react-router-dom'
 
 const VideoCard = memo(function VideoCard({ video }) {
   const formatDuration = (sec) => {
@@ -37,27 +38,30 @@ const VideoCard = memo(function VideoCard({ video }) {
         )}
         
         <div className="card__meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>{formatDuration(video.duration)}</span>
+          {/*video.duration → video.duration_seconds */}
+          <span>{formatDuration(video.duration_seconds)}</span>
           {video.status && (
             <span className={`badge status-${video.status.toLowerCase()}`}>{video.status}</span>
           )}
         </div>
 
-        {video.tags?.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', marginTop: '0.5rem' }}>
-            {video.tags.slice(0, 3).map((tag, idx) => (
-              <span key={idx} className="badge badge-neutral" style={{ fontSize: '0.75rem' }}>
-                #{tag}
-              </span>
-            ))}
-          </div>
+        {/*отображение автора */}
+        {video.username && (
+          <p style={{ 
+            color: 'var(--misis-gray-300)',
+            fontSize: '0.75rem',
+            marginTop: '0.5rem',
+            marginBottom: 0
+          }}>
+            👤 {video.username}
+          </p>
         )}
       </div>
 
       <div style={{ padding: '1rem', paddingTop: 0 }}>
-        <a href={`/watch/${video.id}`} className="btn btn-outline" style={{ width: '100%' }}>
+        <Link to={`/watch/${video.id}`} className="btn btn-outline" style={{ width: '100%', display: 'block', textAlign: 'center', textDecoration: 'none' }}>
           ▶ Смотреть
-        </a>
+        </Link>
       </div>
     </article>
   )

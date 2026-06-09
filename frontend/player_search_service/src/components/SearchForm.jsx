@@ -2,19 +2,10 @@ import { useState } from 'react'
 
 export default function SearchForm({ onSearch }) {
   const [query, setQuery] = useState('')
-  const [selectedTags, setSelectedTags] = useState([])
-
-  const availableTags = ['коты', 'python', 'docker', 'tutorial', 'милота', 'devops']
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSearch({ q: query, tags: selectedTags })
-  }
-
-  const toggleTag = (tag) => {
-    setSelectedTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    )
+    onSearch({ q: query })
   }
 
   return (
@@ -33,22 +24,18 @@ export default function SearchForm({ onSearch }) {
           <button type="submit" className="btn btn-primary">
             Найти
           </button>
-        </div>
-      </div>
-
-      <div className="form-group">
-        <label className="label">Фильтр по тегам</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-          {availableTags.map(tag => (
-            <button
-              key={tag}
-              type="button"
-              className={`btn btn-sm ${selectedTags.includes(tag) ? 'btn-primary' : 'btn-secondary'}`}
-              onClick={() => toggleTag(tag)}
+          {query && (
+            <button 
+              type="button" 
+              className="btn btn-outline"
+              onClick={() => {
+                setQuery('')
+                onSearch({ q: '' })
+              }}
             >
-              #{tag}
+              Сбросить
             </button>
-          ))}
+          )}
         </div>
       </div>
     </form>

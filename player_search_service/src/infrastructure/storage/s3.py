@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime, timedelta
+from typing import Optional
 
 import aiobotocore.session
 from aiobotocore.session import AioSession
@@ -20,13 +21,17 @@ class S3StorageAdapter(StoragePort):
         public_endpoint_url: str | None = None,
         access_key: str | None = None,
         secret_key: str | None = None,
+        bucket_name: Optional[str] = None,
+        bucket_thumbnails: Optional[str] = None,
     ):
         settings = get_settings()
         self.endpoint_url = endpoint_url or settings.S3_ENDPOINT_URL
         self.public_endpoint_url = public_endpoint_url or settings.S3_PUBLIC_ENDPOINT_URL
         self.access_key = access_key or settings.S3_ACCESS_KEY.get_secret_value()
         self.secret_key = secret_key or settings.S3_SECRET_KEY.get_secret_value()
-
+        self.bucket_name = bucket_name or settings.S3_BUCKET_NAME
+        self.bucket_thumbnails = bucket_thumbnails or settings.S3_BUCKET_THUMBNAILS
+        
         self.session: AioSession = aiobotocore.session.get_session()
         self._client = None
         self._client_context = None
@@ -71,6 +76,29 @@ class S3StorageAdapter(StoragePort):
             url = url.replace(self.endpoint_url, self.public_endpoint_url)
         expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
         return url, expires_at
+
+    async def generate_thumbnail_url(
+        self,
+        thumbnail_key: str,
+        expires_in: int = 3600
+    ) -> Optional[str]:
+        """
+        Генерирует presigned URL для превью видео из бакета thumbnails.
+        Возвращает None, если thumbnail_key не задан.
+        """
+        if not thumbnail_key:
+            return None
+        
+        try:
+            url, _ = await self.generate_presigned_url(
+                object_key=thumbnail_key,
+                bucket=self.bucket_thumbnails,
+                expires_in=expires_in,
+            )
+            return url
+        except Exception as e:
+            logger.warning("Failed to generate thumbnail URL for %s: %s", thumbnail_key, e)
+            return None
 
     async def upload_file(
         self,
