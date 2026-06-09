@@ -58,38 +58,44 @@ export const VideoUploader = () => {
       </div>
       <div className="form-group">
         <label className="label">Файл видео *</label>
-        <input
-          type="file"
-          accept="video/*"
-          onChange={(e) => {
-            const f = e.target.files?.[0] || null;
-            if (f && f.size > MAX_FILE_SIZE) {
-              setError('Видео слишком большое (Max 100 MB)');
-              setFile(null);
-              e.target.value = '';
-            } else {
-              setFile(f);
-              setError(null);
-            }
-          }}
-          required
-          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-misis-light file:text-white hover:file:bg-misis-dark"
-        />
+        <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', display: 'inline-block' }}>
+          {file ? file.name : 'Выбрать видео'}
+          <input
+            type="file"
+            accept="video/*"
+            onChange={(e) => {
+              const f = e.target.files?.[0] || null;
+              if (f && f.size > MAX_FILE_SIZE) {
+                setError('Видео слишком большое (Max 100 MB)');
+                setFile(null);
+                e.target.value = '';
+              } else {
+                setFile(f);
+                setError(null);
+              }
+            }}
+            required
+            style={{ display: 'none' }}
+          />
+        </label>
       </div>
       <div className="form-group">
-        <label className="label">Превью (необязательно)</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
-          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-misis-light file:text-white hover:file:bg-misis-dark"
-        />
+        <label className="label">Превью</label>
+        <label className="btn btn-sm btn-outline" style={{ cursor: 'pointer', display: 'inline-block' }}>
+          {thumbnail ? thumbnail.name : 'Выбрать превью'}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setThumbnail(e.target.files?.[0] || null)}
+            style={{ display: 'none' }}
+          />
+        </label>
       </div>
       {error && <div className="text-red-600 text-sm">{error}</div>}
       <button
         type="submit"
         disabled={uploading}
-        className="btn-primary w-full"
+        className="btn btn-sm btn-outline"
       >
         {uploading ? 'Загрузка...' : 'Загрузить видео'}
       </button>
