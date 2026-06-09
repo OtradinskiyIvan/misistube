@@ -384,8 +384,7 @@ function LikesTab({ userId }) {
               <li key={vid} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--misis-gray-200)" }}>
                 <a
                   href={`/player/watch/${vid}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+
                   style={{ display: "flex", alignItems: "center", gap: "0.75rem", textDecoration: "none", color: "inherit" }}
                 >
                   {meta?.thumbnail_url && (
