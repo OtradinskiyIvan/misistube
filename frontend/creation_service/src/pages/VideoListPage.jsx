@@ -35,7 +35,7 @@ export const VideoListPage = () => {
       </div>
       {videos.length === 0 ? (
         <>
-          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 24px' }} />
+          <hr style={{ border: 'none', height: '1px', backgroundColor: '#e5e4e7', margin: '0 0 24px' }} />
           <p className="text-gray-500">У вас пока нет видео. Загрузите первое!</p>
         </>
       ) : viewMode === 'grid' ? (
