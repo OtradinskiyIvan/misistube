@@ -138,7 +138,10 @@ class AuthService:
             roles=roles,
         )
         if self._user_svc_client is not None:
-            await self._user_svc_client.sync_user(access_token)
+            try:
+                await self._user_svc_client.sync_user(access_token)
+            except Exception as exc:
+                logger.warning("Failed to sync user after login: %s", exc)
         return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "Bearer"}
 
     async def refresh_access_token(self, refresh_token: str) -> dict[str, str]:

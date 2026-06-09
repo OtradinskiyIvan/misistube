@@ -30,7 +30,7 @@ function StatsCards({ userId }) {
   );
 }
 
-function InfoTab({ user, isAdmin, isOwner, logout }) {
+function InfoTab({ user, isAdmin, isOwner, logout, api }) {
   const [profile, setProfile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -91,6 +91,17 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
       setEditing(false);
     } catch (err) {
       alert(err.detail || "Ошибка сохранения");
+    }
+  };
+
+  const handleDeactivate = async () => {
+    if (!window.confirm("Вы уверены, что хотите удалить профиль? Это действие необратимо.")) return;
+    if (!window.confirm("Все ваши данные будут деактивированы. Продолжить?")) return;
+    try {
+      await api.deactivateMe();
+      logout();
+    } catch (err) {
+      alert(err.detail || "Ошибка удаления профиля");
     }
   };
 
@@ -210,6 +221,16 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
             Выйти
           </button>
         </div>
+
+        <hr style={{ margin: "1.5rem 0", border: "none", borderTop: "1px solid var(--misis-gray-200)" }} />
+
+        <button
+          className="btn btn-sm"
+          style={{ background: "#EF4444", color: "white", border: "none" }}
+          onClick={handleDeactivate}
+        >
+          Удалить профиль
+        </button>
       </div>
     </>
   );
@@ -296,13 +317,49 @@ function SubscriptionsTab({ userId }) {
 
 function LikesTab({ userId }) {
   const [videoIds, setVideoIds] = useState([]);
+  const [videoMeta, setVideoMeta] = useState({});
   const [loading, setLoading] = useState(true);
+
+  function getAuthHeaders() {
+    const stored = localStorage.getItem("auth_user");
+    if (!stored) return {};
+    try {
+      const token = JSON.parse(stored).token;
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    } catch {
+      return {};
+    }
+  }
 
   useEffect(() => {
     async function load() {
       try {
         const res = await api.getLikedVideos(userId);
-        setVideoIds(res.video_ids || []);
+        const ids = res.video_ids || [];
+        setVideoIds(ids);
+
+        if (ids.length > 0) {
+          const headers = getAuthHeaders();
+          const results = await Promise.allSettled(
+            ids.map((vid) =>
+              fetch(`/api/v1/videos/${vid}`, { headers })
+                .then((r) => (r.ok ? r.json() : Promise.reject()))
+                .then((data) => ({
+                  id: vid,
+                  title: data.title,
+                  thumbnail_url: data.thumbnail_url?.startsWith("/videos/") ? `/api/v1${data.thumbnail_url}` : data.thumbnail_url,
+                }))
+                .catch(() => ({ id: vid, title: null, thumbnail_url: null })),
+            ),
+          );
+          const map = {};
+          results.forEach((r) => {
+            if (r.status === "fulfilled" && r.value) {
+              map[r.value.id] = { title: r.value.title, thumbnail_url: r.value.thumbnail_url };
+            }
+          });
+          setVideoMeta(map);
+        }
       } catch {
         setVideoIds([]);
       } finally {
@@ -321,11 +378,30 @@ function LikesTab({ userId }) {
         <p style={{ opacity: 0.6 }}>Нет лайкнутых видео</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
-          {videoIds.map((vid) => (
-            <li key={vid} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--misis-gray-200)" }}>
-              video_id: {vid}
-            </li>
-          ))}
+          {videoIds.map((vid) => {
+            const meta = videoMeta[vid];
+            return (
+              <li key={vid} style={{ padding: "0.5rem 0", borderBottom: "1px solid var(--misis-gray-200)" }}>
+                <a
+                  href={`/player/watch/${vid}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "flex", alignItems: "center", gap: "0.75rem", textDecoration: "none", color: "inherit" }}
+                >
+                  {meta?.thumbnail_url && (
+                    <img
+                      src={meta.thumbnail_url}
+                      alt=""
+                      style={{ width: 80, height: 45, objectFit: "cover", borderRadius: "4px", background: "var(--misis-gray-200)", flexShrink: 0 }}
+                    />
+                  )}
+                  <span style={{ fontWeight: 500 }}>
+                    {meta?.title || vid.slice(0, 8) + "…"}
+                  </span>
+                </a>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
@@ -389,7 +465,7 @@ export default function ProfilePage() {
         ))}
       </div>
 
-      {activeTab === "info" && <InfoTab user={user} isAdmin={isAdmin} isOwner={isOwner} logout={logout} />}
+      {activeTab === "info" && <InfoTab user={user} isAdmin={isAdmin} isOwner={isOwner} logout={logout} api={api} />}
       {activeTab === "subscriptions" && <SubscriptionsTab userId={user.id} />}
       {activeTab === "likes" && <LikesTab userId={user.id} />}
     </div>

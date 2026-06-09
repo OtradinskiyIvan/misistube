@@ -4,14 +4,6 @@ import { VideoPlayer } from '../components/VideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
 import { getUserIdFromToken, deleteVideo } from '../api/videos';
 
-const STATUS_ICONS = {
-  uploading: '⏳ ',
-  processing: '⚙️ ',
-  ready: '✅ ',
-  failed: '❌ ',
-  deleted: '🗑 ',
-};
-
 const STATUS_CLASSES = {
   ready: 'success',
   failed: 'error',
@@ -44,7 +36,6 @@ export const VideoDetailPage = () => {
   if (error || !video) return <div className="text-red-600 p-10">Видео не найдено</div>;
 
   const statusClass = STATUS_CLASSES[video.status] || 'warning';
-  const statusIcon = STATUS_ICONS[video.status] || '';
   const timeAgo = video.created_at
     ? formatDistanceToNow(new Date(video.created_at), { addSuffix: true })
     : '';
@@ -65,8 +56,8 @@ export const VideoDetailPage = () => {
       <hr style={{ border: 'none', borderTop: '1px solid #e5e4e7', margin: '16px 0' }} />
       <p style={{ color: '#1E2A3A', margin: '0 0 16px', lineHeight: 1.5, border: '1px solid #e5e4e7', borderRadius: '8px', padding: '12px' }}>{video.description || ''}</p>
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-        <span className={`badge badge-${statusClass}`}>
-          {statusIcon}{video.status}
+        <span className={`badge badge-${statusClass}`} style={{ borderRadius: '6px' }}>
+          {video.status}
         </span>
         {video.duration > 0 && (
           <span style={{ fontSize: '0.875rem', color: '#1E2A3A', fontWeight: 500 }}>
@@ -85,7 +76,7 @@ export const VideoDetailPage = () => {
           marginTop: '16px',
           fontSize: '0.9rem'
         }}>
-          🗑 Удалить видео
+          Удалить видео
         </button>
       )}
     </div>

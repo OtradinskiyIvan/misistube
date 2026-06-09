@@ -15,6 +15,7 @@ from .infrastructure.repositories import UserRepositoryImpl, RoleRepositoryImpl,
 from .infrastructure.storage.s3_client import S3Client
 from .services.create_user import CreateUserService
 from .services.delete_user import DeleteUserService
+from .services.deactivate_user import DeactivateUserService
 from .services.get_user import GetUserService
 from .services.profile_service import ProfileService
 from .services.sync_user import SyncUserService
@@ -88,6 +89,12 @@ async def get_delete_user_service(
     return DeleteUserService(UserRepositoryImpl(session), UnitOfWorkImpl(session))
 
 
+async def get_deactivate_user_service(
+    session: AsyncSession = Depends(get_session),
+) -> DeactivateUserService:
+    return DeactivateUserService(UserRepositoryImpl(session), UnitOfWorkImpl(session))
+
+
 async def get_assign_role_service(
     session: AsyncSession = Depends(get_session),
 ) -> AssignRoleService:
@@ -145,6 +152,24 @@ async def get_current_user_payload(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
+        )
+
+
+async def get_current_user_id(
+    payload: dict = Depends(get_current_user_payload),
+) -> UUID:
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing subject",
+        )
+    try:
+        return UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user ID in token",
         )
 
 

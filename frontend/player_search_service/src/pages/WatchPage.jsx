@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import AuthorCard from '../components/AuthorCard'
 import { userService } from '../services/userService'
 import { commentsService } from '../services/commentsService'
+import { likeService } from '../services/likeService'
 
 export default function WatchPage() {
   const { id } = useParams()
@@ -18,6 +19,9 @@ export default function WatchPage() {
   const [commentError, setCommentError] = useState(null)
   const [userNames, setUserNames] = useState({})
   const [copyNotification, setCopyNotification] = useState(false)
+  const [liked, setLiked] = useState(false)
+  const [likesCount, setLikesCount] = useState(0)
+  const [likeLoading, setLikeLoading] = useState(false)
   const token = localStorage.getItem('auth_user')
 
   const handleShare = async () => {
@@ -122,6 +126,44 @@ export default function WatchPage() {
 
     fetchVideo()
   }, [id])
+
+  useEffect(() => {
+    likeService.likesCount(id).then((data) => {
+      if (data) setLikesCount(data.count);
+    }).catch(() => {});
+
+    const authUser = token ? (() => { try { return JSON.parse(token) } catch { return null } })() : null;
+    if (authUser) {
+      likeService.isLiked(id).then((data) => {
+        if (data) setLiked(data.liked);
+      }).catch(() => {});
+    }
+  }, [id]);
+
+  const handleToggleLike = async () => {
+    const authUser = (() => { try { return JSON.parse(token) } catch { return null } })();
+    if (!authUser) {
+      window.location.href = '/auth/';
+      return;
+    }
+    if (likeLoading) return;
+    setLikeLoading(true);
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikesCount(c => wasLiked ? c - 1 : c + 1);
+    try {
+      if (wasLiked) {
+        await likeService.unlikeVideo(id);
+      } else {
+        await likeService.likeVideo(id);
+      }
+    } catch {
+      setLiked(wasLiked);
+      setLikesCount(c => wasLiked ? c + 1 : c - 1);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -240,8 +282,13 @@ export default function WatchPage() {
               gap: '0.75rem', 
               flexWrap: 'wrap',
               paddingTop: '0.5rem'
-            }}>
-              <button className="btn btn-outline" style={{ flex: '0 1 auto' }}>
+            }}> 
+              <button 
+                className={btn ${liked ? 'btn-primary' : 'btn-secondary'} 
+                style={{ flex: '0 1 auto' }} 
+                onClick={handleToggleLike}
+                disabled={likeLoading}
+              >
                 ♡ В избранное
               </button>
               <button 

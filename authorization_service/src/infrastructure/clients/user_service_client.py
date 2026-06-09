@@ -19,6 +19,14 @@ class UserServiceClient:
             )
             return resp.status_code == 200
 
+    async def delete_user(self, user_id: str, auth_token: str) -> bool:
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            resp = await client.delete(
+                f"{self._base_url}/api/v1/users/{user_id}",
+                headers={"Authorization": f"Bearer {auth_token}"},
+            )
+            return resp.status_code == 204
+
     async def assign_role(self, user_id: str, role: str, auth_token: str) -> bool:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             resp = await client.post(

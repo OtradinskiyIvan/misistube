@@ -39,6 +39,7 @@ from ..deps import (
     get_brief_user_service,
     get_create_user_service,
     get_delete_user_service,
+    get_deactivate_user_service,
     get_get_user_service,
     get_logger_dep,
     get_profile_service,
@@ -51,11 +52,13 @@ from ..deps import (
     get_revoke_role_service,
     require_admin,
     get_current_user_payload,
+    get_current_user_id,
     verify_internal_api_key,
 )
 from ..services.assign_role import AssignRoleService
 from ..services.brief_user import BriefUserService
 from ..services.create_user import CreateUserService
+from ..services.deactivate_user import DeactivateUserService
 from ..services.delete_user import DeleteUserService
 from ..services.get_user import GetUserService
 from ..services.get_user_roles import GetUserRolesService
@@ -358,22 +361,26 @@ async def update_user_status(
 @router.delete(
     "/users/{user_id}",
     status_code=204,
-    summary="Delete user",
-    description="Permanently deletes a user by their UUID.",
+    summary="Deactivate user (self-service)",
+    description="Soft-deletes (deactivates) a user. Requires JWT of the same user.",
     responses={
-        204: {"description": "User deleted successfully"},
+        204: {"description": "User deactivated successfully"},
+        401: {"model": ErrorResponse, "description": "Unauthorized"},
+        403: {"model": ErrorResponse, "description": "Cannot delete another user"},
         404: {"model": ErrorResponse, "description": "User not found"},
-        500: {"model": ErrorResponse, "description": "Internal server error"},
     },
 )
 async def delete_user(
     user_id: UUID,
-    service: DeleteUserService = Depends(get_delete_user_service),
+    current_user_id: UUID = Depends(get_current_user_id),
+    service: DeactivateUserService = Depends(get_deactivate_user_service),
     logger=Depends(get_logger_dep),
 ):
-    logger.info("users.delete.requested", extra={"user_id": str(user_id)})
+    if current_user_id != user_id:
+        raise HTTPException(status_code=403, detail="Cannot delete another user")
+    logger.info("users.deactivate.requested", extra={"user_id": str(user_id)})
     await service.execute(user_id)
-    logger.info("users.delete.success", extra={"user_id": str(user_id)})
+    logger.info("users.deactivate.success", extra={"user_id": str(user_id)})
     return None
 
 

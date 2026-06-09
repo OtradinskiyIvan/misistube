@@ -1,10 +1,18 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useVideos } from '../hooks/useVideos';
 import { VideoCard } from '../components/VideoCard';
 import { getUserIdFromToken } from '../api/videos';
 
 export const VideoListPage = () => {
-  const { videos, loading, error } = useVideos();
+  const { videos, loading, error, refresh } = useVideos();
+  const [viewMode, setViewMode] = useState(() =>
+    localStorage.getItem('viewMode') === 'list' ? 'list' : 'grid'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('viewMode', viewMode);
+  }, [viewMode]);
 
   const userId = getUserIdFromToken();
   if (!userId) {
@@ -18,14 +26,28 @@ export const VideoListPage = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1>Все видео</h1>
-        <Link to="/upload" className="btn-primary">+ Загрузить видео</Link>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button className="btn btn-sm btn-outline" onClick={() => setViewMode(m => m === 'grid' ? 'list' : 'grid')}>
+            {viewMode === 'grid' ? 'Список' : 'Сетка'}
+          </button>
+          <Link to="/upload" className="btn btn-sm btn-outline">+ Загрузить видео</Link>
+        </div>
       </div>
       {videos.length === 0 ? (
-        <p className="text-gray-500">Пока нет видео. Станьте первым!</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <>
+          <hr style={{ border: 'none', height: '1px', backgroundColor: '#e5e4e7', margin: '0 0 24px' }} />
+          <p className="text-gray-500">У вас пока нет видео. Загрузите первое!</p>
+        </>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
           {videos.map((video) => (
-            <VideoCard key={video.id} video={video} showDescription={false} />
+            <VideoCard key={video.id} video={video} showDescription={false} onDelete={refresh} />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {videos.map((video) => (
+            <VideoCard key={video.id} video={video} compact onDelete={refresh} />
           ))}
         </div>
       )}
