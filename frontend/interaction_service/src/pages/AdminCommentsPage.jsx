@@ -111,7 +111,7 @@ export default function AdminCommentsPage() {
                   </td>
                   <td>
                     <div style={{ display: "flex", gap: "0.25rem" }}>
-                      {isAdmin && !c.is_blocked && (
+                      {canModerate && !c.is_blocked && (
                         <button
                           className="btn btn-sm btn-outline"
                           style={{ borderColor: "#EF4444", color: "#EF4444", fontSize: "0.75rem" }}
@@ -120,7 +120,7 @@ export default function AdminCommentsPage() {
                           Заблокировать
                         </button>
                       )}
-                      {isAdmin && c.is_blocked && (
+                      {canModerate && c.is_blocked && (
                         <button
                           className="btn btn-sm btn-outline"
                           style={{ borderColor: "#10B981", color: "#10B981", fontSize: "0.75rem" }}
