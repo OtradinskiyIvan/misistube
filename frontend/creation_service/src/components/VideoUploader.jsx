@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadVideo } from '../api/videos';
 
+const MAX_FILE_SIZE = 100 * 1024 * 1024;
+
 export const VideoUploader = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -15,6 +17,10 @@ export const VideoUploader = () => {
     e.preventDefault();
     if (!file) {
       setError('Выберите файл');
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError('Видео слишком большое (Max 100 MB)');
       return;
     }
     setUploading(true);
@@ -55,7 +61,17 @@ export const VideoUploader = () => {
         <input
           type="file"
           accept="video/*"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          onChange={(e) => {
+            const f = e.target.files?.[0] || null;
+            if (f && f.size > MAX_FILE_SIZE) {
+              setError('Видео слишком большое (Max 100 MB)');
+              setFile(null);
+              e.target.value = '';
+            } else {
+              setFile(f);
+              setError(null);
+            }
+          }}
           required
           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-misis-light file:text-white hover:file:bg-misis-dark"
         />
