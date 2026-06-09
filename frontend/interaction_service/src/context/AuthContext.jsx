@@ -69,6 +69,8 @@ export function AuthProvider({ children }) {
       isAuthenticated: !!user,
       authLoading,
       isAdmin: user ? user.roles.includes("admin") : false,
+      isModerator: user ? user.roles.includes("moderator") : false,
+      canModerate: user ? (user.roles.includes("admin") || user.roles.includes("moderator")) : false,
       hasRole,
       loginWithToken,
       logout,

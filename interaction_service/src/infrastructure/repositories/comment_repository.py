@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, delete as sa_delete, update as sa_update
+from sqlalchemy import select, delete as sa_delete, update as sa_update, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.comment import CommentModel
@@ -63,25 +63,45 @@ class CommentRepositoryImpl:
         return result.rowcount > 0
 
     async def block(self, comment_id: UUID, blocked_by: UUID) -> Optional[CommentModel]:
-        model = await self.get_by_id(comment_id)
-        if model is None:
+        from datetime import datetime
+        stmt = (
+            update(CommentModel)
+            .where(CommentModel.id == comment_id)
+            .values(
+                is_blocked=True,
+                blocked_by=blocked_by,
+                blocked_at=datetime.utcnow(),
+            )
+        )
+        result = await self._session.execute(stmt)
+        if result.rowcount == 0:
             return None
-        model.is_blocked = True
-        model.blocked_by = blocked_by
-        from datetime import datetime, timezone
-        model.blocked_at = datetime.now(timezone.utc)
-        await self._session.flush()
-        return model
+        return await self.get_by_id(comment_id)
 
     async def unblock(self, comment_id: UUID) -> Optional[CommentModel]:
-        model = await self.get_by_id(comment_id)
-        if model is None:
+        stmt = (
+            update(CommentModel)
+            .where(CommentModel.id == comment_id)
+            .values(
+                is_blocked=False,
+                blocked_by=None,
+                blocked_at=None,
+            )
+        )
+        result = await self._session.execute(stmt)
+        if result.rowcount == 0:
             return None
-        model.is_blocked = False
-        model.blocked_by = None
-        model.blocked_at = None
-        await self._session.flush()
-        return model
+        return await self.get_by_id(comment_id)
+
+    async def get_all(self, skip: int = 0, limit: int = 50) -> list[CommentModel]:
+        stmt = (
+            select(CommentModel)
+            .order_by(CommentModel.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        return list(result.scalars().all())
 
     async def get_blocked(self, skip: int = 0, limit: int = 50) -> list[CommentModel]:
         stmt = (

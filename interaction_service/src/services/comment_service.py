@@ -97,6 +97,10 @@ class CommentService:
         await self._uow.commit()
         return _to_dict(comment)
 
+    async def get_all_comments(self, skip: int = 0, limit: int = 50) -> list[dict]:
+        comments = await self._comment_repo.get_all(skip=skip, limit=limit)
+        return [_to_dict(c) for c in comments]
+
     async def get_blocked_comments(self, skip: int = 0, limit: int = 50) -> list[dict]:
         comments = await self._comment_repo.get_blocked(skip=skip, limit=limit)
         return [_to_dict(c) for c in comments]

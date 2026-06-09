@@ -177,3 +177,13 @@ def require_admin(payload: dict = Depends(get_current_user_payload)) -> dict:
             detail="Admin access required",
         )
     return payload
+
+
+def require_moderator_or_admin(payload: dict = Depends(get_current_user_payload)) -> dict:
+    roles = payload.get("roles", [])
+    if "admin" not in roles and "moderator" not in roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Moderator or admin access required",
+        )
+    return payload

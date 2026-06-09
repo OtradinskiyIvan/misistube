@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Header() {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, isAdmin, canModerate, logout } = useAuth();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
 
@@ -42,6 +42,15 @@ export default function Header() {
                 >
                   Управление
                 </Link>
+              )}
+              {canModerate && (
+                <a
+                  href="/interaction/admin/comments"
+                  className="btn btn-sm btn-outline"
+                  style={{ color: "white", borderColor: "white", marginRight: "0.5rem" }}
+                >
+                  Модерация
+                </a>
               )}
               <Link
                 to="/profile"
