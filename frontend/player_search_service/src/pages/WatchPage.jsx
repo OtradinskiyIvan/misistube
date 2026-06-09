@@ -68,31 +68,49 @@ export default function WatchPage() {
       try {
         setLoading(true)
                 
-        const playbackResponse = await fetch(`/api/v1/playback/${id}`)
+        const [playbackResult, videoResult, commentsResult] = await Promise.allSettled([
+          fetch(`/api/v1/playback/${id}`),
+          fetch(`/api/v1/videos/${id}/details`),
+          commentsService.getVideoComments(id)
+        ])
         
-        if (!playbackResponse.ok) {
-          throw new Error('Видео не найдено')
+        if (playbackResult.status === 'rejected' || !playbackResult.value.ok) {
+          const errorMsg = playbackResult.status === 'rejected' 
+            ? 'Не удалось загрузить видео'
+            : 'Видео не найдено'
+          throw new Error(errorMsg)
         }
         
-        const playbackData = await playbackResponse.json()
+        const playbackData = await playbackResult.value.json()
         setVideoUrl(playbackData.hls_master_url)
         
-        const searchResponse = await fetch(`/api/v1/search?q=&limit=100`)
-        const searchData = await searchResponse.json()
-        const foundVideo = searchData.items?.find(v => v.id === id)
-        
-        if (foundVideo) {
-          setVideo(foundVideo)
-          
-          if (foundVideo.user_id) {
-            const userData = await userService.getUserById(foundVideo.user_id)
-            setAuthor(userData)
-          }
+        if (videoResult.status === 'fulfilled' && videoResult.value.ok) {
+          const videoData = await videoResult.value.json()
+          setVideo(videoData)
 
-          const commentsData = await commentsService.getVideoComments(id)
+          if (videoData.user_id) {
+            setAuthor({
+              user_id: videoData.user_id,
+              username: videoData.username,
+              channelUrl: `/user/users/${videoData.user_id}`
+            })
+          }
+        } else {
+          console.warn(
+            'Failed to load video details:',
+            videoResult.status === 'rejected' ? videoResult.reason : videoResult.value?.statusText
+          )
+        }
+
+        if (commentsResult.status === 'fulfilled') {
+          const commentsData = commentsResult.value
           setComments(commentsData.comments || [])
           setCommentsTotal(commentsData.total || 0)
           resolveUserNames(commentsData.comments)
+        } else {
+          console.warn('Failed to load comments:', commentsResult.reason)
+          setComments([])
+          setCommentsTotal(0)
         }
       } catch (err) {
         setError(err.message)
@@ -237,80 +255,79 @@ export default function WatchPage() {
 
           {/* Плашка автора */}
           <AuthorCard author={author} />
-
-          {/* Комментарии */}
-          <div className="card" style={{ padding: '1.5rem', marginTop: '1rem' }}>
-            <h3 style={{ marginBottom: '1rem' }}>Комментарии ({commentsTotal})</h3>
-
-            {token ? (
-              <div style={{ marginBottom: '1rem' }}>
-                <textarea
-                  className="input"
-                  style={{ width: '100%', minHeight: '80px', resize: 'vertical' }}
-                  placeholder="Напишите комментарий..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                />
-                <button
-                  className="btn btn-primary"
-                  style={{ marginTop: '0.5rem' }}
-                  disabled={!newComment.trim() || sendingComment}
-                  onClick={async () => {
-                    setCommentError(null)
-                    setSendingComment(true)
-                    try {
-                      await commentsService.createComment(id, newComment.trim())
-                      setNewComment('')
-                      const updated = await commentsService.getVideoComments(id)
-                      setComments(updated.comments || [])
-                      setCommentsTotal(updated.total || 0)
-                      resolveUserNames(updated.comments)
-                    } catch (err) {
-                      console.error("WatchPage comment error:", err)
-                      setCommentError(err.message)
-                    } finally {
-                      setSendingComment(false)
-                    }
-                  }}
-                >
-                  {sendingComment ? 'Отправка...' : 'Отправить'}
-                </button>
-                {commentError && (
-                  <p style={{ color: '#e53e3e', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                    {commentError}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p style={{ color: 'var(--misis-gray-300)', marginBottom: '1rem' }}>
-                <a href="/auth/">Войдите</a>, чтобы оставить комментарий
-              </p>
-            )}
-
-            {comments.length === 0 ? (
-              <p style={{ color: 'var(--misis-gray-300)' }}>Пока нет комментариев</p>
-            ) : (
-              comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  style={{
-                    padding: '0.75rem 0',
-                    borderBottom: '1px solid var(--misis-gray-200)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <strong style={{ fontSize: '0.875rem' }}>{userNames[comment.user_id] || comment.user_id?.slice(0, 8) || 'Аноним'}</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--misis-gray-300)' }}>
-                      {comment.created_at ? new Date(comment.created_at).toLocaleDateString() : ''}
-                    </span>
-                  </div>
-                  <p style={{ margin: 0, fontSize: '0.875rem' }}>{comment.content}</p>
-                </div>
-              ))
-            )}
-          </div>
         </>
       )}
+
+      <div className="card" style={{ padding: '1.5rem', marginTop: '1rem' }}>
+        <h3 style={{ marginBottom: '1rem' }}>Комментарии ({commentsTotal})</h3>
+
+        {token ? (
+          <div style={{ marginBottom: '1rem' }}>
+            <textarea
+              className="input"
+              style={{ width: '100%', minHeight: '80px', resize: 'vertical' }}
+              placeholder="Напишите комментарий..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+            />
+            <button
+              className="btn btn-primary"
+              style={{ marginTop: '0.5rem' }}
+              disabled={!newComment.trim() || sendingComment}
+              onClick={async () => {
+                setCommentError(null)
+                setSendingComment(true)
+                try {
+                  await commentsService.createComment(id, newComment.trim())
+                  setNewComment('')
+                  const updated = await commentsService.getVideoComments(id)
+                  setComments(updated.comments || [])
+                  setCommentsTotal(updated.total || 0)
+                  resolveUserNames(updated.comments)
+                } catch (err) {
+                  console.error("WatchPage comment error:", err)
+                  setCommentError(err.message)
+                } finally {
+                  setSendingComment(false)
+                }
+              }}
+            >
+              {sendingComment ? 'Отправка...' : 'Отправить'}
+            </button>
+            {commentError && (
+              <p style={{ color: '#e53e3e', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                {commentError}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p style={{ color: 'var(--misis-gray-300)', marginBottom: '1rem' }}>
+            <a href="/auth/">Войдите</a>, чтобы оставить комментарий
+          </p>
+        )}
+
+        {comments.length === 0 ? (
+          <p style={{ color: 'var(--misis-gray-300)' }}>Пока нет комментариев</p>
+        ) : (
+          comments.map((comment) => (
+            <div
+              key={comment.id}
+              style={{
+                padding: '0.75rem 0',
+                borderBottom: '1px solid var(--misis-gray-200)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <strong style={{ fontSize: '0.875rem' }}>{userNames[comment.user_id] || comment.user_id?.slice(0, 8) || 'Аноним'}</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--misis-gray-300)' }}>
+                  {comment.created_at ? new Date(comment.created_at).toLocaleDateString() : ''}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.875rem' }}>{comment.content}</p>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   )
 }
