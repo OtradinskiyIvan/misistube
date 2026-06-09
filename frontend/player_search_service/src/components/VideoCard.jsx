@@ -59,8 +59,6 @@ const VideoCard = memo(function VideoCard({ video }) {
         {video.username && channelUrl && (
           <a 
             href={channelUrl}
-            target="_blank"
-            rel="noopener noreferrer"
             style={{ 
               display: 'flex',
               alignItems: 'center',
