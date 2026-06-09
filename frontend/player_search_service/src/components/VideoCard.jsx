@@ -11,20 +11,36 @@ const VideoCard = memo(function VideoCard({ video }) {
       ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
       : `${m}:${String(s).padStart(2, '0')}`
   }
-
   const channelUrl = video.user_id 
-    ? `http://localhost:5173/users/${video.user_id}`
+    ? `/user/users/${video.user_id}`
     : null
 
   return (
     <article className="card" style={{ animation: 'fadeIn 0.25s ease-out forwards' }}>
-      {/* Стабильный inline-SVG вместо внешнего файла, чтобы не было мигания при 404 */}
-      <img 
-        src={video.thumbnail_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect width='16' height='9' fill='%23E5E7EB'/%3E%3C/svg%3E"}
-        alt={video.title}
-        className="card__image"
-        style={{ objectFit: 'cover' }}
-      />
+      <div style={{ position: 'relative' }}>
+        <img 
+          src={video.thumbnail_url || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect width='16' height='9' fill='%23E5E7EB'/%3E%3C/svg%3E"}
+          alt={video.title}
+          className="card__image"
+          style={{ objectFit: 'cover' }}
+        />
+
+        <span style={{
+          position: 'absolute',
+          bottom: '8px',
+          right: '8px',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          color: 'white',
+          padding: '3px 6px',
+          borderRadius: '4px',
+          fontSize: '0.75rem',
+          fontWeight: '600',
+          letterSpacing: '0.5px',
+          lineHeight: '1'
+        }}>
+          {formatDuration(video.duration_seconds)}
+        </span>
+      </div>
       
       <div className="card__content">
         <h3 className="card__title">{video.title}</h3>
@@ -40,27 +56,53 @@ const VideoCard = memo(function VideoCard({ video }) {
             {video.description}
           </p>
         )}
-        
-        <div className="card__meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--misis-text-dark)' }}>
-          <span>{formatDuration(video.duration_seconds)}</span>
-          {video.status && (
-            <span className={`badge status-${video.status.toLowerCase()}`}>{video.status}</span>
-          )}
-        </div>
-
         {video.username && channelUrl && (
           <a 
             href={channelUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{ 
-              display: 'inline-block',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
               color: 'var(--misis-text-dark)',
-              fontSize: '0.75rem',
+              fontSize: '0.875rem',
               marginTop: '0.5rem',
               marginBottom: 0,
-              textDecoration: 'none'
+              textDecoration: 'none',
+              fontWeight: '500'
             }}
           >
-            👤 {video.username}
+            {video.avatar_url ? (
+              <img 
+                src={video.avatar_url}
+                alt={video.username}
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  flexShrink: 0
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--misis-gray-200)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                color: 'var(--misis-gray-400)',
+                flexShrink: 0
+              }}>
+                {video.username[0]?.toUpperCase() || '?'}
+              </div>
+            )}
+            <span>{video.username}</span>
           </a>
         )}
       </div>
