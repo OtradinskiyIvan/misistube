@@ -40,10 +40,8 @@ export default function WatchPage() {
       try {
         setLoading(true)
         
-        const [playbackResponse, videoResponse] = await Promise.all([
-          fetch(`/api/v1/playback/${id}`),
-          fetch(`/api/v1/videos/${id}`)
-        ])
+        // Получаем presigned URL для видео
+        const playbackResponse = await fetch(`/api/v1/playback/${id}`)
         
         if (!playbackResponse.ok) {
           throw new Error('Видео не найдено')
@@ -52,25 +50,23 @@ export default function WatchPage() {
         const playbackData = await playbackResponse.json()
         setVideoUrl(playbackData.hls_master_url)
         
-        if (videoResponse.ok) {
-          const videoData = await videoResponse.json()
-          setVideo(videoData)
+        // Получаем информацию о видео
+        const searchResponse = await fetch(`/api/v1/search?q=&limit=100`)
+        const searchData = await searchResponse.json()
+        const foundVideo = searchData.items?.find(v => v.id === id)
+        
+        if (foundVideo) {
+          setVideo(foundVideo)
           
-          if (videoData.user_id) {
-            setAuthor({
-              user_id: videoData.user_id,
-              username: videoData.username,
-              channelUrl: `http://localhost:5173/users/${videoData.user_id}`
-            })
+          if (foundVideo.user_id) {
+            const userData = await userService.getUserById(foundVideo.user_id)
+            setAuthor(userData)
           }
 
-          // Загружаем комментарии
           const commentsData = await commentsService.getVideoComments(id)
           setComments(commentsData.comments || [])
           setCommentsTotal(commentsData.total || 0)
           resolveUserNames(commentsData.comments)
-        } else {
-          throw new Error('Не удалось загрузить информацию о видео')
         }
       } catch (err) {
         setError(err.message)
@@ -137,26 +133,27 @@ export default function WatchPage() {
           </div>
         )}
       </div>
+
       {/* Информация о видео */}
       {video && (
         <>
           <div className="card" style={{ padding: '1.5rem', marginBottom: '1rem' }}>
-            {/* Заголовок */}
-            <h1 style={{ fontSize: '1.5rem', marginBottom: '0.75rem', fontWeight: '600' }}>
-              {video.title}
-            </h1>
+            <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{video.title}</h1>
             
-            {/* Метаданные: длительность и статус */}
+            {video.description && (
+              <p style={{ color: 'var(--misis-text-dark)', opacity: 0.8, marginBottom: '1rem' }}>
+                {video.description}
+              </p>
+            )}
+
             <div style={{ 
               display: 'flex', 
               gap: '1rem', 
               alignItems: 'center',
               flexWrap: 'wrap',
-              marginBottom: '1rem',
-              paddingBottom: '1rem',
-              borderBottom: '1px solid var(--misis-gray-200)'
+              marginBottom: '1rem'
             }}>
-              <span style={{ color: 'var(--misis-text-dark)', fontSize: '0.875rem' }}>
+              <span style={{ color: 'var(--misis-gray-300)', fontSize: '0.875rem' }}>
                 ⏱ {Math.floor((video.duration_seconds || 0) / 60)}:{String((video.duration_seconds || 0) % 60).padStart(2, '0')}
               </span>
               
@@ -167,32 +164,15 @@ export default function WatchPage() {
               )}
             </div>
 
-            {/* Описание */}
-            {video.description && (
-              <p style={{ 
-                color: 'var(--misis-text-dark)', 
-                opacity: 0.8, 
-                marginBottom: '1rem',
-                lineHeight: '1.6'
-              }}>
-                {video.description}
-              </p>
+            {video.tags && video.tags.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {video.tags.map((tag, idx) => (
+                  <span key={idx} className="badge badge-info">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
             )}
-
-            {/*Кнопки действий - отдельная секция */}
-            <div style={{ 
-              display: 'flex', 
-              gap: '0.75rem', 
-              flexWrap: 'wrap',
-              paddingTop: '0.5rem'
-            }}>
-              <button className="btn btn-outline" style={{ flex: '0 1 auto' }}>
-                ♡ В избранное
-              </button>
-              <button className="btn btn-outline" style={{ flex: '0 1 auto' }}>
-                ↗ Поделиться
-              </button>
-            </div>
           </div>
 
           {/* Плашка автора */}
@@ -271,6 +251,19 @@ export default function WatchPage() {
           </div>
         </>
       )}
+
+      {/* Действия */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <button className="btn btn-secondary">
+          ♡ В избранное
+        </button>
+        <button className="btn btn-outline">
+          ↗ Поделиться
+        </button>
+        <button className="btn btn-outline">
+          ⬇ Скачать
+        </button>
+      </div>
     </div>
   )
 }

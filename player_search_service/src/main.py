@@ -13,7 +13,7 @@ from shared.database.session import init_engine
 
 from core.logger import correlation_id_var
 from src.api.deps import get_storage_adapter
-from src.api.routers import playback, search, videos
+from src.api.routers import playback, search
 from src.core.config import get_settings
 from src.core.exceptions import register_rfc7807_handlers
 from src.core.logger import setup_service_logger
@@ -80,8 +80,6 @@ register_rfc7807_handlers(app)
 
 app.include_router(search.router, prefix="/api/v1", tags=["Search"])
 app.include_router(playback.router, prefix="/api/v1", tags=["Playback"])
-app.include_router(videos.router, prefix="/api/v1/videos", tags=["videos"])
-
 
 
 @app.get("/", include_in_schema=False)
