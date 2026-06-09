@@ -3,7 +3,8 @@ from uuid import UUID
 
 from authorization_service.src.domain.entities.user import User
 from authorization_service.src.domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError
-from authorization_service.src.presentations.deps import get_auth_service
+from authorization_service.src.presentations.deps import get_auth_service, get_current_user_id, get_current_token, get_user_service_client
+from authorization_service.src.infrastructure.clients.user_service_client import UserServiceClient
 from authorization_service.src.presentations.schemas.auth import (
     AccessTokenResponse,
     ConfirmRequest,
@@ -110,6 +111,24 @@ async def refresh(
         logger.warning("Refresh failed: %s", exc)
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     return AccessTokenResponse(**token_data)
+
+@router.post("/users/me/deactivate", status_code=200)
+async def deactivate_me(
+    user_id: UUID = Depends(get_current_user_id),
+    token: str = Depends(get_current_token),
+    auth_service: AuthService = Depends(get_auth_service),
+    user_svc_client: UserServiceClient = Depends(get_user_service_client),
+):
+    logger.info("auth.users.deactivate.requested", extra={"user_id": str(user_id)})
+
+    repo = auth_service._user_repo
+    user = await repo.deactivate_user(user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await user_svc_client.delete_user(str(user_id), token)
+    return {"success": True}
+
 
 @router.get("/me", response_model=UserOut)
 async def get_current_user():

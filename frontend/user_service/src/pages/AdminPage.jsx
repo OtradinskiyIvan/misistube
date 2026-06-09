@@ -12,6 +12,7 @@ export default function AdminPage() {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [roleUser, setRoleUser] = useState(null);
   const [newRole, setNewRole] = useState("admin");
+  const [hideInactive, setHideInactive] = useState(true);
 
   const loadUsers = useCallback(async () => {
     try {
@@ -85,15 +86,31 @@ export default function AdminPage() {
     <div className="fade-in">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
         <h1>Управление пользователями</h1>
-        <button className="btn btn-primary" onClick={loadUsers}>
-          Обновить
-        </button>
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.9rem", cursor: "pointer", userSelect: "none" }}>
+            <input
+              type="checkbox"
+              checked={hideInactive}
+              onChange={(e) => setHideInactive(e.target.checked)}
+            />
+            Скрыть не активных
+          </label>
+          <button className="btn btn-primary" onClick={loadUsers}>
+            Обновить
+          </button>
+        </div>
       </div>
 
       {error && (
         <div className="card" style={{ padding: "1rem", marginBottom: "1rem", borderLeft: "3px solid #EF4444" }}>
           <p style={{ color: "#EF4444" }}>{error}</p>
         </div>
+      )}
+
+      {hideInactive && users.filter(u => u.status === "inactive").length > 0 && (
+        <p style={{ marginBottom: "0.75rem", opacity: 0.6, fontSize: "0.85rem" }}>
+          Скрыто {users.filter(u => u.status === "inactive").length} неактивных пользователей
+        </p>
       )}
 
       <div className="card" style={{ padding: "1.5rem", overflowX: "auto" }}>
@@ -108,7 +125,7 @@ export default function AdminPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
+            {users.filter(u => !hideInactive || u.status !== "inactive").map((u) => (
               <tr key={u.id}>
                 <td>
                   <strong>{u.username}</strong>

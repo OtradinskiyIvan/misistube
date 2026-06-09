@@ -79,6 +79,9 @@ export const api = {
   deleteUser: (id) =>
     request(`/users/${id}`, { method: "DELETE" }),
 
+  deactivateMe: () =>
+    request("/auth/users/me/deactivate", { method: "POST" }),
+
   assignRole: (userId, role) =>
     request(`/users/${userId}/roles`, { method: "POST", body: JSON.stringify({ role }) }),
 
