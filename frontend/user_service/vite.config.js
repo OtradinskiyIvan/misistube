@@ -18,6 +18,10 @@ export default defineConfig({
         target: USER_TARGET,
         changeOrigin: true,
       },
+      "/api/v1/videos": {
+        target: "http://creation-service:8000",
+        changeOrigin: true,
+      },
       "/api/v1/auth": {
         target: AUTH_TARGET,
         changeOrigin: true,
