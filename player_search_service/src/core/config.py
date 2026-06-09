@@ -29,7 +29,7 @@ class PlayerSearchSettings(BaseSettings):
 
     CORS_ALLOW_ORIGINS: list[str] = ["*"]
 
-    USER_SERVICE_URL: str = "http://localhost:8002"
+    USER_SERVICE_URL: str = "http://localhost:8000"
 
     @field_validator("DATABASE_URL")
     @classmethod

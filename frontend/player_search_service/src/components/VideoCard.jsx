@@ -37,7 +37,7 @@ const VideoCard = memo(function VideoCard({ video }) {
           </p>
         )}
         
-        <div className="card__meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="card__meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--misis-text-dark)' }}>
           {/*video.duration → video.duration_seconds */}
           <span>{formatDuration(video.duration_seconds)}</span>
           {video.status && (
@@ -48,7 +48,7 @@ const VideoCard = memo(function VideoCard({ video }) {
         {/*отображение автора */}
         {video.username && (
           <p style={{ 
-            color: 'var(--misis-gray-300)',
+            color: 'var(--misis-text-dark)',
             fontSize: '0.75rem',
             marginTop: '0.5rem',
             marginBottom: 0
