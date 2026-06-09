@@ -44,11 +44,14 @@ export const getUserIdFromToken = () => {
   }
 };
 
-export const uploadVideo = async (title, description, file) => {
+export const uploadVideo = async (title, description, file, thumbnail = null) => {
   const formData = new FormData();
   formData.append('title', title);
   formData.append('description', description || '');
   formData.append('file', file);
+  if (thumbnail) {
+    formData.append('thumbnail', thumbnail);
+  }
   const response = await api.post('/videos/upload', formData);
   return response.data;
 };

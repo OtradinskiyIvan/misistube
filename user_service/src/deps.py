@@ -12,9 +12,11 @@ from .core.settings import settings, UserServiceSettings
 from .infrastructure.database.manager import DatabaseManager
 from .infrastructure.database.uow import UnitOfWorkImpl
 from .infrastructure.repositories import UserRepositoryImpl, RoleRepositoryImpl, StatisticRepositoryImpl
+from .infrastructure.storage.s3_client import S3Client
 from .services.create_user import CreateUserService
 from .services.delete_user import DeleteUserService
 from .services.get_user import GetUserService
+from .services.profile_service import ProfileService
 from .services.sync_user import SyncUserService
 from .services.update_user import UpdateUserService
 from .services.assign_role import AssignRoleService
@@ -182,3 +184,20 @@ def verify_internal_api_key(
     settings: UserServiceSettings = Depends(get_settings),
 ) -> bool:
     return bool(settings.INTERNAL_API_KEY) and x_api_key == settings.INTERNAL_API_KEY
+
+
+def get_s3_client(settings: UserServiceSettings = Depends(get_settings)) -> S3Client:
+    return S3Client(
+        endpoint_url=settings.S3_ENDPOINT_URL,
+        public_endpoint_url=settings.S3_PUBLIC_ENDPOINT_URL,
+        access_key=settings.S3_ACCESS_KEY.get_secret_value(),
+        secret_key=settings.S3_SECRET_KEY.get_secret_value(),
+        bucket_name=settings.S3_AVATAR_BUCKET,
+    )
+
+
+async def get_profile_service(
+    session: AsyncSession = Depends(get_session),
+    s3: S3Client = Depends(get_s3_client),
+) -> ProfileService:
+    return ProfileService(session, s3)

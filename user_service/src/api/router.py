@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
 from jwt import ExpiredSignatureError, InvalidTokenError
 
 from .mappers import (
@@ -11,10 +11,13 @@ from .mappers import (
 )
 from .schemas import (
     AssignRoleInternalRequest,
+    AvatarResponse,
     BatchUserRequest,
     ErrorResponse,
     FollowStatusResponse,
     HealthResponse,
+    ProfileResponse,
+    ProfileUpdateRequest,
     RoleAssignDTO,
     RoleResponse,
     StatsUpdateRequest,
@@ -38,6 +41,7 @@ from ..deps import (
     get_delete_user_service,
     get_get_user_service,
     get_logger_dep,
+    get_profile_service,
     get_settings,
     get_statistic_service,
     get_subscription_service,
@@ -58,6 +62,7 @@ from ..services.get_user_roles import GetUserRolesService
 from ..services.revoke_role import RevokeRoleService
 from ..services.statistic_service import StatisticService
 from ..services.subscription_service import SubscriptionService
+from ..services.profile_service import ProfileService
 from ..services.sync_user import SyncUserService
 from ..services.update_user import UpdateUserService
 
@@ -672,4 +677,84 @@ async def decrement_user_stats(
         total_likes_received=stats.total_likes_received,
         total_comments_received=stats.total_comments_received,
         updated_at=stats.updated_at,
+    )
+
+
+@router.put(
+    "/users/{user_id}/profile/avatar",
+    response_model=AvatarResponse,
+    summary="Upload or replace avatar",
+)
+async def upload_avatar(
+    user_id: UUID,
+    file: UploadFile = File(...),
+    profile: ProfileService = Depends(get_profile_service),
+    logger=Depends(get_logger_dep),
+):
+    if file.content_type not in ("image/jpeg", "image/png", "image/gif", "image/webp"):
+        raise HTTPException(status_code=400, detail="Unsupported image type. Use JPEG, PNG, GIF or WebP.")
+
+    data = await file.read()
+    if len(data) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Max 5 MB.")
+
+    url = await profile.upload_avatar(user_id, data, file.content_type)
+    logger.info("profile.avatar.uploaded", extra={"user_id": str(user_id)})
+    return AvatarResponse(avatar_url=url)
+
+
+@router.delete(
+    "/users/{user_id}/profile/avatar",
+    summary="Delete avatar",
+)
+async def delete_avatar(
+    user_id: UUID,
+    profile: ProfileService = Depends(get_profile_service),
+    logger=Depends(get_logger_dep),
+):
+    await profile.delete_avatar(user_id)
+    logger.info("profile.avatar.deleted", extra={"user_id": str(user_id)})
+    return {"detail": "Avatar deleted"}
+
+
+@router.get(
+    "/users/{user_id}/profile",
+    response_model=ProfileResponse,
+    summary="Get user profile",
+)
+async def get_profile(
+    user_id: UUID,
+    profile: ProfileService = Depends(get_profile_service),
+):
+    p = await profile.get_profile(user_id)
+    if p is None:
+        p = await profile.update_profile(user_id)
+    return ProfileResponse(
+        avatar_url=p.avatar_url,
+        bio=p.bio,
+        location=p.location,
+        created_at=p.created_at,
+        updated_at=p.updated_at,
+    )
+
+
+@router.put(
+    "/users/{user_id}/profile",
+    response_model=ProfileResponse,
+    summary="Update user profile (bio, location)",
+)
+async def update_profile(
+    user_id: UUID,
+    body: ProfileUpdateRequest,
+    profile: ProfileService = Depends(get_profile_service),
+    logger=Depends(get_logger_dep),
+):
+    p = await profile.update_profile(user_id, bio=body.bio, location=body.location)
+    logger.info("profile.updated", extra={"user_id": str(user_id)})
+    return ProfileResponse(
+        avatar_url=p.avatar_url,
+        bio=p.bio,
+        location=p.location,
+        created_at=p.created_at,
+        updated_at=p.updated_at,
     )

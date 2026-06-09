@@ -18,6 +18,7 @@ async def get_video_service(
         access_key=settings.S3_ACCESS_KEY,
         secret_key=settings.S3_SECRET_KEY,
         bucket_name=settings.S3_BUCKET_NAME,
+        thumbnail_bucket_name=settings.S3_BUCKET_THUMBNAILS,
     )
     return VideoService(repo, s3_client)
 

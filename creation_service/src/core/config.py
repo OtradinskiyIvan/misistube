@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY: str = "minioadmin"
     S3_SECRET_KEY: str = "minioadmin123"
     S3_BUCKET_NAME: str = "videos"
+    S3_BUCKET_THUMBNAILS: str = "thumbnails"
     S3_PRESIGNED_EXPIRY: int = 3600  # 1 час
     
     VITE_API_BASE_URL: str = "http://localhost:5173"

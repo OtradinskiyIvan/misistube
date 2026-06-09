@@ -106,6 +106,35 @@ export const api = {
   getUserStats: (userId) =>
     request(`/users/${userId}/stats`),
 
+  uploadAvatar: async (userId, file) => {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${BASE}/users/${userId}/profile/avatar`, {
+      method: "PUT",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new ApiError(
+        body.error || "UNKNOWN",
+        body.detail || res.statusText,
+        res.status,
+      );
+    }
+    return res.json();
+  },
+
+  deleteAvatar: (userId) =>
+    request(`/users/${userId}/profile/avatar`, { method: "DELETE" }),
+
+  getProfile: (userId) =>
+    request(`/users/${userId}/profile`),
+
+  updateProfile: (userId, data) =>
+    request(`/users/${userId}/profile`, { method: "PUT", body: JSON.stringify(data) }),
+
   getLikedVideos: async (userId) => {
     const token = getToken();
     const headers = { "Content-Type": "application/json" };
