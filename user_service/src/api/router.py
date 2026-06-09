@@ -190,7 +190,7 @@ async def sync_user(
         )
 
     logger.info("auth.sync.requested", extra={"user_id": str(user_id), "username": username, "is_internal": is_internal})
-    user = await service.execute(user_id=user_id, username=username, email=email, create_if_missing=is_internal)
+    user = await service.execute(user_id=user_id, username=username, email=email, create_if_missing=True)
     logger.info("auth.sync.success", extra={"user_id": str(user_id)})
     return map_user_to_response(user)
 
