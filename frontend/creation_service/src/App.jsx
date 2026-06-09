@@ -8,10 +8,18 @@ function Header() {
   return (
     <header className="header">
       <div className="container">
-        <Link to="/" className="logo">MisisTube</Link>
+        <a href="http://localhost:8080/player/"
+           className="logo"
+           style={{ transition: 'opacity 0.2s' }}
+           onMouseEnter={e => e.currentTarget.style.opacity = '0.2'}
+           onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+          MISIS Tube
+        </a>
         <nav className="nav">
-          <Link to="/" className="nav-link">Главная</Link>
+          <Link to="/" className="nav-link">Загруженные</Link>
           <Link to="/upload" className="nav-link">Загрузить</Link>
+          <a href="http://localhost:8080/player/" className="nav-link">Поиск</a>
+          <a href="http://localhost:8080/user/profile" className="nav-link">Профиль</a>
         </nav>
       </div>
     </header>
