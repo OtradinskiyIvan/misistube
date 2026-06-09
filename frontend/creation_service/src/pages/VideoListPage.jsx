@@ -34,7 +34,10 @@ export const VideoListPage = () => {
         </div>
       </div>
       {videos.length === 0 ? (
-        <p className="text-gray-500">Пока нет видео. Станьте первым!</p>
+        <>
+          <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 24px' }} />
+          <p className="text-gray-500">У вас пока нет видео. Загрузите первое!</p>
+        </>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
           {videos.map((video) => (
