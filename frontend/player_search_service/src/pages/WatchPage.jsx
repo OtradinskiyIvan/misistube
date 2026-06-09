@@ -284,12 +284,12 @@ export default function WatchPage() {
               paddingTop: '0.5rem'
             }}> 
               <button 
-                className={btn ${liked ? 'btn-primary' : 'btn-secondary'} 
+                className={`btn ${liked ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ flex: '0 1 auto' }} 
                 onClick={handleToggleLike}
                 disabled={likeLoading}
               >
-                ♡ В избранное
+                {liked ? '♥ В избранном' : '♡ В избранное'}
               </button>
               <button 
                 className="btn btn-outline" 
