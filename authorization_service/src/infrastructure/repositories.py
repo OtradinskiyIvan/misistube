@@ -60,6 +60,21 @@ class UserRepository(IUserRepository):
             model = await model
         return model is not None
 
+    async def deactivate_user(self, user_id: UUID) -> User | None:
+        result = await self._session.execute(select(UserModel).where(UserModel.id == user_id))
+        model = result.scalar_one_or_none()
+        if asyncio.iscoroutine(model):
+            model = await model
+        if not model:
+            return None
+        ts = int(datetime.now().timestamp())
+        model.is_active = False
+        model.username = f"{model.username}_deleted_{ts}"
+        model.email = f"deleted_{ts}@deleted.local"
+        await self._session.flush()
+        await self._session.refresh(model)
+        return self._to_domain(model)
+
     async def activate_user_by_email(self, email: str) -> None:
         result = await self._session.execute(select(UserModel).where(UserModel.email == email).limit(1))
         model = result.scalar_one_or_none()
