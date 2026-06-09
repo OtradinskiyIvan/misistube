@@ -70,8 +70,16 @@ async def get_comment_service(
 
 async def get_user_service_client(
     s: InteractionSettings = Depends(get_settings),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
 ) -> UserServiceClient:
-    return UserServiceClient(base_url=s.USER_SERVICE_URL)
+    auth_token = ""
+    if authorization and authorization.startswith("Bearer "):
+        auth_token = authorization[len("Bearer "):]
+    return UserServiceClient(
+        base_url=s.USER_SERVICE_URL,
+        auth_token=auth_token,
+        internal_api_key=s.INTERNAL_API_KEY,
+    )
 
 
 async def get_creation_service_client(

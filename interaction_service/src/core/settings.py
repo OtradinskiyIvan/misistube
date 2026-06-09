@@ -38,6 +38,8 @@ class InteractionSettings(shared_config.BaseSettings):
     USER_SERVICE_URL: str = "http://user-service:8000"
     CREATION_SERVICE_URL: str = "http://creation-service:8000"
 
+    INTERNAL_API_KEY: str = ""
+
     S3_ENDPOINT: Optional[str] = None
     S3_ACCESS_KEY: Optional[shared_config.SecretStr] = None
     S3_SECRET_KEY: Optional[shared_config.SecretStr] = None

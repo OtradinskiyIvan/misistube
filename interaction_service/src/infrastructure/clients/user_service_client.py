@@ -13,8 +13,10 @@ class UserBrief:
 
 
 class UserServiceClient:
-    def __init__(self, base_url: str, timeout: int = 10) -> None:
+    def __init__(self, base_url: str, auth_token: str = "", internal_api_key: str = "", timeout: int = 10) -> None:
         self._base_url = base_url.rstrip("/")
+        self._auth_token = auth_token
+        self._internal_api_key = internal_api_key
         self._timeout = timeout
 
     async def get_brief(self, user_id: UUID) -> Optional[UserBrief]:
@@ -52,16 +54,24 @@ class UserServiceClient:
             ]
 
     async def follow(self, follower_id: UUID, following_id: UUID) -> bool:
+        headers = {}
+        if self._auth_token:
+            headers["Authorization"] = f"Bearer {self._auth_token}"
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             resp = await client.post(
                 f"{self._base_url}/api/v1/users/{follower_id}/follow/{following_id}",
+                headers=headers,
             )
             return resp.status_code == 200
 
     async def unfollow(self, follower_id: UUID, following_id: UUID) -> bool:
+        headers = {}
+        if self._auth_token:
+            headers["Authorization"] = f"Bearer {self._auth_token}"
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             resp = await client.delete(
                 f"{self._base_url}/api/v1/users/{follower_id}/follow/{following_id}",
+                headers=headers,
             )
             return resp.status_code == 204
 
@@ -102,17 +112,25 @@ class UserServiceClient:
             return resp.status_code == 200
 
     async def increment_stat(self, user_id: UUID, field: str, amount: int = 1) -> bool:
+        headers = {}
+        if self._internal_api_key:
+            headers["X-API-Key"] = self._internal_api_key
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             resp = await client.post(
                 f"{self._base_url}/api/v1/users/{user_id}/stats/increment",
                 json={"field": field, "amount": amount},
+                headers=headers,
             )
             return resp.status_code == 200
 
     async def decrement_stat(self, user_id: UUID, field: str, amount: int = 1) -> bool:
+        headers = {}
+        if self._internal_api_key:
+            headers["X-API-Key"] = self._internal_api_key
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             resp = await client.post(
                 f"{self._base_url}/api/v1/users/{user_id}/stats/decrement",
                 json={"field": field, "amount": amount},
+                headers=headers,
             )
             return resp.status_code == 200

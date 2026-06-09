@@ -208,7 +208,14 @@ def verify_internal_api_key(
     x_api_key: str = Depends(_api_key_header),
     settings: UserServiceSettings = Depends(get_settings),
 ) -> bool:
-    return bool(settings.INTERNAL_API_KEY) and x_api_key == settings.INTERNAL_API_KEY
+    if not settings.INTERNAL_API_KEY:
+        return True
+    if not x_api_key or x_api_key != settings.INTERNAL_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or missing API key",
+        )
+    return True
 
 
 def get_s3_client(settings: UserServiceSettings = Depends(get_settings)) -> S3Client:

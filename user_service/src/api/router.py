@@ -512,10 +512,13 @@ async def batch_users(
 async def follow_user(
     follower_id: UUID,
     following_id: UUID,
+    current_user_id: UUID = Depends(get_current_user_id),
     service: SubscriptionService = Depends(get_subscription_service),
     logger=Depends(get_logger_dep),
 ):
     logger.info("subscriptions.follow.requested", extra={"follower": str(follower_id), "following": str(following_id)})
+    if current_user_id != follower_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot follow as another user")
     if follower_id == following_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot follow yourself")
     sub = await service.follow(follower_id, following_id)
@@ -537,10 +540,13 @@ async def follow_user(
 async def unfollow_user(
     follower_id: UUID,
     following_id: UUID,
+    current_user_id: UUID = Depends(get_current_user_id),
     service: SubscriptionService = Depends(get_subscription_service),
     logger=Depends(get_logger_dep),
 ):
     logger.info("subscriptions.unfollow.requested", extra={"follower": str(follower_id), "following": str(following_id)})
+    if current_user_id != follower_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot unfollow as another user")
     await service.unfollow(follower_id, following_id)
     logger.info("subscriptions.unfollow.success")
     return None
@@ -644,6 +650,7 @@ async def increment_user_stats(
     body: StatsUpdateRequest,
     service: StatisticService = Depends(get_statistic_service),
     logger=Depends(get_logger_dep),
+    _api_key: bool = Depends(verify_internal_api_key),
 ):
     logger.info("users.stats.increment.requested", extra={"user_id": str(user_id), "field": body.field, "amount": body.amount})
     stats = await service.increment(user_id, body.field, body.amount)
@@ -671,6 +678,7 @@ async def decrement_user_stats(
     body: StatsUpdateRequest,
     service: StatisticService = Depends(get_statistic_service),
     logger=Depends(get_logger_dep),
+    _api_key: bool = Depends(verify_internal_api_key),
 ):
     logger.info("users.stats.decrement.requested", extra={"user_id": str(user_id), "field": body.field, "amount": body.amount})
     stats = await service.decrement(user_id, body.field, body.amount)
@@ -695,9 +703,12 @@ async def decrement_user_stats(
 async def upload_avatar(
     user_id: UUID,
     file: UploadFile = File(...),
+    current_user_id: UUID = Depends(get_current_user_id),
     profile: ProfileService = Depends(get_profile_service),
     logger=Depends(get_logger_dep),
 ):
+    if current_user_id != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot modify another user's avatar")
     if file.content_type not in ("image/jpeg", "image/png", "image/gif", "image/webp"):
         raise HTTPException(status_code=400, detail="Unsupported image type. Use JPEG, PNG, GIF or WebP.")
 
@@ -716,9 +727,12 @@ async def upload_avatar(
 )
 async def delete_avatar(
     user_id: UUID,
+    current_user_id: UUID = Depends(get_current_user_id),
     profile: ProfileService = Depends(get_profile_service),
     logger=Depends(get_logger_dep),
 ):
+    if current_user_id != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot delete another user's avatar")
     await profile.delete_avatar(user_id)
     logger.info("profile.avatar.deleted", extra={"user_id": str(user_id)})
     return {"detail": "Avatar deleted"}
@@ -753,9 +767,12 @@ async def get_profile(
 async def update_profile(
     user_id: UUID,
     body: ProfileUpdateRequest,
+    current_user_id: UUID = Depends(get_current_user_id),
     profile: ProfileService = Depends(get_profile_service),
     logger=Depends(get_logger_dep),
 ):
+    if current_user_id != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cannot modify another user's profile")
     p = await profile.update_profile(user_id, bio=body.bio, location=body.location)
     logger.info("profile.updated", extra={"user_id": str(user_id)})
     return ProfileResponse(
