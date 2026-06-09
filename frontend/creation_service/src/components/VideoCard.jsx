@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { getUserIdFromToken, deleteVideo } from '../api/videos';
 
@@ -16,12 +16,13 @@ const STATUS_CLASSES = {
   deleted: 'error',
 };
 
-export const VideoCard = ({ video, showDescription = true }) => {
+export const VideoCard = ({ video, showDescription = true, onDelete }) => {
   if (!video || !video.id) return null;
 
   const userId = getUserIdFromToken();
   const isOwner = userId === video.user_id;
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8003';
+  const navigate = useNavigate();
 
   const handleDelete = async (e) => {
     e.preventDefault();
@@ -29,7 +30,11 @@ export const VideoCard = ({ video, showDescription = true }) => {
     if (!window.confirm('Удалить видео?')) return;
     try {
       await deleteVideo(video.id);
-      window.location.reload();
+      if (onDelete) {
+        onDelete();
+      } else {
+        navigate('/');
+      }
     } catch {
       alert('Ошибка при удалении');
     }

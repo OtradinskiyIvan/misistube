@@ -1,10 +1,19 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { fetchVideos, fetchVideoById } from '../api/videos';
 
 export const useVideos = (limit = 10, offset = 0) => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchVideos(limit, offset)
+      .then((data) => setVideos(data.items))
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [limit, offset]);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -25,7 +34,7 @@ export const useVideos = (limit = 10, offset = 0) => {
     return () => abort.abort();
   }, [limit, offset]);
 
-  return { videos, loading, error };
+  return { videos, loading, error, refresh };
 };
 
 export const useVideo = (id) => {
