@@ -172,7 +172,7 @@ export default function AdminPage() {
                 </td>
                 <td>
                   <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
-                    {u.status !== "banned" && (
+                    {u.status !== "banned" && u.status !== "inactive" && (
                       <button
                         className="btn btn-sm btn-outline"
                         style={{ borderColor: "#EF4444", color: "#EF4444", fontSize: "0.75rem" }}
