@@ -20,6 +20,10 @@ export default defineConfig({
         target: USER_API_TARGET,
         changeOrigin: true,
       },
+      '/api/v1/likes': {
+        target: INTERACTION_API_TARGET,
+        changeOrigin: true,
+      },
       '/api/v1/auth': {
         target: AUTH_API_TARGET,
         changeOrigin: true,
