@@ -17,7 +17,7 @@ from shared.database.session import Base
 
 
 class DatabaseManager:
-    def __init__(self, database_url: str, echo: bool = False, pool_pre_ping: bool = True) -> None:
+    def __init__(self, database_url: str, echo: bool = False, pool_pre_ping: bool = False) -> None:
         url = str(database_url)
         if "postgresql+asyncpg" not in url and url.startswith("postgresql://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)

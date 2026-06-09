@@ -83,6 +83,9 @@ export const api = {
   deleteCommentAsAdmin: (commentId) =>
     request(`/admin/comments/${commentId}`, { method: "DELETE" }),
 
+  getAllComments: (skip = 0, limit = 200) =>
+    request(`/admin/comments?skip=${skip}&limit=${limit}`),
+
   getBlockedComments: (skip = 0, limit = 50) =>
     request(`/admin/comments/blocked?skip=${skip}&limit=${limit}`),
 

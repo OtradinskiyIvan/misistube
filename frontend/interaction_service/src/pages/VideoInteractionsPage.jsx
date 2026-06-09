@@ -7,7 +7,7 @@ export default function VideoInteractionsPage() {
   const { videoId } = useParams();
   const [searchParams] = useSearchParams();
   const authorId = searchParams.get("authorId");
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, canModerate } = useAuth();
 
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
@@ -96,9 +96,14 @@ export default function VideoInteractionsPage() {
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = async (comment) => {
     try {
-      await api.deleteComment(commentId);
+      const isOwner = user?.id === comment.user_id;
+      if (isOwner) {
+        await api.deleteComment(comment.id);
+      } else if (canModerate) {
+        await api.deleteCommentAsAdmin(comment.id);
+      }
       await fetchData();
     } catch (err) {
       setError(err.detail || "Failed to delete comment");
@@ -184,10 +189,10 @@ export default function VideoInteractionsPage() {
             </div>
             <div className="comment__content">{comment.content}</div>
             <div className="comment__actions">
-              {isAuthenticated && (
+              {(user?.id === comment.user_id || canModerate) && (
                 <button
                   className="btn btn-sm btn-secondary"
-                  onClick={() => handleDeleteComment(comment.id)}
+                  onClick={() => handleDeleteComment(comment)}
                 >
                   Delete
                 </button>

@@ -9,7 +9,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route path="/video/:videoId" element={<VideoInteractionsPage />} />
         <Route path="/admin/comments" element={<AdminCommentsPage />} />
-        <Route path="*" element={<Navigate to="/video/1" replace />} />
+        <Route path="*" element={<Navigate to="/admin/comments" replace />} />
       </Route>
     </Routes>
   );

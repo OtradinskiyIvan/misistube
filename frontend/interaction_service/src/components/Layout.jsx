@@ -1,23 +1,18 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Layout() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
 
   return (
     <>
       <header className="header">
         <div className="container">
-          <Link to="/" className="logo">MISIS Tube — Interactions</Link>
+          <span className="logo">MISIS Tube — Модерация</span>
           <nav className="nav">
-            <Link to="/video/1" className="nav-link">Video #1</Link>
+            <a href="/user/profile" className="nav-link">Профиль</a>
             {isAuthenticated ? (
               <>
-                {isAdmin && (
-                  <Link to="/admin/comments" className="nav-link">
-                    Модерация
-                  </Link>
-                )}
                 <span className="nav-link">{user?.username}</span>
                 <button className="btn btn-sm btn-outline" onClick={logout}>
                   Logout

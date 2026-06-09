@@ -29,6 +29,7 @@ from ..deps import (
     get_user_service_client,
     get_view_service,
     require_admin,
+    require_moderator_or_admin,
 )
 from ..infrastructure.clients.creation_service_client import CreationServiceClient
 from ..infrastructure.clients.user_service_client import UserServiceClient
@@ -427,13 +428,37 @@ async def admin_delete_comment(
     comment_id: UUID,
     service: CommentService = Depends(get_comment_service),
     logger=Depends(get_logger_dep),
-    _admin=Depends(require_admin),
+    _mod=Depends(require_moderator_or_admin),
 ):
     logger.info("admin.comments.delete.requested", extra={"comment_id": str(comment_id)})
     deleted = await service.delete_comment_as_admin(comment_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Comment not found")
     return None
+
+
+@router.get(
+    "/admin/comments",
+    response_model=PaginatedCommentsResponse,
+    summary="List all comments (moderator/admin)",
+    responses={**_error_responses},
+)
+async def list_all_comments(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=500),
+    service: CommentService = Depends(get_comment_service),
+    logger=Depends(get_logger_dep),
+    _mod=Depends(require_moderator_or_admin),
+):
+    logger.info("admin.comments.list.requested", extra={"skip": skip, "limit": limit})
+    comments = await service.get_all_comments(skip=skip, limit=limit)
+    total = len(comments)
+    return PaginatedCommentsResponse(
+        comments=[map_comment_to_response(c) for c in comments],
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.get(
