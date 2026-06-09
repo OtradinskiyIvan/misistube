@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadVideo } from '../api/videos';
 
-const MAX_FILE_SIZE = 100 * 1024 * 1024;
+const MAX_FILE_SIZE = 250 * 1024 * 1024;
 
 export const VideoUploader = () => {
   const [title, setTitle] = useState('');
@@ -20,7 +20,7 @@ export const VideoUploader = () => {
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
-      setError('Видео слишком большое (Max 100 MB)');
+      setError('Видео слишком большое (Max 250 MB)');
       return;
     }
     setUploading(true);
@@ -66,7 +66,7 @@ export const VideoUploader = () => {
             onChange={(e) => {
               const f = e.target.files?.[0] || null;
               if (f && f.size > MAX_FILE_SIZE) {
-                setError('Видео слишком большое (Max 100 MB)');
+                setError('Видео слишком большое (Max 250 MB)');
                 setFile(null);
                 e.target.value = '';
               } else {
