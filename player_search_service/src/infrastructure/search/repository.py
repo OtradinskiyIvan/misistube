@@ -54,7 +54,8 @@ class SQLAlchemyVideoRepository(SearchPort):
                 duration_seconds=v.duration_seconds,
                 created_at=v.created_at.isoformat() if v.created_at else None,
                 updated_at=v.updated_at.isoformat() if v.updated_at else None,
-
+                thumbnail_key=v.thumbnail_key,
+                
                 user_id=str(v.user_id),
                 username=str(v.user_id),
 

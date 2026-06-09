@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import SearchForm from '../components/SearchForm'
 import VideoCard from '../components/VideoCard'
 
@@ -8,9 +8,7 @@ export default function SearchPage() {
   const [hasSearched, setHasSearched] = useState(false)
   const abortControllerRef = useRef(null)
 
-  const handleSearch = useCallback(async ({ q, tags }) => {
-    if (!q && tags.length === 0) return
-
+  const handleSearch = useCallback(async ({ q }) => {
     if (abortControllerRef.current) abortControllerRef.current.abort()
     abortControllerRef.current = new AbortController()
 
@@ -18,8 +16,7 @@ export default function SearchPage() {
     try {
       const params = new URLSearchParams()
       if (q) params.append('q', q)
-      tags.forEach(tag => params.append('tags', tag))
-      params.append('limit', '10')
+      params.append('limit', '50')
 
       const response = await fetch(`/api/v1/search?${params.toString()}`, {
         signal: abortControllerRef.current.signal
@@ -37,22 +34,27 @@ export default function SearchPage() {
     }
   }, [])
 
+  // Автозагрузка всех видео при открытии страницы
+  useEffect(() => {
+    handleSearch({ q: '' })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="container" style={{ paddingTop: '1.5rem', paddingBottom: '3rem' }}>
-      <h1 style={{ marginBottom: '1.5rem' }}>Поиск видео</h1>
+      <h1 style={{ marginBottom: '1.5rem' }}>Видео</h1>
       <SearchForm onSearch={handleSearch} />
 
       {loading && <div className="text-center" style={{ padding: '2rem' }}>Загрузка...</div>}
 
       {!loading && !hasSearched && (
         <p className="text-center" style={{ color: 'var(--misis-gray-300)', marginTop: '2rem' }}>
-          Введите запрос или выберите теги для поиска
+          Загрузка видео...
         </p>
       )}
 
       {!loading && hasSearched && results.length === 0 && (
         <p className="text-center" style={{ color: 'var(--misis-gray-300)', marginTop: '2rem' }}>
-          Ничего не найдено. Попробуйте изменить запрос или выбрать другие теги.
+          Ничего не найдено. Попробуйте изменить запрос.
         </p>
       )}
 

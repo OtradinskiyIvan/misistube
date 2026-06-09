@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -17,6 +18,8 @@ class VideoResult(BaseModel):
     storage_key: str
     status: str
     duration_seconds: int
+    thumbnail_key: Optional[str] = None
+    thumbnail_url: Optional[str] = None
     created_at: str
     updated_at: str
 
@@ -24,7 +27,6 @@ class VideoResult(BaseModel):
     username: str
 
     tags: list[str] | None = None
-    thumbnail_url: str | None = None
 
 class SearchResponse(BaseModel):
     items: list[VideoResult]

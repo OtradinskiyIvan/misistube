@@ -239,6 +239,7 @@ services:
       S3_BUCKET_NAME: videos
       S3_BUCKET_THUMBNAILS: thumbnails
       S3_PRESIGNED_URL_EXPIRES: 900
+      USER_SERVICE_URL: http://user-service:${USER_BACK_CONTAINER_PORT}
       APP_ENV: development
       LOG_LEVEL: INFO
     volumes:

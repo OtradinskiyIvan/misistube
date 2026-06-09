@@ -18,6 +18,7 @@ class VideoStatus(str, Enum):
     PROCESSING = "processing"
     READY = "ready"
     FAILED = "failed"
+    DELETED = "deleted"
 
 class Video(Base):
     __tablename__ = "videos"
@@ -39,6 +40,7 @@ class Video(Base):
         server_default=text("'uploading'::video_status")
     )
     duration_seconds = Column(Integer, nullable=True, server_default=text("0"))
+    thumbnail_key = Column(String(500), nullable=True)
 
     user_id = Column(UUID(as_uuid=True), nullable=False)
 

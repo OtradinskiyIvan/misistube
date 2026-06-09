@@ -4,6 +4,7 @@ from src.api.schemas import PlaybackUrl
 from src.core.exceptions import VideoNotFoundError
 from src.infrastructure.search.protocol import SearchPort
 from src.infrastructure.storage.protocol import StoragePort
+from src.infrastructure.database.models import VideoStatus
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,11 @@ class GetPlaybackUrlUseCase:
         video = await self.search_port.get_by_id(video_id)
         if not video:
             logger.error("Video not found: %s", video_id)
+            raise VideoNotFoundError(video_id)
+
+
+        if video.status == VideoStatus.DELETED:
+            logger.warning("Attempted to play deleted video: %s", video_id)
             raise VideoNotFoundError(video_id)
 
         logger.info("Found video: %s, storage_key: %s", video.title, video.storage_key)
