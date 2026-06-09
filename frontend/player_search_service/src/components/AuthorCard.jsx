@@ -32,9 +32,8 @@ export default function AuthorCard({ author }) {
     )
   }
 
-  const { username, channelUrl } = author
+  const { username, channelUrl, avatar_url } = author
 
-  // Генерируем инициалы для аватара
   const initials = username 
     ? username.slice(0, 1).toUpperCase()
     : '?'
@@ -50,24 +49,37 @@ export default function AuthorCard({ author }) {
         gap: '1rem'
       }}
     >
-      {/* Аватар */}
-      <div
-        style={{
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          backgroundColor: 'var(--misis-gray-200);',
-          color: 'var(--misis-text-dark)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '1.25rem',
-          fontWeight: 'bold',
-          flexShrink: 0
-        }}
-      >
-        {initials}
-      </div>
+      {avatar_url ? (
+        <img
+          src={avatar_url}
+          alt={username}
+          style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            objectFit: 'cover',
+            flexShrink: 0
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            backgroundColor: 'var(--misis-gray-200)',
+            color: 'var(--misis-text-dark)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.25rem',
+            fontWeight: 'bold',
+            flexShrink: 0
+          }}
+        >
+          {initials}
+        </div>
+      )}
 
       {/* Информация об авторе */}
       <div style={{ flex: 1 }}>

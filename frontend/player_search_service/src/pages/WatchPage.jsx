@@ -18,10 +18,38 @@ export default function WatchPage() {
   const [sendingComment, setSendingComment] = useState(false)
   const [commentError, setCommentError] = useState(null)
   const [userNames, setUserNames] = useState({})
+  const [copyNotification, setCopyNotification] = useState(false)
   const [liked, setLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(0)
   const [likeLoading, setLikeLoading] = useState(false)
   const token = localStorage.getItem('auth_user')
+
+  const handleShare = async () => {
+    try {      
+      const currentUrl = window.location.href
+            
+      await navigator.clipboard.writeText(currentUrl)
+            
+      setCopyNotification(true)
+            
+      setTimeout(() => {
+        setCopyNotification(false)
+      }, 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)      
+      const textArea = document.createElement('textarea')
+      textArea.value = window.location.href
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      
+      setCopyNotification(true)
+      setTimeout(() => {
+        setCopyNotification(false)
+      }, 2000)
+    }
+  }
 
   async function resolveUserNames(comments) {
     const userIds = [...new Set((comments || []).map(c => c.user_id).filter(Boolean))]
@@ -43,34 +71,51 @@ export default function WatchPage() {
     const fetchVideo = async () => {
       try {
         setLoading(true)
+                
+        const [playbackResult, videoResult, commentsResult] = await Promise.allSettled([
+          fetch(`/api/v1/playback/${id}`),
+          fetch(`/api/v1/videos/${id}/details`),
+          commentsService.getVideoComments(id)
+        ])
         
-        // Получаем presigned URL для видео
-        const playbackResponse = await fetch(`/api/v1/playback/${id}`)
-        
-        if (!playbackResponse.ok) {
-          throw new Error('Видео не найдено')
+        if (playbackResult.status === 'rejected' || !playbackResult.value.ok) {
+          const errorMsg = playbackResult.status === 'rejected' 
+            ? 'Не удалось загрузить видео'
+            : 'Видео не найдено'
+          throw new Error(errorMsg)
         }
         
-        const playbackData = await playbackResponse.json()
+        const playbackData = await playbackResult.value.json()
         setVideoUrl(playbackData.hls_master_url)
         
-        // Получаем информацию о видео
-        const searchResponse = await fetch(`/api/v1/search?q=&limit=100`)
-        const searchData = await searchResponse.json()
-        const foundVideo = searchData.items?.find(v => v.id === id)
-        
-        if (foundVideo) {
-          setVideo(foundVideo)
-          
-          if (foundVideo.user_id) {
-            const userData = await userService.getUserById(foundVideo.user_id)
-            setAuthor(userData)
-          }
+        if (videoResult.status === 'fulfilled' && videoResult.value.ok) {
+          const videoData = await videoResult.value.json()
+          setVideo(videoData)
 
-          const commentsData = await commentsService.getVideoComments(id)
+          if (videoData.user_id) {
+            setAuthor({
+              user_id: videoData.user_id,
+              username: videoData.username,
+              avatar_url: videoData.avatar_url,
+              channelUrl: `/user/users/${videoData.user_id}`
+            })
+          }
+        } else {
+          console.warn(
+            'Failed to load video details:',
+            videoResult.status === 'rejected' ? videoResult.reason : videoResult.value?.statusText
+          )
+        }
+
+        if (commentsResult.status === 'fulfilled') {
+          const commentsData = commentsResult.value
           setComments(commentsData.comments || [])
           setCommentsTotal(commentsData.total || 0)
           resolveUserNames(commentsData.comments)
+        } else {
+          console.warn('Failed to load comments:', commentsResult.reason)
+          setComments([])
+          setCommentsTotal(0)
         }
       } catch (err) {
         setError(err.message)
@@ -143,7 +188,27 @@ export default function WatchPage() {
   }
 
   return (
-    <div className="container" style={{ paddingTop: '1.5rem', paddingBottom: '3rem' }}>
+    <div className="container" style={{ paddingTop: '1.5rem', paddingBottom: '3rem', position: 'relative' }}>
+      {copyNotification && (
+        <div style={{
+          position: 'fixed',
+          bottom: '2rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'var(--misis-dark)',
+          color: 'white',
+          padding: '0.75rem 1.5rem',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          zIndex: 1000,
+          animation: 'fadeInUp 0.3s ease-out',
+          fontSize: '0.875rem',
+          fontWeight: '500'
+        }}>
+          ✓ Ссылка скопирована в буфер обмена
+        </div>
+      )}
+
       {/* Кнопка назад */}
       <Link to="/search" className="btn btn-sm btn-outline" style={{ marginBottom: '1rem', width: 'fit-content' }}>
         ← Назад к поиску
@@ -180,135 +245,136 @@ export default function WatchPage() {
       {video && (
         <>
           <div className="card" style={{ padding: '1.5rem', marginBottom: '1rem' }}>
-            <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{video.title}</h1>
+            {/* Заголовок */}
+            <h1 style={{ fontSize: '1.5rem', marginBottom: '0.75rem', fontWeight: '600' }}>
+              {video.title}
+            </h1>
             
+            {/* Метаданные: длительность и статус */}
+            <div style={{ 
+              gap: '1rem', 
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              marginBottom: '1rem',
+              paddingBottom: '1rem',
+              borderBottom: '1px solid var(--misis-gray-200)'
+            }}>
+              <span style={{ color: 'var(--misis-text-dark)', fontSize: '0.875rem' }}>
+                <span style={{fontSize: '1rem'}}>⏱</span> {Math.floor((video.duration_seconds || 0) / 60)}:{String((video.duration_seconds || 0) % 60).padStart(2, '0')}
+              </span>
+            </div>
+
+            {/* Описание */}
             {video.description && (
-              <p style={{ color: 'var(--misis-text-dark)', opacity: 0.8, marginBottom: '1rem' }}>
+              <p style={{ 
+                color: 'var(--misis-text-dark)', 
+                opacity: 0.8, 
+                marginBottom: '1rem',
+                lineHeight: '1.6'
+              }}>
                 {video.description}
               </p>
             )}
 
+            {/* Кнопки действий - отдельная секция */}
             <div style={{ 
               display: 'flex', 
-              gap: '1rem', 
-              alignItems: 'center',
+              gap: '0.75rem', 
               flexWrap: 'wrap',
-              marginBottom: '1rem'
-            }}>
-              <span style={{ color: 'var(--misis-gray-300)', fontSize: '0.875rem' }}>
-                ⏱ {Math.floor((video.duration_seconds || 0) / 60)}:{String((video.duration_seconds || 0) % 60).padStart(2, '0')}
-              </span>
-              
-              {video.status && (
-                <span className={`badge status-${video.status.toLowerCase()}`}>
-                  {video.status}
-                </span>
-              )}
+              paddingTop: '0.5rem'
+            }}> 
+              <button 
+                className={btn ${liked ? 'btn-primary' : 'btn-secondary'} 
+                style={{ flex: '0 1 auto' }} 
+                onClick={handleToggleLike}
+                disabled={likeLoading}
+              >
+                ♡ В избранное
+              </button>
+              <button 
+                className="btn btn-outline" 
+                style={{ flex: '0 1 auto' }}
+                onClick={handleShare}
+              >
+                ↗ Поделиться
+              </button>
             </div>
-
-            {video.tags && video.tags.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {video.tags.map((tag, idx) => (
-                  <span key={idx} className="badge badge-info">
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Плашка автора */}
           <AuthorCard author={author} />
-
-          {/* Комментарии */}
-          <div className="card" style={{ padding: '1.5rem', marginTop: '1rem' }}>
-            <h3 style={{ marginBottom: '1rem' }}>Комментарии ({commentsTotal})</h3>
-
-            {token ? (
-              <div style={{ marginBottom: '1rem' }}>
-                <textarea
-                  className="input"
-                  style={{ width: '100%', minHeight: '80px', resize: 'vertical' }}
-                  placeholder="Напишите комментарий..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                />
-                <button
-                  className="btn btn-primary"
-                  style={{ marginTop: '0.5rem' }}
-                  disabled={!newComment.trim() || sendingComment}
-                  onClick={async () => {
-                    setCommentError(null)
-                    setSendingComment(true)
-                    try {
-                      await commentsService.createComment(id, newComment.trim())
-                      setNewComment('')
-                      const updated = await commentsService.getVideoComments(id)
-                      setComments(updated.comments || [])
-                      setCommentsTotal(updated.total || 0)
-                      resolveUserNames(updated.comments)
-                    } catch (err) {
-                      console.error("WatchPage comment error:", err)
-                      setCommentError(err.message)
-                    } finally {
-                      setSendingComment(false)
-                    }
-                  }}
-                >
-                  {sendingComment ? 'Отправка...' : 'Отправить'}
-                </button>
-                {commentError && (
-                  <p style={{ color: '#e53e3e', fontSize: '0.875rem', marginTop: '0.5rem' }}>
-                    {commentError}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p style={{ color: 'var(--misis-gray-300)', marginBottom: '1rem' }}>
-                <a href="/auth/">Войдите</a>, чтобы оставить комментарий
-              </p>
-            )}
-
-            {comments.length === 0 ? (
-              <p style={{ color: 'var(--misis-gray-300)' }}>Пока нет комментариев</p>
-            ) : (
-              comments.map((comment) => (
-                <div
-                  key={comment.id}
-                  style={{
-                    padding: '0.75rem 0',
-                    borderBottom: '1px solid var(--misis-gray-200)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <strong style={{ fontSize: '0.875rem' }}>{userNames[comment.user_id] || comment.user_id?.slice(0, 8) || 'Аноним'}</strong>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--misis-gray-300)' }}>
-                      {comment.created_at ? new Date(comment.created_at).toLocaleDateString() : ''}
-                    </span>
-                  </div>
-                  <p style={{ margin: 0, fontSize: '0.875rem' }}>{comment.content}</p>
-                </div>
-              ))
-            )}
-          </div>
         </>
       )}
 
-      {/* Действия */}
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1rem' }}>
-        <button
-          className={`btn ${liked ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={handleToggleLike}
-          disabled={likeLoading}
-        >
-          {liked ? '♥' : '♡'} {likesCount}
-        </button>
-        <button className="btn btn-outline">
-          ↗ Поделиться
-        </button>
-        <button className="btn btn-outline">
-          ⬇ Скачать
-        </button>
+      <div className="card" style={{ padding: '1.5rem', marginTop: '1rem' }}>
+        <h3 style={{ marginBottom: '1rem' }}>Комментарии ({commentsTotal})</h3>
+
+        {token ? (
+          <div style={{ marginBottom: '1rem' }}>
+            <textarea
+              className="input"
+              style={{ width: '100%', minHeight: '80px', resize: 'vertical' }}
+              placeholder="Напишите комментарий..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+            />
+            <button
+              className="btn btn-primary"
+              style={{ marginTop: '0.5rem' }}
+              disabled={!newComment.trim() || sendingComment}
+              onClick={async () => {
+                setCommentError(null)
+                setSendingComment(true)
+                try {
+                  await commentsService.createComment(id, newComment.trim())
+                  setNewComment('')
+                  const updated = await commentsService.getVideoComments(id)
+                  setComments(updated.comments || [])
+                  setCommentsTotal(updated.total || 0)
+                  resolveUserNames(updated.comments)
+                } catch (err) {
+                  console.error("WatchPage comment error:", err)
+                  setCommentError(err.message)
+                } finally {
+                  setSendingComment(false)
+                }
+              }}
+            >
+              {sendingComment ? 'Отправка...' : 'Отправить'}
+            </button>
+            {commentError && (
+              <p style={{ color: '#e53e3e', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                {commentError}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p style={{ color: 'var(--misis-gray-300)', marginBottom: '1rem' }}>
+            <a href="/auth/">Войдите</a>, чтобы оставить комментарий
+          </p>
+        )}
+
+        {comments.length === 0 ? (
+          <p style={{ color: 'var(--misis-gray-300)' }}>Пока нет комментариев</p>
+        ) : (
+          comments.map((comment) => (
+            <div
+              key={comment.id}
+              style={{
+                padding: '0.75rem 0',
+                borderBottom: '1px solid var(--misis-gray-200)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <strong style={{ fontSize: '0.875rem' }}>{userNames[comment.user_id] || comment.user_id?.slice(0, 8) || 'Аноним'}</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--misis-gray-300)' }}>
+                  {comment.created_at ? new Date(comment.created_at).toLocaleDateString() : ''}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.875rem' }}>{comment.content}</p>
+            </div>
+          ))
+        )}
       </div>
     </div>
   )

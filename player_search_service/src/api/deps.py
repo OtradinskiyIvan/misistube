@@ -13,6 +13,7 @@ from src.infrastructure.storage.protocol import StoragePort
 from src.infrastructure.storage.s3 import S3StorageAdapter
 from src.infrastructure.user_service.client import UserServiceClient
 from src.infrastructure.user_service.cache import UserCacheService
+from src.infrastructure.user_service.avatar_cache import AvatarCacheService
 from src.usecases.playback import GetPlaybackUrlUseCase
 from src.usecases.search import SearchVideoUseCase
 
@@ -36,6 +37,10 @@ def get_user_cache() -> UserCacheService:
     """Кэш username пользователей (in-memory, TTL 5 минут)"""
     return UserCacheService(ttl_seconds=300)
 
+@lru_cache
+def get_avatar_cache() -> AvatarCacheService:
+    """Кэш аватарок пользователей (in-memory, TTL 5 минут)"""
+    return AvatarCacheService(ttl_seconds=300)
 
 def get_search_repository(session: AsyncSession = Depends(get_async_session)) -> SearchPort: # noqa: B008
     """

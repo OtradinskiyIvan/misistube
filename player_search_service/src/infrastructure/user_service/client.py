@@ -128,3 +128,99 @@ class UserServiceClient:
                 logger.warning("Batch fetch failed for %s: %s", user_id, result)
         
         return usernames
+    
+    async def get_user_avatar(self, user_id: str) -> Optional[str]:
+        """
+        Получает URL аватарки пользователя через /profile эндпоинт.
+        
+        Args:
+            user_id: UUID пользователя
+            
+        Returns:
+            URL аватарки или None, если не удалось получить
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(
+                    f"{self.base_url}/api/v1/users/{user_id}/profile"
+                )
+                
+                if response.status_code == 404:
+                    logger.warning("User profile not found: %s", user_id)
+                    return None
+                
+                if response.status_code != 200:
+                    logger.warning(
+                        "Failed to fetch user profile %s: %s", 
+                        user_id, 
+                        response.status_code
+                    )
+                    return None
+                
+                data = response.json()
+                return data.get("avatar_url")
+        
+        except httpx.TimeoutException:
+            logger.warning("Timeout while fetching avatar for %s", user_id)
+            return None
+        except Exception as e:
+            logger.warning("Error fetching avatar for %s: %s", user_id, e)
+            return None
+
+    async def get_user_avatar(self, user_id: str) -> Optional[str]:
+        """
+        Получает URL аватарки пользователя через /profile эндпоинт.
+        
+        Args:
+            user_id: UUID пользователя
+            
+        Returns:
+            URL аватарки или None, если не удалось получить
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(f"{self.base_url}/api/v1/users/{user_id}/profile")
+                
+                if response.status_code == 404:
+                    logger.warning("User profile not found: %s", user_id)
+                    return None
+                
+                if response.status_code != 200:
+                    logger.warning(
+                        "Failed to fetch user profile %s: %s", 
+                        user_id, 
+                        response.status_code
+                    )
+                    return None
+                
+                data = response.json()
+                return data.get("avatar_url")
+        
+        except httpx.TimeoutException:
+            logger.warning("Timeout while fetching avatar for %s", user_id)
+            return None
+        except Exception as e:
+            logger.warning("Error fetching avatar for %s: %s", user_id, e)
+            return None
+
+    async def get_avatars_batch(self, user_ids: list[str]) -> dict[str, Optional[str]]:
+        """
+        Получает аватарки для списка user_id параллельно.
+        """
+        if not user_ids:
+            return {}
+        
+        tasks = [self.get_user_avatar(uid) for uid in user_ids]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        avatars = {}
+        for user_id, result in zip(user_ids, results):
+            if isinstance(result, str):
+                avatars[user_id] = result
+            elif isinstance(result, Exception):
+                logger.warning("Batch avatar fetch failed for %s: %s", user_id, result)
+                avatars[user_id] = None
+            else:
+                avatars[user_id] = None
+        
+        return avatars
