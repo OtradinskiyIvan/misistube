@@ -4,6 +4,14 @@ import { VideoPlayer } from '../components/VideoPlayer';
 import { formatDistanceToNow } from 'date-fns';
 import { getUserIdFromToken, deleteVideo } from '../api/videos';
 
+const STATUS_LABELS = {
+  uploading: 'Загружается',
+  processing: 'Обрабатывается',
+  ready: 'Готово',
+  failed: 'Ошибка',
+  deleted: 'Удалено',
+};
+
 const STATUS_CLASSES = {
   ready: 'success',
   failed: 'error',
@@ -57,7 +65,7 @@ export const VideoDetailPage = () => {
       <p style={{ color: '#1E2A3A', margin: '0 0 16px', lineHeight: 1.5, border: '1px solid #e5e4e7', borderRadius: '8px', padding: '12px' }}>{video.description || ''}</p>
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
         <span className={`badge badge-${statusClass}`} style={{ borderRadius: '6px' }}>
-          {video.status}
+          {STATUS_LABELS[video.status] || video.status}
         </span>
         {video.duration > 0 && (
           <span style={{ fontSize: '0.875rem', color: '#1E2A3A', fontWeight: 500 }}>
