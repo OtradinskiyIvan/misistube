@@ -50,17 +50,13 @@ export default function Header() {
               >
                 Профиль
               </Link>
-              <button
-                onClick={() => {
-                  const token = user.token;
-                  const refreshToken = localStorage.getItem('refresh_token') || '';
-                  window.location.href = `/player/#access_token=${encodeURIComponent(token)}&refresh_token=${encodeURIComponent(refreshToken)}`;
-                }}
+              <a
+                href="/player/"
                 className="btn btn-sm btn-outline"
                 style={{ color: "white", borderColor: "white", marginRight: "0.5rem" }}
               >
                 Смотреть
-              </button>
+              </a>
               <button
                 className="btn btn-sm btn-outline"
                 onClick={logout}

@@ -23,9 +23,16 @@ function App() {
   const [confirmStatus, setConfirmStatus] = useState('')
   const [confirmStatusType, setConfirmStatusType] = useState('')
 
-  const saveTokens = (data) => {
-    localStorage.setItem('access_token', data.access_token)
-    localStorage.setItem('refresh_token', data.refresh_token)
+  const saveAuthUser = (data) => {
+    const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+    localStorage.setItem('auth_user', JSON.stringify({
+      id: payload.sub,
+      username: payload.username,
+      email: payload.email,
+      roles: payload.roles || [],
+      token: data.access_token,
+    }));
+    localStorage.setItem('refresh_token', data.refresh_token);
   }
 
   const parseError = async (response) => {
@@ -86,7 +93,8 @@ function App() {
       const tokenData = await response.json()
       setStatusType('success')
       setStatus('Вход выполнен. Идет перенаправление...')
-      window.location.replace(`/user/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`)
+      saveAuthUser(tokenData)
+      window.location.replace('/user/profile')
     } catch (error) {
       setStatusType('error')
       setStatus(error.message || 'Не удалось выполнить запрос. Попробуйте позже.')
@@ -157,7 +165,8 @@ function App() {
       setShowConfirm(false)
       setStatusType('success')
       setStatus('Регистрация и вход выполнены. Идет перенаправление...')
-      window.location.replace(`/user/#access_token=${encodeURIComponent(tokenData.access_token)}&refresh_token=${encodeURIComponent(tokenData.refresh_token)}`)
+      saveAuthUser(tokenData)
+      window.location.replace('/user/profile')
     } catch (error) {
       setConfirmStatusType('error')
       setConfirmStatus(error.message || 'Не удалось выполнить запрос. Попробуйте позже.')

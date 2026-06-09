@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { VideoListPage } from './pages/VideoListPage';
 import { VideoDetailPage } from './pages/VideoDetailPage';
@@ -20,21 +19,6 @@ function Header() {
 }
 
 function App() {
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash && hash.includes('access_token=')) {
-      window.location.hash = '';
-      const params = new URLSearchParams(hash.slice(1));
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      if (accessToken) {
-        if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
-        localStorage.setItem('auth_user', JSON.stringify({ token: accessToken }));
-        window.location.reload();
-      }
-    }
-  }, []);
-
   return (
     <BrowserRouter basename="/creation">
       <Header />

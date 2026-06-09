@@ -95,8 +95,7 @@ function InfoTab({ user, isAdmin, isOwner, logout }) {
   };
 
   const goToUpload = () => {
-    const token = user.token;
-    window.location.href = `/creation/#access_token=${encodeURIComponent(token)}`;
+    window.location.href = '/creation/upload';
   };
 
   return (

@@ -29,7 +29,7 @@ function saveUser(user) {
   }
 }
 
-export function AuthProvider({ children, initialHash = "" }) {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(loadUser);
   const [authLoading, setAuthLoading] = useState(false);
 
@@ -55,47 +55,8 @@ export function AuthProvider({ children, initialHash = "" }) {
     return authUser;
   }, []);
 
-  useEffect(() => {
-    if (user) return;
-
-    const hash = initialHash || window.location.hash;
-    if (hash && hash.includes("access_token=")) {
-      window.location.hash = "";
-      const params = new URLSearchParams(hash.slice(1));
-      const accessToken = params.get("access_token");
-      const refreshToken = params.get("refresh_token");
-      if (accessToken) {
-        if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
-        saveUser(null);
-        setAuthLoading(true);
-        loginWithToken(accessToken)
-          .catch(() => saveUser(null))
-          .finally(() => setAuthLoading(false));
-        return;
-      }
-    }
-
-    const accessToken = localStorage.getItem("access_token");
-    if (!accessToken) return;
-
-    saveUser(null);
-    setAuthLoading(true);
-    loginWithToken(accessToken)
-      .then(() => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-      })
-      .catch(() => {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        saveUser(null);
-      })
-      .finally(() => setAuthLoading(false));
-  }, [user, loginWithToken]);
-
   const logout = useCallback(() => {
     saveUser(null);
-    localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     setUser(null);
     window.location.href = "/auth/";
