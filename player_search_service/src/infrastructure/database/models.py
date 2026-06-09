@@ -18,6 +18,7 @@ class VideoStatus(str, Enum):
     PROCESSING = "processing"
     READY = "ready"
     FAILED = "failed"
+    DELETED = "deleted"
 
 class Video(Base):
     __tablename__ = "videos"

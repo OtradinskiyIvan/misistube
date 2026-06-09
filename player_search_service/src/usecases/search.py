@@ -52,7 +52,7 @@ class SearchVideoUseCase:
             offset=query.offset,
             limit=query.limit
         )
-        await self.cache.set(cache_key, response.model_dump(), ttl=300)
+        await self.cache.set(cache_key, response.model_dump(), ttl=60)
         return response
 
     async def _enrich_usernames(self, items: list) -> None:
