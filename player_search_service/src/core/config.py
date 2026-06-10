@@ -15,6 +15,7 @@ class PlayerSearchSettings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     DATABASE_URL: str
+    SLOW_QUERY_THRESHOLD_MS: int = 100  # миллисекунды
 
     REDIS_URL: str = "redis://localhost:6379/0"
     REDIS_CACHE_TTL: int = 300
