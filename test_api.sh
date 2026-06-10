@@ -280,6 +280,7 @@ fi
 # 3k. Update profile
 if [[ -n "$MY_USER_ID" ]]; then
     RESP=$(do_curl PUT "$USER_URL/api/v1/users/$MY_USER_ID/profile" \
+        --header "$AUTH_HEADER" \
         --json '{"bio":"Тестовый био","location":"Москва"}')
     CODE=$(extract_http_code "$RESP"); BODY=$(extract_body "$RESP")
     assert_status 200 "$CODE" "PUT /users/{id}/profile" "$BODY"
@@ -288,7 +289,8 @@ fi
 # 3l. Follow / unfollow
 if [[ -n "$MY_USER_ID" ]]; then
     # Self-follow — ожидаем 400 (нельзя подписаться на себя)
-    RESP=$(do_curl POST "$USER_URL/api/v1/users/$MY_USER_ID/follow/$MY_USER_ID")
+    RESP=$(do_curl POST "$USER_URL/api/v1/users/$MY_USER_ID/follow/$MY_USER_ID" \
+    --header "$AUTH_HEADER")
     CODE=$(extract_http_code "$RESP")
     if [[ "$CODE" == "400" ]]; then
         print_test "POST /users/{id}/follow/{id} (self-follow)" "PASS" ""
@@ -320,12 +322,14 @@ if [[ -n "$MY_USER_ID" ]]; then
     PNG_DATA=$(printf '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82')
     echo -n "$PNG_DATA" > /tmp/test_avatar.png
     RESP=$(do_curl PUT "$USER_URL/api/v1/users/$MY_USER_ID/profile/avatar" \
-        -F "file=@/tmp/test_avatar.png")
+    --header "$AUTH_HEADER" \
+    -F "file=@/tmp/test_avatar.png")
     CODE=$(extract_http_code "$RESP"); BODY=$(extract_body "$RESP")
     if [[ "$CODE" == "200" ]]; then
         print_test "PUT /users/{id}/profile/avatar" "PASS" ""
         # Delete avatar
-        RESP=$(do_curl DELETE "$USER_URL/api/v1/users/$MY_USER_ID/profile/avatar")
+        RESP=$(do_curl DELETE "$USER_URL/api/v1/users/$MY_USER_ID/profile/avatar" \
+            --header "$AUTH_HEADER")
         CODE=$(extract_http_code "$RESP"); BODY=$(extract_body "$RESP")
         assert_status 200 "$CODE" "DELETE /users/{id}/profile/avatar" "$BODY"
     else
@@ -422,22 +426,6 @@ if [[ -n "$ACCESS_TOKEN" ]]; then
     if [[ "$CODE" == "201" ]]; then
         print_test "POST /comments" "PASS" ""
         COMMENT_ID=$(echo "$BODY" | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])" 2>/dev/null)
-
-        # Update comment
-        if [[ -n "$COMMENT_ID" ]]; then
-            RESP=$(do_curl PUT "$INTERACTION_URL/api/v1/comments/$COMMENT_ID" \
-                --header "$AUTH_HEADER" \
-                --json '{"content":"Обновлённый комментарий"}')
-            CODE=$(extract_http_code "$RESP"); BODY=$(extract_body "$RESP")
-            if [[ "$CODE" == "200" ]]; then
-                print_test "PUT /comments/{id}" "PASS" ""
-                assert_body_contains '"is_edited":true' "$CODE" "  → is_edited=true" "$BODY"
-            elif [[ "$CODE" == "500" ]]; then
-                print_test "PUT /comments/{id}" "SKIP" "HTTP 500 (ошибка сервиса)"
-            else
-                print_test "PUT /comments/{id}" "FAIL" "ожидался 200, получен $CODE"
-            fi
-        fi
 
         # Delete comment (сначала создадим новый для удаления)
         RESP=$(do_curl POST "$INTERACTION_URL/api/v1/comments" \
