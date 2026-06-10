@@ -12,7 +12,6 @@ from logging.handlers import RotatingFileHandler
 
 from shared.logger import correlation_id_var
 
-# Московский часовой пояс (UTC+3)
 MOSCOW_TZ = timezone(timedelta(hours=3))
 
 
@@ -54,6 +53,21 @@ class ServiceFilter(logging.Filter):
         record.service = self.service_name
         return True
 
+class HealthCheckFilter(logging.Filter):
+    """
+    Фильтрует запросы к /health из access-логов uvicorn.
+    """
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage().find("/health") == -1
+
+class SQLAlchemyFilter(logging.Filter):
+    """
+    Фильтрует SQL-логи из консоли.
+    В файл они всё равно пишутся через file_handler.
+    """
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.levelno >= logging.WARNING
+
 def setup_service_logger(service_name: str, level: str = "INFO") -> logging.LoggerAdapter:
     src_level = getattr(logging, level.upper(), logging.INFO)
 
@@ -68,13 +82,11 @@ def setup_service_logger(service_name: str, level: str = "INFO") -> logging.Logg
 
         formatter = JSONFormatter()
 
-        # Консоль
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         console_handler.setLevel(src_level)
         service_logger.addHandler(console_handler)
 
-        # Файл
         log_file = ROOT_DIRECTORY / "logs/player_search_service.log"
         file_handler = RotatingFileHandler(
             log_file,
@@ -86,5 +98,56 @@ def setup_service_logger(service_name: str, level: str = "INFO") -> logging.Logg
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
         service_logger.addHandler(file_handler)
+    
+    src_logger = logging.getLogger("src")
+    if not src_logger.handlers:
+        src_logger.setLevel(src_level)
+        src_logger.propagate = False
+        
+        service_filter = ServiceFilter(service_name)
+        src_logger.addFilter(service_filter)
+        
+        formatter = JSONFormatter()
+        
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        console_handler.setLevel(src_level)
+        src_logger.addHandler(console_handler)
+        
+        log_file = ROOT_DIRECTORY / "logs/player_search_service.log"
+        file_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=10 * 1024 * 1024,
+            backupCount=5,
+            encoding="utf-8",
+            delay=True
+        )
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        src_logger.addHandler(file_handler)
 
+    # В файл SQL-логи всё равно пишутся через file_handler
+    sqlalchemy_logger = logging.getLogger("sqlalchemy.engine")
+    if not sqlalchemy_logger.handlers:
+        sqlalchemy_logger.setLevel(logging.WARNING)
+        sqlalchemy_logger.propagate = False
+        
+        formatter = JSONFormatter()
+        
+        log_file = ROOT_DIRECTORY / "logs/player_search_service.log"
+        file_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=10 * 1024 * 1024,
+            backupCount=5,
+            encoding="utf-8",
+            delay=True
+        )
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        sqlalchemy_logger.addHandler(file_handler)
+
+    uvicorn_access = logging.getLogger("uvicorn.access")
+    uvicorn_access.filters.clear()
+    uvicorn_access.addFilter(HealthCheckFilter())
+    
     return logging.LoggerAdapter(service_logger, {"service": service_name})
