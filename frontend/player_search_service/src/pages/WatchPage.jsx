@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AuthorCard from '../components/AuthorCard'
 import { userService } from '../services/userService'
 import { commentsService } from '../services/commentsService'
 import { likeService } from '../services/likeService'
+import { viewService } from '../services/viewService'
 
 export default function WatchPage() {
   const { id } = useParams()
@@ -23,6 +24,7 @@ export default function WatchPage() {
   const [likesCount, setLikesCount] = useState(0)
   const [likeLoading, setLikeLoading] = useState(false)
   const token = localStorage.getItem('auth_user')
+  const viewRecorded = useRef(false);
 
   const handleShare = async () => {
     try {      
@@ -66,7 +68,7 @@ export default function WatchPage() {
     )
     setUserNames(prev => ({ ...prev, ...Object.fromEntries(entries) }))
   }
-
+  
   useEffect(() => {
     const fetchVideo = async () => {
       try {
@@ -116,6 +118,10 @@ export default function WatchPage() {
           console.warn('Failed to load comments:', commentsResult.reason)
           setComments([])
           setCommentsTotal(0)
+        }
+        if (!viewRecorded.current) {
+            viewRecorded.current = true;
+            viewService.recordView(id).catch(() => {});
         }
       } catch (err) {
         setError(err.message)
