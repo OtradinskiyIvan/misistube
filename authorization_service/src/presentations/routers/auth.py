@@ -27,6 +27,7 @@ logger = logging.getLogger("Authorization Service")
 
 router = APIRouter()
 
+
 @router.post("/register", status_code=status.HTTP_202_ACCEPTED)
 async def register(
     payload: RegisterRequest,
@@ -87,6 +88,7 @@ async def confirm_email(
         created_at=created.created_at,
     )
 
+
 @router.post("/login", response_model=TokenResponse)
 async def login(
     payload: LoginRequest,
@@ -105,6 +107,7 @@ async def login(
         logger.warning("Login failed for %s: %s", payload.login, exc)
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
+
 @router.post("/refresh", response_model=AccessTokenResponse)
 async def refresh(
     payload: RefreshRequest,
@@ -116,6 +119,7 @@ async def refresh(
         logger.warning("Refresh failed: %s", exc)
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     return AccessTokenResponse(**token_data)
+
 
 @router.post("/users/me/deactivate", status_code=200)
 async def deactivate_me(

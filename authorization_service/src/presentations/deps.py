@@ -16,13 +16,13 @@ from ..services.auth import AuthService
 def get_settings() -> AuthSettings:
     return AuthSettings()
 
-def get_user_service_client(
-    settings: AuthSettings = Depends(get_settings)
-) -> UserServiceClient:
+
+def get_user_service_client(settings: AuthSettings = Depends(get_settings)) -> UserServiceClient:
     return UserServiceClient(
         base_url=settings.USER_SERVICE_URL,
         internal_api_key=settings.INTERNAL_API_KEY,
     )
+
 
 async def get_current_token(
     authorization: str = Header(..., alias="Authorization"),
@@ -33,7 +33,7 @@ async def get_current_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authorization header",
         )
-    return authorization[len(prefix):]
+    return authorization[len(prefix) :]
 
 
 async def get_current_user_id(
@@ -48,7 +48,7 @@ async def get_current_user_id(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authorization header",
         )
-    token = authorization[len(prefix):]
+    token = authorization[len(prefix) :]
     try:
         payload = decode_jwt_token(
             token,

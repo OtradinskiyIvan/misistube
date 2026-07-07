@@ -29,9 +29,7 @@ class AuthService:
     async def _fetch_user_roles(self, user_id: UUID) -> list[str]:
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(
-                    f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/roles"
-                )
+                resp = await client.get(f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/roles")
                 if resp.status_code == 200:
                     return resp.json().get("roles", [])
         except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
@@ -41,9 +39,7 @@ class AuthService:
     async def _check_user_banned(self, user_id: UUID) -> bool:
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(
-                    f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/status"
-                )
+                resp = await client.get(f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/status")
                 if resp.status_code == 200:
                     return resp.json().get("status") == "banned"
         except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
@@ -94,7 +90,6 @@ class AuthService:
             raise InvalidCredentialsError("User account is deactivated")
 
         return user
-
 
     async def login(self, login: str, password: str, admin_key: str | None = None) -> dict[str, str]:
         user = await self._find_and_validate_user(login=login, password=password)
