@@ -8,9 +8,9 @@ from shared.database.session import get_async_session
 from shared.security import decode_jwt_token
 
 from ..core.settings import AuthSettings
+from ..infrastructure.clients.user_service_client import UserServiceClient
 from ..infrastructure.repositories import UserRepository
 from ..services.auth import AuthService
-from ..infrastructure.clients.user_service_client import UserServiceClient
 
 
 def get_settings() -> AuthSettings:
@@ -55,16 +55,16 @@ async def get_current_user_id(
             secret=settings.JWT_SECRET.get_secret_value(),
             algorithm=settings.JWT_ALGORITHM,
         )
-    except ExpiredSignatureError:
+    except ExpiredSignatureError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
-        )
-    except InvalidTokenError:
+        ) from err
+    except InvalidTokenError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
-        )
+        ) from err
 
     user_id = payload.get("sub")
     if not user_id:
@@ -74,11 +74,11 @@ async def get_current_user_id(
         )
     try:
         return UUID(user_id)
-    except ValueError:
+    except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user ID in token",
-        )
+        ) from err
 
 
 def get_auth_service(

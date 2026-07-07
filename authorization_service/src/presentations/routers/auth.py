@@ -2,9 +2,14 @@ import logging
 from uuid import UUID
 
 from authorization_service.src.domain.entities.user import User
-from authorization_service.src.domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError
-from authorization_service.src.presentations.deps import get_auth_service, get_current_user_id, get_current_token, get_user_service_client
+from authorization_service.src.domain.exceptions import InvalidCredentialsError
 from authorization_service.src.infrastructure.clients.user_service_client import UserServiceClient
+from authorization_service.src.presentations.deps import (
+    get_auth_service,
+    get_current_token,
+    get_current_user_id,
+    get_user_service_client,
+)
 from authorization_service.src.presentations.schemas.auth import (
     AccessTokenResponse,
     ConfirmRequest,
