@@ -98,21 +98,6 @@ class AuthService:
 
     async def login(self, login: str, password: str, admin_key: str | None = None) -> dict[str, str]:
         user = await self._find_and_validate_user(login=login, password=password)
-        # user = await self._user_repo.get_by_email(login)
-        # if not user:
-        #     user = await self._user_repo.get_by_username(login)
-
-        # if not user:
-        #     logger.warning("Login failed: user not found: %s", login)
-        #     raise InvalidCredentialsError("Invalid username/email or password")
-
-        # if not verify_password(password, user.hashed_password):
-        #     logger.warning("Login failed: wrong password for user %s (%s)", user.username, login)
-        #     raise InvalidCredentialsError("Invalid username/email or password")
-
-        # if not user.is_active:
-        #     logger.warning("Login failed: user %s is deactivated", user.username)
-        #     raise InvalidCredentialsError("User account is deactivated")
 
         if admin_key:
             if admin_key != self._settings.ADMIN_KEY:
