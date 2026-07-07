@@ -6,8 +6,6 @@ from jwt import PyJWTError
 
 from shared.security import create_jwt_token, decode_jwt_token, hash_password, verify_password
 
-from typing import Optional
-
 from ..core.settings import AuthSettings
 from ..domain.entities.user import User
 from ..domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError, UserNotFoundError
@@ -22,7 +20,7 @@ class AuthService:
         self,
         user_repo: IUserRepository,
         settings: AuthSettings,
-        user_svc_client: Optional[UserServiceClient] = None,
+        user_svc_client: UserServiceClient | None = None,
     ):
         self._user_repo = user_repo
         self._settings = settings
@@ -77,8 +75,9 @@ class AuthService:
         await self._user_repo.activate_user_by_email(email)
         logger.info("User activated: %s", email)
 
-    async def login(self, login: str, password: str, admin_key: str | None = None) -> dict[str, str]:
+    async def _find_and_validate_user(self, login: str, password: str) -> User:
         user = await self._user_repo.get_by_email(login)
+
         if not user:
             user = await self._user_repo.get_by_username(login)
 
@@ -93,6 +92,27 @@ class AuthService:
         if not user.is_active:
             logger.warning("Login failed: user %s is deactivated", user.username)
             raise InvalidCredentialsError("User account is deactivated")
+
+        return user
+
+
+    async def login(self, login: str, password: str, admin_key: str | None = None) -> dict[str, str]:
+        user = await self._find_and_validate_user(login=login, password=password)
+        # user = await self._user_repo.get_by_email(login)
+        # if not user:
+        #     user = await self._user_repo.get_by_username(login)
+
+        # if not user:
+        #     logger.warning("Login failed: user not found: %s", login)
+        #     raise InvalidCredentialsError("Invalid username/email or password")
+
+        # if not verify_password(password, user.hashed_password):
+        #     logger.warning("Login failed: wrong password for user %s (%s)", user.username, login)
+        #     raise InvalidCredentialsError("Invalid username/email or password")
+
+        # if not user.is_active:
+        #     logger.warning("Login failed: user %s is deactivated", user.username)
+        #     raise InvalidCredentialsError("User account is deactivated")
 
         if admin_key:
             if admin_key != self._settings.ADMIN_KEY:
