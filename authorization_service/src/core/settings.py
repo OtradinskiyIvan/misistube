@@ -4,7 +4,7 @@ from pathlib import Path
 from pydantic import PostgresDsn, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
 
-from shared.config import BaseSettings as SharedBaseSettings
+from shared.config import SharedBaseSettings
 
 SERVICE_DIRECTORY = Path(__file__).resolve().parents[2]
 if str(SERVICE_DIRECTORY.parent) not in sys.path:
