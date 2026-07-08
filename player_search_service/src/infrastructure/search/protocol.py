@@ -15,4 +15,4 @@ class SearchPort(Protocol):
 
     async def get_by_id(self, video_id: str) -> Video | None:
         """Получить видео по ID"""
-        ...  # 🔹 Только сигнатура, без реализации
+        ...

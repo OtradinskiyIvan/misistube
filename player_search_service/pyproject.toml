@@ -57,6 +57,17 @@ known-first-party = ["src"]
 pythonpath = ["src", ".", ".."]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "unit: Unit tests (fast, no external services)",
+    "integration: Integration tests (require Docker)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
 addopts = """
   -v
   --cov=src
@@ -111,6 +122,5 @@ module = [
     "aiobotocore.*",
     "testcontainers.*",
     "shared.*",
-    "core.logger",
 ]
 ignore_missing_imports = true

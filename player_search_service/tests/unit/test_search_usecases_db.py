@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
@@ -52,14 +52,17 @@ async def test_search_with_db_port(db_session: AsyncSession):
 
     repo = SQLAlchemyVideoRepository(session=db_session)
     mock_cache = AsyncMock()
-    mock_cache.get.return_value = None
+    mock_cache.get = AsyncMock(return_value=None)
+
+    mock_user_cache = MagicMock()
+    mock_user_cache.get.return_value = None
 
     uc = SearchVideoUseCase(
         cache=mock_cache,
         search_port=repo,
         storage=AsyncMock(),
         user_service_client=AsyncMock(),
-        user_cache=AsyncMock(),
+        user_cache=mock_user_cache,
     )
     query = SearchQuery(q="Test", offset=0, limit=10)
 

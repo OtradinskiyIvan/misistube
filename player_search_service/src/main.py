@@ -14,12 +14,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from shared.database.session import init_engine
 from sqlalchemy import event
 
-from core.logger import correlation_id_var
 from src.api.deps import get_storage_adapter
 from src.api.routers import playback, search, videos
 from src.core.config import get_settings
 from src.core.exceptions import register_rfc7807_handlers
-from src.core.logger import setup_service_logger
+from src.core.logger import correlation_id_var, setup_service_logger
 from src.core.middleware import CorrelationIdMiddleware
 
 settings = get_settings()

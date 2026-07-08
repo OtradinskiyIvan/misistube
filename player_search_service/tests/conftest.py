@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from testcontainers.postgres import PostgresContainer
 
 from src.api.deps import get_async_session, get_cache_adapter, get_storage_adapter
+from src.api.schemas import VideoResult
 
 # ─── ФИКСТУРЫ C МОКАМИ (нужны только для unit-тестов) ──────────────────
 
@@ -15,7 +16,7 @@ from src.api.deps import get_async_session, get_cache_adapter, get_storage_adapt
 @pytest.fixture
 def mock_cache():
     cache = AsyncMock()
-    cache.get.return_value = None  # имитируем промах кеша
+    cache.get = AsyncMock(return_value=None)
     return cache
 
 
@@ -24,20 +25,20 @@ def mock_search_port():
     port = AsyncMock()
     port.search.return_value = (
         [
-            {
-                "id": "mock-1",
-                "title": "Mock Video",
-                "description": None,
-                "storage_key": "videos/mock1/master.m3u8",
-                "status": "ready",
-                "duration_seconds": 120,
-                "created_at": "2026-06-05T10:00:00+00:00",
-                "updated_at": "2026-06-05T10:00:00+00:00",
-                "user_id": "123e4567-e89b-12d3-a456-426614174000",
-                "username": "test_user",
-                "tags": None,
-                "thumbnail_url": None,
-            }
+            VideoResult(
+                id="mock-1",
+                title="Mock Video",
+                description=None,
+                storage_key="videos/mock1/master.m3u8",
+                status="ready",
+                duration_seconds=120,
+                created_at="2026-06-05T10:00:00+00:00",
+                updated_at="2026-06-05T10:00:00+00:00",
+                user_id="123e4567-e89b-12d3-a456-426614174000",
+                username="test_user",
+                tags=None,
+                thumbnail_url=None,
+            )
         ],
         1,
     )
