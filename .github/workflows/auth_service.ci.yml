@@ -56,9 +56,16 @@ jobs:
         run: pytest --cov --cov-report=xml --cov-fail-under=75
 
       - name: Upload coverage report
-        if: success()
+        if: env.ACTIONS_RUNTIME_TOKEN != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+      - name: Upload coverage report (legacy)
+        if: success() && env.ACTIONS_RUNTIME_TOKEN != ''
         uses: actions/upload-artifact@v4
         with:
           name: coverage-authorization-service
           path: authorization_service/coverage.xml
-          retention-days: 7  # Не храним артефакты вечно
+          retention-days: 7
