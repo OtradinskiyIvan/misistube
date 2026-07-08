@@ -11,6 +11,7 @@ from src.api.deps import get_async_session, get_cache_adapter, get_storage_adapt
 
 # ─── ФИКСТУРЫ C МОКАМИ (нужны только для unit-тестов) ──────────────────
 
+
 @pytest.fixture
 def mock_cache():
     cache = AsyncMock()
@@ -22,22 +23,23 @@ def mock_cache():
 def mock_search_port():
     port = AsyncMock()
     port.search.return_value = (
-        [{
-            "id": "mock-1",
-            "title": "Mock Video",
-            "description": None,
-            "storage_key": "videos/mock1/master.m3u8",
-            "status": "ready",
-            "duration_seconds": 120,
-            "created_at": "2026-06-05T10:00:00+00:00",
-            "updated_at": "2026-06-05T10:00:00+00:00",
-            "user_id": "123e4567-e89b-12d3-a456-426614174000",
-            "username": "test_user",
-
-            "tags": None,
-            "thumbnail_url": None
-        }],
-        1
+        [
+            {
+                "id": "mock-1",
+                "title": "Mock Video",
+                "description": None,
+                "storage_key": "videos/mock1/master.m3u8",
+                "status": "ready",
+                "duration_seconds": 120,
+                "created_at": "2026-06-05T10:00:00+00:00",
+                "updated_at": "2026-06-05T10:00:00+00:00",
+                "user_id": "123e4567-e89b-12d3-a456-426614174000",
+                "username": "test_user",
+                "tags": None,
+                "thumbnail_url": None,
+            }
+        ],
+        1,
     )
     mock_video = AsyncMock()
     mock_video.storage_key = "video-123/master.m3u8"
@@ -51,7 +53,9 @@ def mock_storage():
     storage.generate_presigned_url.return_value = ("https://fake-s3.url/video.m3u8", None)
     return storage
 
+
 # ─── ФИКСТУРЫ БД ДЛЯ ИНТЕГРАЦИОННЫХ ТЕСТОВ ──────────────────────────────
+
 
 @pytest.fixture(scope="module")
 def postgres_container():
@@ -76,11 +80,7 @@ async def db_engine(postgres_container):
 @pytest_asyncio.fixture
 async def db_session(db_engine):
     """Создаёт сессию для каждого теста"""
-    session_factory = async_sessionmaker(
-        db_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
-    )
+    session_factory = async_sessionmaker(db_engine, class_=AsyncSession, expire_on_commit=False)
 
     async with session_factory() as session:
         yield session
@@ -89,10 +89,12 @@ async def db_session(db_engine):
 @pytest.fixture(autouse=True)
 def override_db_session(db_session: AsyncSession):
     """Подменяет сессию БД в зависимостях FastAPI"""
+
     async def _get_session():
         yield db_session
 
     from src.main import app
+
     app.dependency_overrides[get_async_session] = _get_session
     yield
     app.dependency_overrides.clear()
@@ -100,18 +102,21 @@ def override_db_session(db_session: AsyncSession):
 
 # ─── НОВАЯ ФИКСТУРА: HTTP Client ─────────────────────────────────────
 
+
 @pytest.fixture
 def client():
     """
     TestClient для интеграционных тестов эндпоинтов.
     """
     from src.main import app
+
     app.docs_url = None
     app.redoc_url = None
     return TestClient(app)
 
 
 # ─── ОЧИСТКА СОСТОЯНИЯ ───────────────────────────────────────────────────
+
 
 @pytest.fixture(autouse=True)
 def reset_adapters():

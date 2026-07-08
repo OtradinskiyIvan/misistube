@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ProblemDetail(BaseModel):
     """Структура ошибки по стандарту RFC 7807"""
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -13,14 +14,8 @@ class ProblemDetail(BaseModel):
                 "title": "Validation Error",
                 "status": 422,
                 "detail": "Request validation failed",
-                "errors": [
-                    {
-                        "type": "missing",
-                        "loc": ["query", "q"],
-                        "msg": "Field required"
-                    }
-                ],
-                "instance": "/api/v1/search"
+                "errors": [{"type": "missing", "loc": ["query", "q"], "msg": "Field required"}],
+                "instance": "/api/v1/search",
             }
         }
     )
@@ -39,7 +34,7 @@ def problem_response(
     detail: str | None = None,
     errors: list[dict[str, Any]] | None = None,
     problem_type: str = "about:blank",
-    instance: str | None = None
+    instance: str | None = None,
 ) -> JSONResponse:
     """Возвращает ответ в формате RFC 7807 с правильным Content-Type"""
     content = ProblemDetail(
@@ -48,11 +43,11 @@ def problem_response(
         status=status_code,
         detail=detail,
         errors=errors,
-        instance=instance
+        instance=instance,
     ).model_dump(exclude_none=True)
 
     return JSONResponse(
         status_code=status_code,
         content=content,
-        headers={"Content-Type": "application/problem+json"}
+        headers={"Content-Type": "application/problem+json"},
     )

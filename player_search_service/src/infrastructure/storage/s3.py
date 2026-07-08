@@ -1,6 +1,5 @@
 import logging
 from datetime import UTC, datetime, timedelta
-from typing import Optional
 
 import aiobotocore.session
 from aiobotocore.session import AioSession
@@ -21,8 +20,8 @@ class S3StorageAdapter(StoragePort):
         public_endpoint_url: str | None = None,
         access_key: str | None = None,
         secret_key: str | None = None,
-        bucket_name: Optional[str] = None,
-        bucket_thumbnails: Optional[str] = None,
+        bucket_name: str | None = None,
+        bucket_thumbnails: str | None = None,
     ):
         settings = get_settings()
         self.endpoint_url = endpoint_url or settings.S3_ENDPOINT_URL
@@ -31,7 +30,7 @@ class S3StorageAdapter(StoragePort):
         self.secret_key = secret_key or settings.S3_SECRET_KEY.get_secret_value()
         self.bucket_name = bucket_name or settings.S3_BUCKET_NAME
         self.bucket_thumbnails = bucket_thumbnails or settings.S3_BUCKET_THUMBNAILS
-        
+
         self.session: AioSession = aiobotocore.session.get_session()
         self._client = None
         self._client_context = None
@@ -56,10 +55,7 @@ class S3StorageAdapter(StoragePort):
             self._client_context = None
 
     async def generate_presigned_url(
-        self,
-        object_key: str,
-        bucket: str,
-        expires_in: int = 900
+        self, object_key: str, bucket: str, expires_in: int = 900
     ) -> tuple[str, datetime]:
         """Генерирует presigned GET URL"""
         client = await self._get_client()
@@ -70,7 +66,7 @@ class S3StorageAdapter(StoragePort):
                 "Bucket": bucket,
                 "Key": object_key,
             },
-            ExpiresIn=expires_in
+            ExpiresIn=expires_in,
         )
         if self.public_endpoint_url:
             url = url.replace(self.endpoint_url, self.public_endpoint_url)
@@ -78,17 +74,15 @@ class S3StorageAdapter(StoragePort):
         return url, expires_at
 
     async def generate_thumbnail_url(
-        self,
-        thumbnail_key: str,
-        expires_in: int = 3600
-    ) -> Optional[str]:
+        self, thumbnail_key: str, expires_in: int = 3600
+    ) -> str | None:
         """
         Генерирует presigned URL для превью видео из бакета thumbnails.
         Возвращает None, если thumbnail_key не задан.
         """
         if not thumbnail_key:
             return None
-        
+
         try:
             url, _ = await self.generate_presigned_url(
                 object_key=thumbnail_key,
@@ -105,7 +99,7 @@ class S3StorageAdapter(StoragePort):
         file_bytes: bytes,
         object_key: str,
         bucket: str,
-        content_type: str = "application/octet-stream"
+        content_type: str = "application/octet-stream",
     ) -> None:
         """
         ЗАПРЕЩЕНО: Этот сервис имеет права только на чтение.

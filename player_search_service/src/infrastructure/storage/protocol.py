@@ -8,10 +8,7 @@ class StoragePort(Protocol):
 
     @abstractmethod
     async def generate_presigned_url(
-        self,
-        object_key: str,
-        bucket: str,
-        expires_in: int = 900
+        self, object_key: str, bucket: str, expires_in: int = 900
     ) -> tuple[str, datetime]:
         """
         Генерирует presigned URL для доступа к объекту
@@ -30,7 +27,7 @@ class StoragePort(Protocol):
         file_bytes: bytes,
         object_key: str,
         bucket: str,
-        content_type: str = "application/octet-stream"
+        content_type: str = "application/octet-stream",
     ) -> None:
         """Загрузить файл в хранилище"""
         pass

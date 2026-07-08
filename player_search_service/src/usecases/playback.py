@@ -2,20 +2,16 @@ import logging
 
 from src.api.schemas import PlaybackUrl
 from src.core.exceptions import VideoNotFoundError
+from src.infrastructure.database.models import VideoStatus
 from src.infrastructure.search.protocol import SearchPort
 from src.infrastructure.storage.protocol import StoragePort
-from src.infrastructure.database.models import VideoStatus
 
 logger = logging.getLogger(__name__)
 
 
 class GetPlaybackUrlUseCase:
     def __init__(
-        self,
-        storage: StoragePort,
-        search_port: SearchPort,
-        bucket_name: str,
-        expires_in: int
+        self, storage: StoragePort, search_port: SearchPort, bucket_name: str, expires_in: int
     ):
         self.storage = storage
         self.search_port = search_port
@@ -30,7 +26,6 @@ class GetPlaybackUrlUseCase:
             logger.error("Video not found: %s", video_id)
             raise VideoNotFoundError(video_id)
 
-
         if video.status == VideoStatus.DELETED:
             logger.warning("Attempted to play deleted video: %s", video_id)
             raise VideoNotFoundError(video_id)
@@ -40,8 +35,6 @@ class GetPlaybackUrlUseCase:
         storage_key = video.storage_key
 
         url, exp = await self.storage.generate_presigned_url(
-            object_key=storage_key,
-            bucket=self.bucket_name,
-            expires_in=self.expires_in
+            object_key=storage_key, bucket=self.bucket_name, expires_in=self.expires_in
         )
         return PlaybackUrl(hls_master_url=url, expires_at=exp)

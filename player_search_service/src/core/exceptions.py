@@ -12,6 +12,7 @@ logger = logging.getLogger("player_search_service")
 
 class DomainError(Exception):
     """Базовое исключение для доменных ошибок"""
+
     def __init__(self, message: str):
         super().__init__(message)
         self.message = message
@@ -36,7 +37,7 @@ def register_rfc7807_handlers(app: FastAPI):
             title="Video Not Found",
             detail=exc.message,
             problem_type="https://misistube.dev/errors/not-found",
-            instance=request.url.path
+            instance=request.url.path,
         )
 
     @app.exception_handler(StarletteHTTPException)
@@ -46,7 +47,7 @@ def register_rfc7807_handlers(app: FastAPI):
             title=exc.detail or "HTTP Error",
             detail=exc.detail,
             problem_type=f"https://misistube.dev/errors/http-{exc.status_code}",
-            instance=request.url.path
+            instance=request.url.path,
         )
 
     @app.exception_handler(RequestValidationError)
@@ -58,7 +59,7 @@ def register_rfc7807_handlers(app: FastAPI):
             detail="Request validation failed",
             errors=exc.errors(),
             problem_type="https://misistube.dev/errors/validation",
-            instance=request.url.path
+            instance=request.url.path,
         )
 
     @app.exception_handler(Exception)
@@ -72,5 +73,5 @@ def register_rfc7807_handlers(app: FastAPI):
             title="Internal Server Error",
             detail=detail,
             problem_type="https://misistube.dev/errors/internal",
-            instance=request.url.path
+            instance=request.url.path,
         )

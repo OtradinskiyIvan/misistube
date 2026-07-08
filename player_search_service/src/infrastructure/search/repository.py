@@ -15,11 +15,7 @@ class SQLAlchemyVideoRepository(SearchPort):
         self.session = session
 
     async def search(
-        self,
-        query: str | None,
-        tags: list[str] | None = None,
-        offset: int = 0,
-        limit: int = 20
+        self, query: str | None, tags: list[str] | None = None, offset: int = 0, limit: int = 20
     ) -> tuple[list[VideoResult], int]:
         """
         Поиск видео с фильтрацией по тексту и тегам.
@@ -28,12 +24,8 @@ class SQLAlchemyVideoRepository(SearchPort):
 
         if query:
             stmt = stmt.where(
-                or_(
-                    Video.title.ilike(f"%{query}%"),
-                    Video.description.ilike(f"%{query}%")
-                )
+                or_(Video.title.ilike(f"%{query}%"), Video.description.ilike(f"%{query}%"))
             )
-
 
         count_stmt = select(func.count()).select_from(stmt.order_by(None))
         total_result = await self.session.execute(count_stmt)
@@ -50,18 +42,16 @@ class SQLAlchemyVideoRepository(SearchPort):
                 title=v.title,
                 description=v.description,
                 storage_key=v.storage_key,
-                status=v.status.value if hasattr(v.status, 'value') else str(v.status),
+                status=v.status.value if hasattr(v.status, "value") else str(v.status),
                 duration_seconds=v.duration_seconds,
                 created_at=v.created_at.isoformat() if v.created_at else None,
                 updated_at=v.updated_at.isoformat() if v.updated_at else None,
                 thumbnail_key=v.thumbnail_key,
-                
                 user_id=str(v.user_id),
                 username=str(v.user_id),
-
                 # Безопасное получение отсутствующих полей
-                tags=getattr(v, 'tags', None),
-                thumbnail_url=getattr(v, 'thumbnail_url', None)
+                tags=getattr(v, "tags", None),
+                thumbnail_url=getattr(v, "thumbnail_url", None),
             )
             for v in videos
         ]

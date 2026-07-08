@@ -36,6 +36,7 @@ async def db_session(postgres_container):
 @pytest.fixture(autouse=True)
 def override_db_session(db_session: AsyncSession):
     """Подменяет сессию БД в зависимостях FastAPI"""
+
     async def _get_session():
         yield db_session
 

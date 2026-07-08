@@ -27,7 +27,7 @@ class RedisCacheAdapter(CachePort):
         self._circuit_open = False
         self._failure_threshold = 3
         self._recovery_timeout = 60.0
-        
+
         self._lock = asyncio.Lock()
 
     @property
@@ -39,7 +39,7 @@ class RedisCacheAdapter(CachePort):
                 decode_responses=True,
                 socket_connect_timeout=1,
                 socket_timeout=1,
-                retry_on_timeout=False
+                retry_on_timeout=False,
             )
         return self._client
 
@@ -68,7 +68,7 @@ class RedisCacheAdapter(CachePort):
                 logger.warning(
                     "Redis circuit breaker OPEN: %d failures, will retry in %.1fs",
                     self._failures,
-                    self._recovery_timeout
+                    self._recovery_timeout,
                 )
 
     async def _record_success(self):
@@ -88,7 +88,7 @@ class RedisCacheAdapter(CachePort):
             # 🔹 Вызов Redis БЕЗ лока — не блокируем I/O
             data = await self.client.get(key)
             await self._record_success()
-            
+
             if data is None:
                 return None
             try:
