@@ -1,0 +1,64 @@
+name: AUTHORIZATION SERVICE CI
+
+on:
+  push:
+    branches: ['feature/**', 'dev', 'main']
+    paths:
+      - 'authorization_service/**'
+      - 'shared/**'  # Если сервис зависит от shared
+  pull_request:
+    branches: ['feature/**', 'dev', 'main']
+    paths:
+      - 'authorization_service/**'
+      - 'shared/**'
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    # Явно задаем рабочую директорию для всего джоба
+    defaults:
+      run:
+        working-directory: ./authorization_service
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: authorization_service/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Устанавливаем shared, если он есть
+          if [ -d "../shared" ]; then
+            python -m pip install -e ../shared
+            echo "PYTHONPATH=$(pwd)/../shared:$PYTHONPATH" >> $GITHUB_ENV
+          fi
+          python -m pip install -e ".[dev]"
+
+      - name: Ruff check (lint)
+        run: ruff check
+
+      - name: Ruff format check (форматирование)
+        run: ruff format --check
+
+      - name: MyPy (type checking)
+        run: mypy --config-file pyproject.toml ../authorization_service/src/ ../authorization_service/tests/
+        
+      - name: Run tests with coverage
+        env:
+          PYTHONPATH: ../shared:${PYTHONPATH}
+        # --cov без =src, т.к. source уже указан в pyproject.toml
+        run: pytest --cov --cov-report=xml --cov-fail-under=75
+
+      - name: Upload coverage report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-authorization-service
+          path: authorization_service/coverage.xml
+          retention-days: 7  # Не храним артефакты вечно
