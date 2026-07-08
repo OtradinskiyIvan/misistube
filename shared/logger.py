@@ -22,7 +22,7 @@ class JSONFormatter(logging.Formatter):
             log_entry["exception"] = self.formatException(record.exc_info)
         return json.dumps(log_entry, ensure_ascii=False)
 
-def get_logger(service_name: str, level: str = "INFO") -> logging.Logger:
+def get_logger(service_name: str, level: str = "INFO") -> logging.LoggerAdapter:
     logger = logging.getLogger(service_name)
     if not logger.handlers:
         handler = logging.StreamHandler(sys.stdout)

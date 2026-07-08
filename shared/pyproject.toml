@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Shared utilities for MisisTube"
 requires-python = ">=3.10"
 dependencies = [
+    "sqlalchemy>=2.0",
     "pydantic==2.13.2",
     "pydantic-settings==2.13.1",
     "passlib==1.7.4",
