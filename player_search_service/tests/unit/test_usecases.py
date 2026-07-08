@@ -13,7 +13,13 @@ class TestSearchVideoUseCase:
     @pytest.mark.asyncio
     async def test_search_cache_miss(self, mock_cache, mock_search_port):
         """Cache miss → запрос к БД → сохранение в кеш"""
-        uc = SearchVideoUseCase(cache=mock_cache, search_port=mock_search_port)
+        uc = SearchVideoUseCase(
+            cache=mock_cache,
+            search_port=mock_search_port,
+            storage=AsyncMock(),
+            user_service_client=AsyncMock(),
+            user_cache=AsyncMock(),
+        )
         query = SearchQuery(q="test", offset=0, limit=10)
 
         result = await uc.execute(query)
@@ -47,12 +53,18 @@ class TestSearchVideoUseCase:
             "offset": 0,
             "limit": 10,
         }
-        uc = SearchVideoUseCase(cache=mock_cache, search_port=AsyncMock())
+        uc = SearchVideoUseCase(
+            cache=mock_cache,
+            search_port=AsyncMock(),
+            storage=AsyncMock(),
+            user_service_client=AsyncMock(),
+            user_cache=AsyncMock(),
+        )
 
         result = await uc.execute(SearchQuery(q="cached", limit=10))
 
         mock_cache.get.assert_called_once()
-        uc.search_port.search.assert_not_called()
+        uc.search_port.search.assert_not_called()  # type: ignore[attr-defined]
         assert result.items[0].title == "Cached"
         assert result.items[0].user_id == "123e4567-e89b-12d3-a456-426614174000"
         assert result.items[0].username == "cached_user"

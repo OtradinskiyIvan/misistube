@@ -128,7 +128,7 @@ class RedisCacheAdapter(CachePort):
         if await self._is_circuit_open():
             return False
         try:
-            result = await self.client.exists(key) > 0
+            result: bool = await self.client.exists(key) > 0
             await self._record_success()
             return result
         except redis.RedisError as e:

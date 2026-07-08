@@ -54,7 +54,13 @@ async def test_search_with_db_port(db_session: AsyncSession):
     mock_cache = AsyncMock()
     mock_cache.get.return_value = None
 
-    uc = SearchVideoUseCase(cache=mock_cache, search_port=repo)
+    uc = SearchVideoUseCase(
+        cache=mock_cache,
+        search_port=repo,
+        storage=AsyncMock(),
+        user_service_client=AsyncMock(),
+        user_cache=AsyncMock(),
+    )
     query = SearchQuery(q="Test", offset=0, limit=10)
 
     result = await uc.execute(query)

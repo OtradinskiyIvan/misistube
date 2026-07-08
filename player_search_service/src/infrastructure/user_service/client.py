@@ -91,7 +91,8 @@ class UserServiceClient:
                     return None
 
                 data = response.json()
-                return data.get("username")
+                value: str | None = data.get("username")
+                return value
 
         except httpx.TimeoutException:
             logger.warning("Timeout while fetching username for %s", user_id)
@@ -151,7 +152,8 @@ class UserServiceClient:
                     return None
 
                 data = response.json()
-                return data.get("avatar_url")
+                value: str | None = data.get("avatar_url")
+                return value
 
         except httpx.TimeoutException:
             logger.warning("Timeout while fetching avatar for %s", user_id)
@@ -170,7 +172,7 @@ class UserServiceClient:
         tasks = [self.get_user_avatar(uid) for uid in user_ids]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        avatars = {}
+        avatars: dict[str, str | None] = {}
         for user_id, result in zip(user_ids, results, strict=True):
             if isinstance(result, str):
                 avatars[user_id] = result

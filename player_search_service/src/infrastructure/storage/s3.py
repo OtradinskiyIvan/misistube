@@ -1,5 +1,6 @@
 import logging
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import aiobotocore.session
 from aiobotocore.session import AioSession
@@ -32,8 +33,8 @@ class S3StorageAdapter(StoragePort):
         self.bucket_thumbnails = bucket_thumbnails or settings.S3_BUCKET_THUMBNAILS
 
         self.session: AioSession = aiobotocore.session.get_session()
-        self._client = None
-        self._client_context = None
+        self._client: Any = None
+        self._client_context: Any = None
 
     async def _get_client(self):
         """Ленивая инициализация клиента (входим в контекст один раз)"""

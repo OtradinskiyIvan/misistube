@@ -29,7 +29,7 @@ class Video(Base):
     description = Column(Text, nullable=True)
     storage_key = Column(String(500), nullable=False)
 
-    status = Column(
+    status: Column = Column(
         SQLEnum(
             VideoStatus,
             name="video_status",

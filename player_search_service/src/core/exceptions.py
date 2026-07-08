@@ -57,7 +57,7 @@ def register_rfc7807_handlers(app: FastAPI):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             title="Validation Error",
             detail="Request validation failed",
-            errors=exc.errors(),
+            errors=list(exc.errors()),
             problem_type="https://misistube.dev/errors/validation",
             instance=request.url.path,
         )

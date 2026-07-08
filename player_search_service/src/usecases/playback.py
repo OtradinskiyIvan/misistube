@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 from src.api.schemas import PlaybackUrl
 from src.core.exceptions import VideoNotFoundError
@@ -32,7 +33,7 @@ class GetPlaybackUrlUseCase:
 
         logger.info("Found video: %s, storage_key: %s", video.title, video.storage_key)
 
-        storage_key = video.storage_key
+        storage_key = cast(str, video.storage_key)
 
         url, exp = await self.storage.generate_presigned_url(
             object_key=storage_key, bucket=self.bucket_name, expires_in=self.expires_in

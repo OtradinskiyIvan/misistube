@@ -21,8 +21,8 @@ class VideoResult(BaseModel):
     duration_seconds: int
     thumbnail_key: str | None = None
     thumbnail_url: str | None = None
-    created_at: str
-    updated_at: str
+    created_at: str | None = None
+    updated_at: str | None = None
 
     user_id: str
     username: str

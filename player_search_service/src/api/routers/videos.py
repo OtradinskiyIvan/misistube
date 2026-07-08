@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException
 from shared.database.session import get_async_session
@@ -65,7 +66,9 @@ async def get_video(
 
     if video.thumbnail_key:
         try:
-            video_data["thumbnail_url"] = await storage.generate_thumbnail_url(video.thumbnail_key)
+            video_data["thumbnail_url"] = await storage.generate_thumbnail_url(
+                cast(str, video.thumbnail_key)
+            )
         except Exception as e:
             logger.warning("Failed to generate thumbnail URL for %s: %s", video_id, e)
 

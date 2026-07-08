@@ -22,6 +22,18 @@ class StoragePort(Protocol):
         pass
 
     @abstractmethod
+    async def generate_thumbnail_url(
+        self, thumbnail_key: str, expires_in: int = 3600
+    ) -> str | None:
+        """Генерирует presigned URL для превью"""
+        ...
+
+    @abstractmethod
+    async def close(self) -> None:
+        """Закрыть соединение с хранилищем"""
+        ...
+
+    @abstractmethod
     async def upload_file(
         self,
         file_bytes: bytes,
