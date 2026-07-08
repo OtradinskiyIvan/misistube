@@ -149,6 +149,53 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(UserNotFoundError):
             await self.service.get_user(user_id)
 
+    async def test_register_duplicate_username(self):
+        username = "testuser"
+        email = "test@example.com"
+        password = "password123"
+
+        self.mock_repo.exists_by_email.return_value = False
+        self.mock_repo.exists_by_username.return_value = True
+
+        with self.assertRaises(UserAlreadyExistsError):
+            await self.service.register(username, email, password)
+
+        self.mock_repo.exists_by_email.assert_called_once_with(email)
+        self.mock_repo.exists_by_username.assert_called_once_with(username)
+        self.mock_repo.save.assert_not_called()
+
+    async def test_login_wrong_password(self):
+        username = "testuser"
+        email = "test@example.com"
+        password = "password123"
+
+        hashed = hash_password(password)
+        user = User(id=uuid4(), username=username, email=email, hashed_password=hashed, is_active=True)
+        self.mock_repo.get_by_email.return_value = user
+
+        with self.assertRaises(InvalidCredentialsError):
+            await self.service.login(email, "wrong_password")
+
+    async def test_login_banned_user(self):
+        username = "testuser"
+        email = "test@example.com"
+        password = "password123"
+
+        hashed = hash_password(password)
+        user = User(id=uuid4(), username=username, email=email, hashed_password=hashed, is_active=True)
+        self.mock_repo.get_by_email.return_value = user
+
+        with unittest.mock.patch.object(self.service, "_check_user_banned", return_value=True):
+            with self.assertRaises(InvalidCredentialsError):
+                await self.service.login(email, password)
+
+    async def test_activate_user(self):
+        email = "test@example.com"
+
+        await self.service.activate_user(email)
+
+        self.mock_repo.activate_user_by_email.assert_called_once_with(email)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -358,14 +358,15 @@ class TestCreatePendingRegistration:
         event_loop.run_until_complete(test())
 
     def test_create_pending_registration_email_sending_failure(self, mock_settings, event_loop):
-        """Test that exception is raised if email sending fails."""
+        """Test that email sending failure is handled gracefully and code is still returned."""
 
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.side_effect = Exception("SMTP error")
 
-                with pytest.raises(Exception, match="SMTP error"):
-                    await create_pending_registration("testuser", "test@example.com", "password123", mock_settings)
+                code = await create_pending_registration("testuser", "test@example.com", "password123", mock_settings)
+                assert code is not None
+                assert len(code) == 6
 
         event_loop.run_until_complete(test())
 
