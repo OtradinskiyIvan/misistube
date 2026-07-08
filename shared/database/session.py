@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from pydantic import PostgresDsn
+from collections.abc import AsyncGenerator
 from typing import Any
 
 
@@ -27,7 +28,7 @@ def init_engine(database_url: PostgresDsn | str, echo: bool = False):
     return _engine
 
 
-async def get_async_session() -> AsyncSession:
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     if not _session_factory:
         raise RuntimeError("Database engine not initialized. Call init_engine() first.")
 
