@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from authorization_service.src.domain.entities.user import User
@@ -143,8 +144,9 @@ async def deactivate_me(
 async def get_current_user():
     logger.warning("/me endpoint called — stub implementation")
     return UserOut(
-        id="00000000-0000-0000-0000-000000000000",
+        id=UUID(int=0),
+        username="stub",
         email="stub@example.com",
         is_active=True,
-        created_at="1970-01-01T00:00:00Z",
+        created_at=datetime.now(),
     )

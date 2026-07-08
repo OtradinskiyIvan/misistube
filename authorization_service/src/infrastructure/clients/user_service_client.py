@@ -17,7 +17,8 @@ class UserServiceClient:
                 json={"token": jwt_token},
                 headers=headers,
             )
-            return resp.status_code == 200
+            ok: bool = resp.status_code == 200
+            return ok
 
     async def delete_user(self, user_id: str, auth_token: str) -> bool:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
@@ -25,7 +26,8 @@ class UserServiceClient:
                 f"{self._base_url}/api/v1/users/{user_id}",
                 headers={"Authorization": f"Bearer {auth_token}"},
             )
-            return resp.status_code == 204
+            ok: bool = resp.status_code == 204
+            return ok
 
     async def assign_role(self, user_id: str, role: str, auth_token: str) -> bool:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
@@ -34,4 +36,5 @@ class UserServiceClient:
                 json={"user_id": user_id, "role": role},
                 headers={"Authorization": f"Bearer {auth_token}"},
             )
-            return resp.status_code == 200
+            ok: bool = resp.status_code == 200
+            return ok

@@ -14,7 +14,7 @@ from ..services.auth import AuthService
 
 
 def get_settings() -> AuthSettings:
-    return AuthSettings()
+    return AuthSettings()  # type: ignore[call-arg]
 
 
 def get_user_service_client(settings: AuthSettings = Depends(get_settings)) -> UserServiceClient:
@@ -41,7 +41,7 @@ async def get_current_user_id(
 ) -> UUID:
     from ..core.settings import AuthSettings as S
 
-    settings = S()
+    settings = S()  # type: ignore[call-arg]
     prefix = "Bearer "
     if not authorization.startswith(prefix):
         raise HTTPException(

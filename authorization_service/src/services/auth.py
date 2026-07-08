@@ -31,7 +31,8 @@ class AuthService:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 resp = await client.get(f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/roles")
                 if resp.status_code == 200:
-                    return resp.json().get("roles", [])
+                    roles: list[str] = resp.json().get("roles", [])
+                    return roles
         except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
             logger.warning("Failed to fetch roles for user %s: %s", user_id, exc)
         return []
@@ -41,7 +42,8 @@ class AuthService:
             async with httpx.AsyncClient(timeout=5.0) as client:
                 resp = await client.get(f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/status")
                 if resp.status_code == 200:
-                    return resp.json().get("status") == "banned"
+                    status: str | None = resp.json().get("status")
+                    return status == "banned"
         except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
             logger.warning("Failed to check ban status for user %s: %s", user_id, exc)
         return False
