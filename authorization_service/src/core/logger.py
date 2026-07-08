@@ -25,7 +25,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_entry, ensure_ascii=False)
 
 
-def get_logger(service_name: str, level: str = "INFO", log_file: str | Path | None = None) -> logging.Logger:
+def get_logger(service_name: str, level: str = "INFO", log_file: str | Path | None = None) -> logging.LoggerAdapter:
     logger = logging.getLogger(service_name)
     if not logger.handlers:
         formatter = JSONFormatter()
