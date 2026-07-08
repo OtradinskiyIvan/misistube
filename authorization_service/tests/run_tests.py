@@ -2,6 +2,7 @@
 """
 Test runner for Authorization Service
 """
+
 import subprocess
 import sys
 from pathlib import Path
@@ -16,14 +17,13 @@ def run_tests():
     print(f"Test directory: {auth_tests_dir}")
 
     # Run tests with unittest
-    result = subprocess.run([
-        sys.executable, "-m", "unittest", "discover",
-        "-s", str(auth_tests_dir),
-        "-p", "test_*.py",
-        "-v"
-    ], cwd=str(project_root))
+    result = subprocess.run(
+        [sys.executable, "-m", "unittest", "discover", "-s", str(auth_tests_dir), "-p", "test_*.py", "-v"],
+        cwd=str(project_root),
+    )
 
     return result.returncode
+
 
 if __name__ == "__main__":
     exit_code = run_tests()

@@ -29,7 +29,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
             hashed_password="hashed",
             is_active=True,
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
 
         mock_result = AsyncMock()
@@ -41,6 +41,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
 
         # Assert
         self.assertIsInstance(result, User)
+        assert result is not None
         self.assertEqual(result.id, user_id)
         self.assertEqual(result.email, "test@example.com")
 
@@ -68,7 +69,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
             hashed_password="hashed",
             is_active=True,
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
 
         mock_result = AsyncMock()
@@ -80,16 +81,13 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
 
         # Assert
         self.assertIsInstance(result, User)
+        assert result is not None
         self.assertEqual(result.email, email)
 
     async def test_save_success(self):
         # Arrange
         user = User(
-            id=uuid4(),
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed_password",
-            is_active=True
+            id=uuid4(), username="testuser", email="test@example.com", hashed_password="hashed_password", is_active=True
         )
 
         # Mock the model creation and database operations
@@ -100,7 +98,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
             hashed_password=user.hashed_password,
             is_active=user.is_active,
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
 
         self.mock_session.add = MagicMock()

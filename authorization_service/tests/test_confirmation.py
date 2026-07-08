@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pydantic import SecretStr
+from pydantic import PostgresDsn, SecretStr
 
 from ..src.core.settings import AuthSettings
 from ..src.services.confirmation import (
@@ -28,7 +28,7 @@ def mock_settings():
         JWT_ALGORITHM="HS256",
         JWT_ACCESS_EXPIRE_MINUTES=30,
         JWT_REFRESH_EXPIRE_DAYS=7,
-        DATABASE_URL="postgresql://test:test@localhost:5432/testdb",
+        DATABASE_URL=PostgresDsn("postgresql://test:test@localhost:5432/testdb"),
         S3_ENDPOINT="http://localhost:9000",
         S3_ACCESS_KEY=SecretStr("test-access-key"),
         S3_SECRET_KEY=SecretStr("test-secret-key"),
@@ -259,18 +259,10 @@ class TestSendEmailSync:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
 
-            send_email_sync(
-                "recipient@example.com",
-                "Test Subject",
-                "Test Body",
-                mock_settings
-            )
+            send_email_sync("recipient@example.com", "Test Subject", "Test Body", mock_settings)
 
             mock_server.starttls.assert_called_once()
-            mock_server.login.assert_called_once_with(
-                mock_settings.SMTP_USER,
-                mock_settings.SMTP_PASSWORD
-            )
+            mock_server.login.assert_called_once_with(mock_settings.SMTP_USER, mock_settings.SMTP_PASSWORD)
             mock_server.sendmail.assert_called_once()
 
     def test_send_email_sync_without_tls(self, mock_settings):
@@ -281,12 +273,7 @@ class TestSendEmailSync:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
 
-            send_email_sync(
-                "recipient@example.com",
-                "Test Subject",
-                "Test Body",
-                mock_settings
-            )
+            send_email_sync("recipient@example.com", "Test Subject", "Test Body", mock_settings)
 
             mock_server.starttls.assert_not_called()
             mock_server.login.assert_called_once()
@@ -302,12 +289,7 @@ class TestSendEmailSync:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
 
-            send_email_sync(
-                "recipient@example.com",
-                "Test Subject",
-                "Test Body",
-                mock_settings
-            )
+            send_email_sync("recipient@example.com", "Test Subject", "Test Body", mock_settings)
 
             mock_server.login.assert_not_called()
             mock_server.sendmail.assert_called_once()
@@ -320,12 +302,7 @@ class TestSendEmailSync:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
 
-            send_email_sync(
-                "recipient@example.com",
-                "Test Subject",
-                "Test Body",
-                mock_settings
-            )
+            send_email_sync("recipient@example.com", "Test Subject", "Test Body", mock_settings)
 
             call_args = mock_server.sendmail.call_args
             assert call_args[0][0] == "custom@example.com"
@@ -338,12 +315,7 @@ class TestSendEmailSync:
             mock_server = MagicMock()
             mock_smtp.return_value.__enter__.return_value = mock_server
 
-            send_email_sync(
-                "recipient@example.com",
-                "Test Subject",
-                "Test Body",
-                mock_settings
-            )
+            send_email_sync("recipient@example.com", "Test Subject", "Test Body", mock_settings)
 
             call_args = mock_server.sendmail.call_args
             assert f"no-reply@{mock_settings.SMTP_HOST}" in call_args[0][0]
@@ -352,16 +324,12 @@ class TestSendEmailSync:
 class TestCreatePendingRegistration:
     def test_create_pending_registration_success(self, mock_settings, event_loop):
         """Test successful pending registration creation."""
+
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.return_value = None
 
-                code = await create_pending_registration(
-                    "testuser",
-                    "test@example.com",
-                    "password123",
-                    mock_settings
-                )
+                code = await create_pending_registration("testuser", "test@example.com", "password123", mock_settings)
 
                 assert isinstance(code, str)
                 assert len(code) == 6
@@ -373,16 +341,12 @@ class TestCreatePendingRegistration:
 
     def test_create_pending_registration_stores_hashed_password(self, mock_settings, event_loop):
         """Test that password is hashed in pending."""
+
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.return_value = None
 
-                code = await create_pending_registration(
-                    "testuser",
-                    "test@example.com",
-                    "password123",
-                    mock_settings
-                )
+                code = await create_pending_registration("testuser", "test@example.com", "password123", mock_settings)
 
                 assert code is not None
 
@@ -395,32 +359,24 @@ class TestCreatePendingRegistration:
 
     def test_create_pending_registration_email_sending_failure(self, mock_settings, event_loop):
         """Test that exception is raised if email sending fails."""
+
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.side_effect = Exception("SMTP error")
 
                 with pytest.raises(Exception, match="SMTP error"):
-                    await create_pending_registration(
-                        "testuser",
-                        "test@example.com",
-                        "password123",
-                        mock_settings
-                    )
+                    await create_pending_registration("testuser", "test@example.com", "password123", mock_settings)
 
         event_loop.run_until_complete(test())
 
     def test_create_pending_registration_calls_send_email(self, mock_settings, event_loop):
         """Test that send_email_sync is called."""
+
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.return_value = None
 
-                await create_pending_registration(
-                    "testuser",
-                    "test@example.com",
-                    "password123",
-                    mock_settings
-                )
+                await create_pending_registration("testuser", "test@example.com", "password123", mock_settings)
 
                 mock_thread.assert_called_once()
                 call_args = mock_thread.call_args[0]
@@ -431,16 +387,12 @@ class TestCreatePendingRegistration:
 
     def test_create_pending_registration_code_format(self, mock_settings, event_loop):
         """Test that returned code has correct format."""
+
         async def test():
             with patch("asyncio.to_thread") as mock_thread:
                 mock_thread.return_value = None
 
-                code = await create_pending_registration(
-                    "testuser",
-                    "test@example.com",
-                    "password123",
-                    mock_settings
-                )
+                code = await create_pending_registration("testuser", "test@example.com", "password123", mock_settings)
 
                 assert len(code) == 6
                 assert code.isdigit()

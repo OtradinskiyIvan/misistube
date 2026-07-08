@@ -10,11 +10,7 @@ from ..src.presentations.schemas.auth import LoginRequest, RegisterRequest, Toke
 class TestAuthSchemas(unittest.TestCase):
     def test_register_request_valid(self):
         # Arrange
-        data = {
-            "username": "testuser",
-            "email": "test@example.com",
-            "password": "password123"
-        }
+        data = {"username": "testuser", "email": "test@example.com", "password": "password123"}
 
         # Act
         request = RegisterRequest(**data)
@@ -26,11 +22,7 @@ class TestAuthSchemas(unittest.TestCase):
 
     def test_register_request_invalid_email(self):
         # Arrange
-        data = {
-            "username": "testuser",
-            "email": "invalid-email",
-            "password": "password123"
-        }
+        data = {"username": "testuser", "email": "invalid-email", "password": "password123"}
 
         # Act & Assert
         with self.assertRaises(ValidationError):
@@ -38,11 +30,7 @@ class TestAuthSchemas(unittest.TestCase):
 
     def test_register_request_password_too_short(self):
         # Arrange
-        data = {
-            "username": "testuser",
-            "email": "test@example.com",
-            "password": "short"
-        }
+        data = {"username": "testuser", "email": "test@example.com", "password": "short"}
 
         # Act & Assert
         with self.assertRaises(ValidationError):
@@ -53,7 +41,7 @@ class TestAuthSchemas(unittest.TestCase):
         data = {
             "username": "testuser",
             "email": "test@example.com",
-            "password": "a" * 129  # 129 characters
+            "password": "a" * 129,  # 129 characters
         }
 
         # Act & Assert
@@ -62,10 +50,7 @@ class TestAuthSchemas(unittest.TestCase):
 
     def test_login_request_valid(self):
         # Arrange
-        data = {
-            "login": "testuser",
-            "password": "password123"
-        }
+        data = {"login": "testuser", "password": "password123"}
 
         # Act
         request = LoginRequest(**data)
@@ -76,10 +61,7 @@ class TestAuthSchemas(unittest.TestCase):
 
     def test_token_response_valid(self):
         # Arrange
-        data = {
-            "access_token": "access_token_here",
-            "refresh_token": "refresh_token_here"
-        }
+        data = {"access_token": "access_token_here", "refresh_token": "refresh_token_here"}
 
         # Act
         response = TokenResponse(**data)
@@ -91,11 +73,7 @@ class TestAuthSchemas(unittest.TestCase):
 
     def test_token_response_custom_token_type(self):
         # Arrange
-        data = {
-            "access_token": "access_token_here",
-            "refresh_token": "refresh_token_here",
-            "token_type": "Custom"
-        }
+        data = {"access_token": "access_token_here", "refresh_token": "refresh_token_here", "token_type": "Custom"}
 
         # Act
         response = TokenResponse(**data)
@@ -112,11 +90,11 @@ class TestAuthSchemas(unittest.TestCase):
             "username": "testuser",
             "email": "test@example.com",
             "is_active": True,
-            "created_at": created_at
+            "created_at": created_at,
         }
 
         # Act
-        user_out = UserOut(**data)
+        user_out = UserOut(**data)  # type: ignore[arg-type]
 
         # Assert
         self.assertEqual(user_out.id, user_id)

@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-from pydantic import SecretStr
+from pydantic import PostgresDsn, SecretStr
 
 from shared.security import hash_password
 
@@ -21,21 +21,18 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         self.mock_repo = AsyncMock()
 
         self.settings = AuthSettings(
-            DATABASE_URL="postgresql://test:test@localhost/test",
+            DATABASE_URL=PostgresDsn("postgresql://test:test@localhost/test"),
             S3_ENDPOINT="http://localhost:9000",
-            S3_ACCESS_KEY="test",
-            S3_SECRET_KEY="test",
+            S3_ACCESS_KEY=SecretStr("test"),
+            S3_SECRET_KEY=SecretStr("test"),
             S3_BUCKET_NAME="test",
             JWT_SECRET=SecretStr("x" * 32),
             JWT_ALGORITHM="HS256",
             JWT_ACCESS_EXPIRE_MINUTES=30,
-            JWT_REFRESH_EXPIRE_DAYS=7
+            JWT_REFRESH_EXPIRE_DAYS=7,
         )
 
-        self.service = AuthService(
-            self.mock_repo,
-            self.settings
-        )
+        self.service = AuthService(self.mock_repo, self.settings)
 
     async def test_register_success(self):
         # Arrange
@@ -43,11 +40,7 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         email = "test@example.com"
         password = "password123"
         expected_user = User(
-            id=uuid4(),
-            username=username,
-            email=email,
-            hashed_password="hashed_password",
-            is_active=True
+            id=uuid4(), username=username, email=email, hashed_password="hashed_password", is_active=True
         )
 
         self.mock_repo.exists_by_email.return_value = False
@@ -89,13 +82,7 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         # Создаём реальный хеш пароля
         hashed = hash_password(password)
 
-        user = User(
-            id=user_id,
-            username=username,
-            email=email,
-            hashed_password=hashed,
-            is_active=True
-        )
+        user = User(id=user_id, username=username, email=email, hashed_password=hashed, is_active=True)
 
         self.mock_repo.get_by_email.return_value = user
 
@@ -129,13 +116,7 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         # Создаём реальный хеш пароля
         hashed = hash_password(password)
 
-        user = User(
-            id=uuid4(),
-            username=username,
-            email=email,
-            hashed_password=hashed,
-            is_active=False
-        )
+        user = User(id=uuid4(), username=username, email=email, hashed_password=hashed, is_active=False)
 
         self.mock_repo.get_by_email.return_value = user
 
@@ -147,11 +128,7 @@ class TestAuthService(unittest.IsolatedAsyncioTestCase):
         # Arrange
         user_id = uuid4()
         expected_user = User(
-            id=user_id,
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed",
-            is_active=True
+            id=user_id, username="testuser", email="test@example.com", hashed_password="hashed", is_active=True
         )
 
         self.mock_repo.get_by_id.return_value = expected_user
