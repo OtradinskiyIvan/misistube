@@ -29,6 +29,7 @@ logs/
 # Coverage reports
 .coverage
 coverage.xml
+*.py,cover
 
 node_modules/
 .vite/
