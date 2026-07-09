@@ -13,7 +13,7 @@ class DeactivateUserService:
         user = await self._repository.get_by_id(user_id)
         ts = int(time.time())
         user.username = f"{user.username}_deleted_{ts}"
-        user.email = f"deleted_{ts}@deleted.local"
+        user.email = f"deleted_{user_id}_{ts}@deleted.local"
         user.status = "inactive"
         await self._repository.update(user)
         await self._uow.commit()
