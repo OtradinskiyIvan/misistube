@@ -5,7 +5,7 @@ on:
     branches: ['feature/**', 'dev', 'main']
     paths:
       - 'player_search_service/**'
-      - 'shared/**'  # Если сервис зависит от shared
+      - 'shared/**'
   pull_request:
     branches: ['feature/**', 'dev', 'main']
     paths:
@@ -15,7 +15,6 @@ on:
 jobs:
   test-and-lint:
     runs-on: ubuntu-latest
-    # Явно задаем рабочую директорию для всего джоба
     defaults:
       run:
         working-directory: ./player_search_service
@@ -33,7 +32,6 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Устанавливаем shared, если он есть
           if [ -d "../shared" ]; then
             python -m pip install -e ../shared
             echo "PYTHONPATH=$(pwd)/../shared:$PYTHONPATH" >> $GITHUB_ENV
@@ -52,7 +50,6 @@ jobs:
       - name: Run tests with coverage
         env:
           PYTHONPATH: ../shared:${PYTHONPATH}
-        # --cov без =src, т.к. source уже указан в pyproject.toml
         run: pytest --cov --cov-report=xml --cov-fail-under=75
 
       - name: Upload coverage report
