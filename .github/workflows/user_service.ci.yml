@@ -6,11 +6,13 @@ on:
     paths:
       - 'user_service/**'
       - 'shared/**'
+      - '.github/workflows/user_service.ci.yml'
   pull_request:
     branches: ['feature/**', 'dev', 'main']
     paths:
       - 'user_service/**'
       - 'shared/**'
+      - '.github/workflows/user_service.ci.yml'
 
 permissions:
   contents: read
