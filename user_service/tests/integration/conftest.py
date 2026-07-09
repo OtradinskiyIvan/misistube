@@ -1,6 +1,7 @@
 import sys
 from collections.abc import AsyncGenerator
 from pathlib import Path
+from uuid import uuid4
 
 import pytest_asyncio
 from fastapi import FastAPI
@@ -16,7 +17,7 @@ for p in (ROOT, SRC, SHARED):
 
 from src.api.error_handlers import register_exception_handlers
 from src.api.router import router
-from src.deps import get_session
+from src.deps import get_current_user_id, get_session, require_admin
 from src.infrastructure.database.manager import Base, DatabaseManager
 
 TEST_DATABASE_URL = "postgresql+asyncpg://misistube:misistube_secret@localhost:5432/misistube_users"
@@ -50,6 +51,8 @@ async def client(db_manager: DatabaseManager) -> AsyncGenerator[AsyncClient, Non
     register_exception_handlers(test_app)
     test_app.include_router(router, prefix="/api/v1")
     test_app.dependency_overrides[get_session] = override_get_session
+    test_app.dependency_overrides[get_current_user_id] = lambda: uuid4()
+    test_app.dependency_overrides[require_admin] = lambda: {"sub": str(uuid4()), "roles": ["admin"]}
 
     async with AsyncClient(
         transport=ASGITransport(app=test_app), base_url="http://test",
