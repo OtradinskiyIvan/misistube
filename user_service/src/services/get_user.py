@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 from ..domain.entities import User
@@ -10,7 +9,7 @@ class GetUserService:
     def __init__(
         self,
         repository: UserRepository,
-        role_repo: Optional[RoleRepositoryImpl] = None,
+        role_repo: RoleRepositoryImpl | None = None,
     ) -> None:
         self._repository = repository
         self._role_repo = role_repo
@@ -18,10 +17,10 @@ class GetUserService:
     async def by_id(self, user_id: UUID) -> User:
         return await self._repository.get_by_id(user_id)
 
-    async def by_username(self, username: str) -> Optional[User]:
+    async def by_username(self, username: str) -> User | None:
         return await self._repository.get_by_username(username)
 
-    async def by_email(self, email: str) -> Optional[User]:
+    async def by_email(self, email: str) -> User | None:
         return await self._repository.get_by_email(email)
 
     async def search_by_username(self, query: str, skip: int = 0, limit: int = 100) -> list[User]:

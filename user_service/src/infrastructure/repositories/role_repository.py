@@ -1,7 +1,7 @@
-from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models.role import UserRoleModel
@@ -16,7 +16,7 @@ class RoleRepositoryImpl:
         result = await self._session.execute(stmt)
         return [r.role for r in result.scalars().all()]
 
-    async def assign_role(self, user_id: UUID, role: str, assigned_by: Optional[UUID] = None) -> UserRoleModel:
+    async def assign_role(self, user_id: UUID, role: str, assigned_by: UUID | None = None) -> UserRoleModel:
         stmt = select(UserRoleModel).where(
             UserRoleModel.user_id == user_id,
             UserRoleModel.role == role,

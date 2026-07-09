@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy import select, update
@@ -12,12 +11,12 @@ class StatisticRepositoryImpl:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_by_user_id(self, user_id: UUID) -> Optional[UserStatistic]:
+    async def get_by_user_id(self, user_id: UUID) -> UserStatistic | None:
         return await self._session.run_sync(
             lambda sync_session: self._get_by_user_id_sync(sync_session, user_id)
         )
 
-    def _get_by_user_id_sync(self, sync_session, user_id: UUID) -> Optional[UserStatistic]:
+    def _get_by_user_id_sync(self, sync_session, user_id: UUID) -> UserStatistic | None:
         model = sync_session.scalar(
             select(UserStatisticModel).where(UserStatisticModel.user_id == user_id)
         )

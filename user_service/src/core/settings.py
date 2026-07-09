@@ -1,7 +1,6 @@
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 from pydantic import AliasChoices, Field
 
@@ -10,7 +9,6 @@ if str(ROOT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(ROOT_DIRECTORY))
 
 import shared.config as shared_config
-
 
 SERVICE_DIRECTORY = Path(__file__).resolve().parents[2]
 ENV_FILE = SERVICE_DIRECTORY / ".env"

@@ -1,15 +1,15 @@
-from .user import UserModel
+from .preference import UserPreferenceModel
 from .profile import UserProfileModel
 from .role import UserRoleModel
-from .preference import UserPreferenceModel
-from .subscription import UserSubscriptionModel
 from .statistic import UserStatisticModel
+from .subscription import UserSubscriptionModel
+from .user import UserModel
 
 __all__ = [
     "UserModel",
+    "UserPreferenceModel",
     "UserProfileModel",
     "UserRoleModel",
-    "UserPreferenceModel",
-    "UserSubscriptionModel",
     "UserStatisticModel",
+    "UserSubscriptionModel",
 ]

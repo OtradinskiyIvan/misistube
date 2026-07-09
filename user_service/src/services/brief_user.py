@@ -1,16 +1,14 @@
-from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import cast, or_, select, String
+from sqlalchemy import String, cast, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from ..infrastructure.models.user import UserModel
-from ..infrastructure.models.profile import UserProfileModel
 
 
 class BriefUser:
-    def __init__(self, id: UUID, username: str, avatar_url: Optional[str], status: str) -> None:
+    def __init__(self, id: UUID, username: str, avatar_url: str | None, status: str) -> None:
         self.id = id
         self.username = username
         self.avatar_url = avatar_url
@@ -21,12 +19,12 @@ class BriefUserService:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_brief(self, user_id: UUID) -> Optional[BriefUser]:
+    async def get_brief(self, user_id: UUID) -> BriefUser | None:
         return await self._session.run_sync(
             lambda sync_session: self._get_brief_sync(sync_session, user_id)
         )
 
-    def _get_brief_sync(self, sync_session, user_id: UUID) -> Optional[BriefUser]:
+    def _get_brief_sync(self, sync_session, user_id: UUID) -> BriefUser | None:
         stmt = (
             select(UserModel)
             .options(joinedload(UserModel.profile))

@@ -1,6 +1,6 @@
 import sys
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import AsyncGenerator
 
 import pytest_asyncio
 from fastapi import FastAPI
@@ -17,8 +17,7 @@ for p in (ROOT, SRC, SHARED):
 from src.api.error_handlers import register_exception_handlers
 from src.api.router import router
 from src.deps import get_session
-from src.infrastructure.database.manager import DatabaseManager, Base
-
+from src.infrastructure.database.manager import Base, DatabaseManager
 
 TEST_DATABASE_URL = "postgresql+asyncpg://misistube:misistube_secret@localhost:5432/misistube_users"
 

@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, func, ForeignKey
+from sqlalchemy import Boolean, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,7 +27,7 @@ class UserPreferenceModel(Base):
         DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False,
     )
 
-    user: Mapped["UserModel"] = relationship(back_populates="preferences")
+    user: Mapped[UserModel] = relationship(back_populates="preferences")
 
     def __repr__(self) -> str:
         return f"<UserPreferenceModel(id={self.id}, user_id={self.user_id})>"

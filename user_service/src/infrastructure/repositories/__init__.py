@@ -1,6 +1,6 @@
-from .user_repository import UserRepositoryImpl
 from .role_repository import RoleRepositoryImpl
-from .subscription_repository import SubscriptionRepositoryImpl
 from .statistic_repository import StatisticRepositoryImpl
+from .subscription_repository import SubscriptionRepositoryImpl
+from .user_repository import UserRepositoryImpl
 
-__all__ = ["UserRepositoryImpl", "RoleRepositoryImpl", "SubscriptionRepositoryImpl", "StatisticRepositoryImpl"]
+__all__ = ["RoleRepositoryImpl", "StatisticRepositoryImpl", "SubscriptionRepositoryImpl", "UserRepositoryImpl"]

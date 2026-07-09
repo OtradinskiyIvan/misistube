@@ -1,9 +1,8 @@
-from typing import Optional
 from uuid import UUID
 
 from ..domain.exceptions import UserNotFoundError
-from ..infrastructure.repositories import RoleRepositoryImpl, UserRepositoryImpl
 from ..infrastructure.database.uow import UnitOfWorkImpl
+from ..infrastructure.repositories import RoleRepositoryImpl, UserRepositoryImpl
 
 
 class AssignRoleService:
@@ -17,7 +16,7 @@ class AssignRoleService:
         self._role_repo = role_repo
         self._uow = uow
 
-    async def execute(self, user_id: UUID, role: str, assigned_by: Optional[UUID] = None) -> list[str]:
+    async def execute(self, user_id: UUID, role: str, assigned_by: UUID | None = None) -> list[str]:
         user = await self._user_repo.get_by_id(user_id)
         if user is None:
             raise UserNotFoundError(str(user_id))

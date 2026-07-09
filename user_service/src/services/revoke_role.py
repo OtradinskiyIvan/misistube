@@ -1,8 +1,8 @@
 from uuid import UUID
 
 from ..domain.exceptions import UserNotFoundError
-from ..infrastructure.repositories import RoleRepositoryImpl, UserRepositoryImpl
 from ..infrastructure.database.uow import UnitOfWorkImpl
+from ..infrastructure.repositories import RoleRepositoryImpl, UserRepositoryImpl
 
 
 class RevokeRoleService:

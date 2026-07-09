@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
-from typing import Optional
 
-from sqlalchemy import String, DateTime, func
+from sqlalchemy import DateTime, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,22 +33,22 @@ class UserModel(Base):
         DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False,
     )
 
-    profile: Mapped[Optional["UserProfileModel"]] = relationship(
+    profile: Mapped[UserProfileModel | None] = relationship(
         back_populates="user", uselist=False, cascade="all, delete",
     )
-    roles: Mapped[list["UserRoleModel"]] = relationship(
+    roles: Mapped[list[UserRoleModel]] = relationship(
         back_populates="user", foreign_keys="UserRoleModel.user_id", cascade="all, delete",
     )
-    preferences: Mapped[Optional["UserPreferenceModel"]] = relationship(
+    preferences: Mapped[UserPreferenceModel | None] = relationship(
         back_populates="user", uselist=False, cascade="all, delete",
     )
-    statistics: Mapped[Optional["UserStatisticModel"]] = relationship(
+    statistics: Mapped[UserStatisticModel | None] = relationship(
         back_populates="user", uselist=False, cascade="all, delete",
     )
-    subscriptions_as_follower: Mapped[list["UserSubscriptionModel"]] = relationship(
+    subscriptions_as_follower: Mapped[list[UserSubscriptionModel]] = relationship(
         back_populates="follower", foreign_keys="UserSubscriptionModel.follower_id", cascade="all, delete",
     )
-    subscriptions_as_following: Mapped[list["UserSubscriptionModel"]] = relationship(
+    subscriptions_as_following: Mapped[list[UserSubscriptionModel]] = relationship(
         back_populates="following", foreign_keys="UserSubscriptionModel.following_id", cascade="all, delete",
     )
 

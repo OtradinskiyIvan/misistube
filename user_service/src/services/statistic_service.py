@@ -1,10 +1,8 @@
-from typing import Optional
 from uuid import UUID
 
 from ..domain.entities import UserStatistic
 from ..infrastructure.database.uow import UnitOfWorkImpl
 from ..infrastructure.repositories.statistic_repository import StatisticRepositoryImpl
-
 
 ALLOWED_FIELDS = {
     "total_videos",
@@ -28,7 +26,7 @@ class StatisticService:
         await self._uow.commit()
         return stats
 
-    async def increment(self, user_id: UUID, field: str, amount: int = 1) -> Optional[UserStatistic]:
+    async def increment(self, user_id: UUID, field: str, amount: int = 1) -> UserStatistic | None:
         if field not in ALLOWED_FIELDS:
             return None
         stats = await self._repo.get_by_user_id(user_id)
@@ -38,7 +36,7 @@ class StatisticService:
         await self._uow.commit()
         return await self._repo.get_by_user_id(user_id)
 
-    async def decrement(self, user_id: UUID, field: str, amount: int = 1) -> Optional[UserStatistic]:
+    async def decrement(self, user_id: UUID, field: str, amount: int = 1) -> UserStatistic | None:
         if field not in ALLOWED_FIELDS:
             return None
         stats = await self._repo.get_by_user_id(user_id)
@@ -48,5 +46,5 @@ class StatisticService:
         await self._uow.commit()
         return await self._repo.get_by_user_id(user_id)
 
-    async def get(self, user_id: UUID) -> Optional[UserStatistic]:
+    async def get(self, user_id: UUID) -> UserStatistic | None:
         return await self._repo.get_by_user_id(user_id)

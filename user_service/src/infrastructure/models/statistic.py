@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Integer, DateTime, func, ForeignKey
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -26,7 +28,7 @@ class UserStatisticModel(Base):
         DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False,
     )
 
-    user: Mapped["UserModel"] = relationship(back_populates="statistics")
+    user: Mapped[UserModel] = relationship(back_populates="statistics")
 
     def __repr__(self) -> str:
         return f"<UserStatisticModel(id={self.id}, user_id={self.user_id})>"
