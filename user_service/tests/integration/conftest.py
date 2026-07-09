@@ -1,10 +1,10 @@
 import sys
 from collections.abc import AsyncGenerator
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest_asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -51,7 +51,11 @@ async def client(db_manager: DatabaseManager) -> AsyncGenerator[AsyncClient, Non
     register_exception_handlers(test_app)
     test_app.include_router(router, prefix="/api/v1")
     test_app.dependency_overrides[get_session] = override_get_session
-    test_app.dependency_overrides[get_current_user_id] = lambda: uuid4()
+
+    async def override_get_current_user_id(request: Request) -> UUID:
+        return UUID(request.path_params.get("user_id", str(uuid4())))
+
+    test_app.dependency_overrides[get_current_user_id] = override_get_current_user_id
     test_app.dependency_overrides[require_admin] = lambda: {"sub": str(uuid4()), "roles": ["admin"]}
 
     async with AsyncClient(
