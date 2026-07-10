@@ -3,10 +3,9 @@ from uuid import uuid4
 import pytest
 
 from src.domain.entities import User
-from src.domain.exceptions import UserNotFoundError, UserAlreadyExistsError
-from src.infrastructure.repositories import UserRepositoryImpl
+from src.domain.exceptions import UserAlreadyExistsError, UserNotFoundError
 from src.infrastructure.database.uow import UnitOfWorkImpl
-from src.infrastructure.database.manager import Base
+from src.infrastructure.repositories import UserRepositoryImpl
 
 
 class TestUserRepository:
@@ -66,7 +65,7 @@ class TestUserRepository:
                 id=uuid4(),
                 username=f"list_user_{i}",
                 email=f"list{i}@example.com",
-        
+
             )
             await repository.create(user)
         await uow.commit()

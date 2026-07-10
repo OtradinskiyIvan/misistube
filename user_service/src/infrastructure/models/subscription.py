@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, func, ForeignKey, UniqueConstraint, CheckConstraint
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -29,10 +31,10 @@ class UserSubscriptionModel(Base):
         CheckConstraint("follower_id != following_id", name="no_self_subscription"),
     )
 
-    follower: Mapped["UserModel"] = relationship(
+    follower: Mapped[UserModel] = relationship(
         foreign_keys=[follower_id], back_populates="subscriptions_as_follower",
     )
-    following: Mapped["UserModel"] = relationship(
+    following: Mapped[UserModel] = relationship(
         foreign_keys=[following_id], back_populates="subscriptions_as_following",
     )
 

@@ -9,4 +9,4 @@ if str(ROOT_DIRECTORY) not in sys.path:
 
 from shared.security import decode_jwt_token
 
-__all__ = ["decode_jwt_token", "ExpiredSignatureError", "InvalidTokenError"]
+__all__ = ["ExpiredSignatureError", "InvalidTokenError", "decode_jwt_token"]

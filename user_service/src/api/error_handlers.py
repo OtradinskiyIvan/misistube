@@ -1,16 +1,17 @@
 """Exception handlers for API responses."""
 import sys
 from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
 from ..domain.exceptions import (
-    UserNotFoundError,
-    UserAlreadyExistsError,
     InvalidUserDataError,
+    UserAlreadyExistsError,
     UserDeletionError,
+    UserNotFoundError,
 )
 
 ROOT_DIRECTORY = Path(__file__).resolve().parents[3]
@@ -18,7 +19,6 @@ if str(ROOT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(ROOT_DIRECTORY))
 
 from shared.exceptions import AppBaseError, InfrastructureError, ValidationAppError
-
 
 from ..core.logging import correlation_id_var
 

@@ -1,9 +1,9 @@
 import sys
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import AsyncGenerator
 
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 from testcontainers.postgres import PostgresContainer
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,7 +13,7 @@ for p in (ROOT, SRC, SHARED):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-from src.infrastructure.database.manager import DatabaseManager, Base
+from src.infrastructure.database.manager import Base, DatabaseManager
 from src.infrastructure.database.uow import UnitOfWorkImpl
 from src.infrastructure.repositories import UserRepositoryImpl
 

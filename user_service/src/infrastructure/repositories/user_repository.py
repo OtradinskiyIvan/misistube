@@ -1,11 +1,10 @@
-from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import select, delete as sa_delete
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...domain.entities import User
-from ...domain.exceptions import UserNotFoundError, UserAlreadyExistsError, UserDeletionError
+from ...domain.exceptions import UserAlreadyExistsError, UserNotFoundError
 from ..models.profile import UserProfileModel
 from ..models.user import UserModel
 
@@ -14,35 +13,35 @@ class UserRepositoryImpl:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_by_id(self, user_id: UUID) -> Optional[User]:
+    async def get_by_id(self, user_id: UUID) -> User | None:
         return await self._session.run_sync(
             lambda sync_session: self._get_by_id_sync(sync_session, user_id)
         )
 
-    def _get_by_id_sync(self, sync_session, user_id: UUID) -> Optional[User]:
+    def _get_by_id_sync(self, sync_session, user_id: UUID) -> User | None:
         model = sync_session.get(UserModel, user_id)
         if model is None:
             raise UserNotFoundError(str(user_id))
         return self._to_domain(model)
 
-    async def get_by_username(self, username: str) -> Optional[User]:
+    async def get_by_username(self, username: str) -> User | None:
         return await self._session.run_sync(
             lambda sync_session: self._get_by_username_sync(sync_session, username)
         )
 
-    def _get_by_username_sync(self, sync_session, username: str) -> Optional[User]:
+    def _get_by_username_sync(self, sync_session, username: str) -> User | None:
         stmt = select(UserModel).where(UserModel.username == username)
         model = sync_session.scalar(stmt)
         if model is None:
             return None
         return self._to_domain(model)
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         return await self._session.run_sync(
             lambda sync_session: self._get_by_email_sync(sync_session, email)
         )
 
-    def _get_by_email_sync(self, sync_session, email: str) -> Optional[User]:
+    def _get_by_email_sync(self, sync_session, email: str) -> User | None:
         stmt = select(UserModel).where(UserModel.email == email)
         model = sync_session.scalar(stmt)
         if model is None:

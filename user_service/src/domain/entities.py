@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 
@@ -10,8 +9,8 @@ class User:
         username: str,
         email: str,
         status: str = "active",
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
     ) -> None:
         self.id = id
         self.username = username
@@ -29,11 +28,11 @@ class UserProfile:
         self,
         id: UUID,
         user_id: UUID,
-        avatar_url: Optional[str] = None,
-        bio: Optional[str] = None,
-        location: Optional[str] = None,
-        created_at: Optional[datetime] = None,
-        updated_at: Optional[datetime] = None,
+        avatar_url: str | None = None,
+        bio: str | None = None,
+        location: str | None = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
     ) -> None:
         self.id = id
         self.user_id = user_id
@@ -50,9 +49,9 @@ class UserRole:
         id: UUID,
         user_id: UUID,
         role: str,
-        assigned_at: Optional[datetime] = None,
-        assigned_by: Optional[UUID] = None,
-        expires_at: Optional[datetime] = None,
+        assigned_at: datetime | None = None,
+        assigned_by: UUID | None = None,
+        expires_at: datetime | None = None,
     ) -> None:
         self.id = id
         self.user_id = user_id
@@ -71,7 +70,7 @@ class UserPreference:
         allow_notifications: bool = True,
         notification_email: bool = True,
         show_subscriber_count: bool = True,
-        updated_at: Optional[datetime] = None,
+        updated_at: datetime | None = None,
     ) -> None:
         self.id = id
         self.user_id = user_id
@@ -88,7 +87,7 @@ class UserSubscription:
         id: UUID,
         follower_id: UUID,
         following_id: UUID,
-        subscribed_at: Optional[datetime] = None,
+        subscribed_at: datetime | None = None,
     ) -> None:
         self.id = id
         self.follower_id = follower_id
@@ -106,7 +105,7 @@ class UserStatistic:
         total_subscribers: int = 0,
         total_likes_received: int = 0,
         total_comments_received: int = 0,
-        updated_at: Optional[datetime] = None,
+        updated_at: datetime | None = None,
     ) -> None:
         self.id = id
         self.user_id = user_id

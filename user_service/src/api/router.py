@@ -1,13 +1,44 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from jwt import ExpiredSignatureError, InvalidTokenError
 
+from ..core.security import decode_jwt_token
+from ..deps import (
+    get_assign_role_service,
+    get_brief_user_service,
+    get_create_user_service,
+    get_current_user_id,
+    get_deactivate_user_service,
+    get_get_user_service,
+    get_logger_dep,
+    get_profile_service,
+    get_revoke_role_service,
+    get_settings,
+    get_statistic_service,
+    get_subscription_service,
+    get_sync_user_service,
+    get_update_user_service,
+    get_user_roles_service,
+    require_admin,
+    verify_internal_api_key,
+)
+from ..services.assign_role import AssignRoleService
+from ..services.brief_user import BriefUserService
+from ..services.create_user import CreateUserService
+from ..services.deactivate_user import DeactivateUserService
+from ..services.get_user import GetUserService
+from ..services.get_user_roles import GetUserRolesService
+from ..services.profile_service import ProfileService
+from ..services.revoke_role import RevokeRoleService
+from ..services.statistic_service import StatisticService
+from ..services.subscription_service import SubscriptionService
+from ..services.sync_user import SyncUserService
+from ..services.update_user import UpdateUserService
 from .mappers import (
     map_create_dto,
     map_update_dto,
     map_user_to_response,
-    map_users_to_response,
 )
 from .schemas import (
     AssignRoleInternalRequest,
@@ -21,11 +52,9 @@ from .schemas import (
     RoleAssignDTO,
     RoleResponse,
     StatsUpdateRequest,
-    SubscriptionActionRequest,
-    SubscriptionListResponse,
     SubscriptionResponse,
-    TokenDecodeRequest,
     TokenDecodedResponse,
+    TokenDecodeRequest,
     UserBriefResponse,
     UserCreateDTO,
     UserListResponse,
@@ -33,41 +62,6 @@ from .schemas import (
     UserStatsResponse,
     UserUpdateDTO,
 )
-from ..core.security import decode_jwt_token
-from ..deps import (
-    get_assign_role_service,
-    get_brief_user_service,
-    get_create_user_service,
-    get_delete_user_service,
-    get_deactivate_user_service,
-    get_get_user_service,
-    get_logger_dep,
-    get_profile_service,
-    get_settings,
-    get_statistic_service,
-    get_subscription_service,
-    get_sync_user_service,
-    get_update_user_service,
-    get_user_roles_service,
-    get_revoke_role_service,
-    require_admin,
-    get_current_user_payload,
-    get_current_user_id,
-    verify_internal_api_key,
-)
-from ..services.assign_role import AssignRoleService
-from ..services.brief_user import BriefUserService
-from ..services.create_user import CreateUserService
-from ..services.deactivate_user import DeactivateUserService
-from ..services.delete_user import DeleteUserService
-from ..services.get_user import GetUserService
-from ..services.get_user_roles import GetUserRolesService
-from ..services.revoke_role import RevokeRoleService
-from ..services.statistic_service import StatisticService
-from ..services.subscription_service import SubscriptionService
-from ..services.profile_service import ProfileService
-from ..services.sync_user import SyncUserService
-from ..services.update_user import UpdateUserService
 
 router = APIRouter(tags=["users"])
 

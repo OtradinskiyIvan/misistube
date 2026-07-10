@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
-from typing import Optional
 
-from sqlalchemy import String, DateTime, func, ForeignKey, UniqueConstraint
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -22,19 +23,19 @@ class UserRoleModel(Base):
     assigned_at: Mapped[datetime] = mapped_column(
         DateTime(), server_default=func.now(), nullable=False,
     )
-    assigned_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+    assigned_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True,
     )
-    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(), nullable=True)
 
     __table_args__ = (
         UniqueConstraint("user_id", "role", name="unique_user_role"),
     )
 
-    user: Mapped["UserModel"] = relationship(
+    user: Mapped[UserModel] = relationship(
         back_populates="roles", foreign_keys=[user_id],
     )
-    assigner: Mapped[Optional["UserModel"]] = relationship(
+    assigner: Mapped[UserModel | None] = relationship(
         foreign_keys=[assigned_by],
     )
 

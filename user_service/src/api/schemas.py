@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
@@ -21,13 +21,13 @@ class UserCreateDTO(BaseModel):
 
 
 class UserUpdateDTO(BaseModel):
-    username: Optional[str] = Field(None, min_length=3, max_length=255)
-    email: Optional[EmailStr] = None
-    status: Optional[str] = Field(None, max_length=50)
+    username: str | None = Field(None, min_length=3, max_length=255)
+    email: EmailStr | None = None
+    status: str | None = Field(None, max_length=50)
 
     @field_validator("username")
     @classmethod
-    def username_chars(cls, v: Optional[str]) -> Optional[str]:
+    def username_chars(cls, v: str | None) -> str | None:
         if v is None:
             return v
         allowed = set("_-")
@@ -39,7 +39,7 @@ class UserUpdateDTO(BaseModel):
 
     @field_validator("status")
     @classmethod
-    def status_value(cls, v: Optional[str]) -> Optional[str]:
+    def status_value(cls, v: str | None) -> str | None:
         if v is None:
             return v
         allowed = {"active", "inactive", "banned", "suspended"}
@@ -130,7 +130,7 @@ class FollowStatusResponse(BaseModel):
 class UserBriefResponse(BaseModel):
     id: UUID
     username: str
-    avatar_url: Optional[str] = None
+    avatar_url: str | None = None
     status: str
 
     model_config = ConfigDict(from_attributes=True)
@@ -156,15 +156,15 @@ class AvatarResponse(BaseModel):
     avatar_url: str
 
 class ProfileResponse(BaseModel):
-    avatar_url: Optional[str] = None
-    bio: Optional[str] = None
-    location: Optional[str] = None
+    avatar_url: str | None = None
+    bio: str | None = None
+    location: str | None = None
     created_at: datetime
     updated_at: datetime
 
 class ProfileUpdateRequest(BaseModel):
-    bio: Optional[str] = None
-    location: Optional[str] = None
+    bio: str | None = None
+    location: str | None = None
 
 class HealthResponse(BaseModel):
     status: str = Field(default="ok", description="Service health status")

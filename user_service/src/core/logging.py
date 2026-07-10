@@ -7,9 +7,10 @@ ROOT_DIRECTORY = Path(__file__).resolve().parents[3]
 if str(ROOT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(ROOT_DIRECTORY))
 
-from shared.logger import correlation_id_var, get_logger as shared_get_logger, JSONFormatter
+from shared.logger import JSONFormatter, correlation_id_var
+from shared.logger import get_logger as shared_get_logger
 
-__all__ = ["correlation_id_var", "get_logger", "bind_correlation_id", "configure_logging"]
+__all__ = ["bind_correlation_id", "configure_logging", "correlation_id_var", "get_logger"]
 
 LOG_DIR = ROOT_DIRECTORY / "logs"
 LOG_FILE = LOG_DIR / "user_service.log"

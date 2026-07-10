@@ -1,7 +1,7 @@
-from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, delete as sa_delete, func
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...domain.entities import UserSubscription

@@ -1,4 +1,3 @@
-from typing import Optional
 from uuid import UUID
 
 from ..domain.entities import User
@@ -13,9 +12,9 @@ class UpdateUserService:
     async def execute(
         self,
         user_id: UUID,
-        username: Optional[str] = None,
-        email: Optional[str] = None,
-        status: Optional[str] = None,
+        username: str | None = None,
+        email: str | None = None,
+        status: str | None = None,
     ) -> User:
         user = await self._repository.get_by_id(user_id)
 

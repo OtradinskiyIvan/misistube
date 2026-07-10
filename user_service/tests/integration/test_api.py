@@ -1,4 +1,3 @@
-import pytest
 from httpx import AsyncClient
 
 
@@ -153,7 +152,9 @@ class TestDeleteUser:
         assert resp.status_code == 204
 
         get_resp = await client.get(f"/api/v1/users/{user_id}")
-        assert get_resp.status_code == 404
+        assert get_resp.status_code == 200
+        data = get_resp.json()
+        assert data["status"] == "inactive"
 
     async def test_delete_user_not_found(self, client: AsyncClient) -> None:
         resp = await client.delete("/api/v1/users/00000000-0000-0000-0000-000000000000")
@@ -185,4 +186,6 @@ class TestFullCRUD:
         assert del_resp.status_code == 204
 
         get_resp = await client.get(f"/api/v1/users/{user_id}")
-        assert get_resp.status_code == 404
+        assert get_resp.status_code == 200
+        data = get_resp.json()
+        assert data["status"] == "inactive"

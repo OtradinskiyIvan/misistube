@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-from typing import Optional
 from uuid import UUID
 
 from fastapi import Depends, Header, HTTPException, status
@@ -8,29 +7,33 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .core.logging import configure_logging, get_logger
-from .core.settings import settings, UserServiceSettings
+from .core.settings import UserServiceSettings, settings
 from .infrastructure.database.manager import DatabaseManager
 from .infrastructure.database.uow import UnitOfWorkImpl
-from .infrastructure.repositories import UserRepositoryImpl, RoleRepositoryImpl, StatisticRepositoryImpl
+from .infrastructure.repositories import (
+    RoleRepositoryImpl,
+    StatisticRepositoryImpl,
+    UserRepositoryImpl,
+)
+from .infrastructure.repositories.subscription_repository import SubscriptionRepositoryImpl
 from .infrastructure.storage.s3_client import S3Client
-from .services.create_user import CreateUserService
-from .services.delete_user import DeleteUserService
-from .services.deactivate_user import DeactivateUserService
-from .services.get_user import GetUserService
-from .services.profile_service import ProfileService
-from .services.sync_user import SyncUserService
-from .services.update_user import UpdateUserService
 from .services.assign_role import AssignRoleService
-from .services.revoke_role import RevokeRoleService
+from .services.brief_user import BriefUserService
+from .services.create_user import CreateUserService
+from .services.deactivate_user import DeactivateUserService
+from .services.delete_user import DeleteUserService
+from .services.get_user import GetUserService
 from .services.get_user_roles import GetUserRolesService
+from .services.profile_service import ProfileService
+from .services.revoke_role import RevokeRoleService
 from .services.statistic_service import StatisticService
 from .services.subscription_service import SubscriptionService
-from .services.brief_user import BriefUserService
-from .infrastructure.repositories.subscription_repository import SubscriptionRepositoryImpl
+from .services.sync_user import SyncUserService
+from .services.update_user import UpdateUserService
 
 configure_logging(log_level=settings.LOG_LEVEL, service_name=settings.APP_NAME)
 
-db_manager: Optional[DatabaseManager] = None
+db_manager: DatabaseManager | None = None
 
 
 def init_db_manager(database_url: str, echo: bool = False) -> DatabaseManager:
@@ -127,8 +130,9 @@ async def get_user_roles_service(
 async def get_current_user_payload(
     authorization: str = Header(..., alias="Authorization"),
 ) -> dict:
-    from .core.settings import settings as s
     from shared.security import decode_jwt_token
+
+    from .core.settings import settings as s
 
     prefix = "Bearer "
     if not authorization.startswith(prefix):

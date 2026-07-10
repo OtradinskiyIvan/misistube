@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from src.domain.exceptions import UserNotFoundError, UserDeletionError
+from src.domain.exceptions import UserDeletionError, UserNotFoundError
 from src.services.delete_user import DeleteUserService
 
 

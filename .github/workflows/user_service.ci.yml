@@ -1,0 +1,105 @@
+name: User Service CI
+
+on:
+  push:
+    branches: ['feature/**', 'dev', 'main']
+    paths:
+      - 'user_service/**'
+      - 'shared/**'
+      - '.github/workflows/user_service.ci.yml'
+  pull_request:
+    branches: ['feature/**', 'dev', 'main']
+    paths:
+      - 'user_service/**'
+      - 'shared/**'
+      - '.github/workflows/user_service.ci.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./user_service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: user_service/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ../shared
+          python -m pip install -e ".[dev]"
+
+      - name: Export shared path
+        run: echo "PYTHONPATH=$(pwd)/../shared${PYTHONPATH:+:$PYTHONPATH}" >> $GITHUB_ENV
+
+      - name: Ruff check
+        run: ruff check src/ tests/
+
+      - name: MyPy
+        run: mypy src/ tests/ || true
+
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./user_service
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: misistube
+          POSTGRES_PASSWORD: misistube_secret
+          POSTGRES_DB: misistube_users
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U misistube -d misistube_users"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: user_service/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ../shared
+          python -m pip install -e ".[dev]"
+
+      - name: Export shared path
+        run: echo "PYTHONPATH=$(pwd)/../shared${PYTHONPATH:+:$PYTHONPATH}" >> $GITHUB_ENV
+
+      - name: Run tests
+        env:
+          PYTHONPATH: ../shared:${PYTHONPATH}
+          DATABASE_URL: postgresql+asyncpg://misistube:misistube_secret@localhost:5432/misistube_users
+          JWT_SECRET: test-secret-key-for-ci
+        run: pytest --cov=src --cov-report=xml --cov-fail-under=20
+
+      - name: Upload coverage
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-user-service
+          path: user_service/coverage.xml

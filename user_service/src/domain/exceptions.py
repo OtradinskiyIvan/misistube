@@ -13,7 +13,7 @@ class UserNotFoundError(AppBaseError):
     """Raised when a user is not found."""
 
     def __init__(self, user_id: str = ""):
-        message = f"User not found" if not user_id else f"User with id {user_id} not found"
+        message = "User not found" if not user_id else f"User with id {user_id} not found"
         super().__init__(message, code="USER_NOT_FOUND", status_code=404)
 
 

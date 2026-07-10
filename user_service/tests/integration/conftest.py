@@ -1,9 +1,10 @@
 import sys
+from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import AsyncGenerator
+from uuid import UUID, uuid4
 
 import pytest_asyncio
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,9 +17,8 @@ for p in (ROOT, SRC, SHARED):
 
 from src.api.error_handlers import register_exception_handlers
 from src.api.router import router
-from src.deps import get_session
-from src.infrastructure.database.manager import DatabaseManager, Base
-
+from src.deps import get_current_user_id, get_session, require_admin
+from src.infrastructure.database.manager import Base, DatabaseManager
 
 TEST_DATABASE_URL = "postgresql+asyncpg://misistube:misistube_secret@localhost:5432/misistube_users"
 
@@ -51,6 +51,12 @@ async def client(db_manager: DatabaseManager) -> AsyncGenerator[AsyncClient, Non
     register_exception_handlers(test_app)
     test_app.include_router(router, prefix="/api/v1")
     test_app.dependency_overrides[get_session] = override_get_session
+
+    async def override_get_current_user_id(request: Request) -> UUID:
+        return UUID(request.path_params.get("user_id", str(uuid4())))
+
+    test_app.dependency_overrides[get_current_user_id] = override_get_current_user_id
+    test_app.dependency_overrides[require_admin] = lambda: {"sub": str(uuid4()), "roles": ["admin"]}
 
     async with AsyncClient(
         transport=ASGITransport(app=test_app), base_url="http://test",
