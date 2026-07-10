@@ -9,22 +9,27 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
 
+
 class LoginRequest(BaseModel):
     login: str = Field(..., description="Username or email")
     password: str
     admin_key: str | None = None
+
 
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "Bearer"
 
+
 class RefreshRequest(BaseModel):
     refresh_token: str
+
 
 class AccessTokenResponse(BaseModel):
     access_token: str
     token_type: str = "Bearer"
+
 
 class UserOut(BaseModel):
     id: UUID

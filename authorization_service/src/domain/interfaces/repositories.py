@@ -26,3 +26,6 @@ class IUserRepository(Protocol):
 
     @abstractmethod
     async def activate_user_by_email(self, email: str) -> None: ...
+
+    @abstractmethod
+    async def deactivate_user(self, user_id: UUID) -> User | None: ...

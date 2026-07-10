@@ -6,8 +6,6 @@ from jwt import PyJWTError
 
 from shared.security import create_jwt_token, decode_jwt_token, hash_password, verify_password
 
-from typing import Optional
-
 from ..core.settings import AuthSettings
 from ..domain.entities.user import User
 from ..domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError, UserNotFoundError
@@ -22,7 +20,7 @@ class AuthService:
         self,
         user_repo: IUserRepository,
         settings: AuthSettings,
-        user_svc_client: Optional[UserServiceClient] = None,
+        user_svc_client: UserServiceClient | None = None,
     ):
         self._user_repo = user_repo
         self._settings = settings
@@ -31,11 +29,10 @@ class AuthService:
     async def _fetch_user_roles(self, user_id: UUID) -> list[str]:
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(
-                    f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/roles"
-                )
+                resp = await client.get(f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/roles")
                 if resp.status_code == 200:
-                    return resp.json().get("roles", [])
+                    roles: list[str] = resp.json().get("roles", [])
+                    return roles
         except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
             logger.warning("Failed to fetch roles for user %s: %s", user_id, exc)
         return []
@@ -43,11 +40,10 @@ class AuthService:
     async def _check_user_banned(self, user_id: UUID) -> bool:
         try:
             async with httpx.AsyncClient(timeout=5.0) as client:
-                resp = await client.get(
-                    f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/status"
-                )
+                resp = await client.get(f"{self._settings.USER_SERVICE_URL}/api/v1/users/{user_id}/status")
                 if resp.status_code == 200:
-                    return resp.json().get("status") == "banned"
+                    status: str | None = resp.json().get("status")
+                    return status == "banned"
         except (httpx.RequestError, httpx.HTTPStatusError, ValueError) as exc:
             logger.warning("Failed to check ban status for user %s: %s", user_id, exc)
         return False
@@ -77,8 +73,9 @@ class AuthService:
         await self._user_repo.activate_user_by_email(email)
         logger.info("User activated: %s", email)
 
-    async def login(self, login: str, password: str, admin_key: str | None = None) -> dict[str, str]:
+    async def _find_and_validate_user(self, login: str, password: str) -> User:
         user = await self._user_repo.get_by_email(login)
+
         if not user:
             user = await self._user_repo.get_by_username(login)
 
@@ -93,6 +90,11 @@ class AuthService:
         if not user.is_active:
             logger.warning("Login failed: user %s is deactivated", user.username)
             raise InvalidCredentialsError("User account is deactivated")
+
+        return user
+
+    async def login(self, login: str, password: str, admin_key: str | None = None) -> dict[str, str]:
+        user = await self._find_and_validate_user(login=login, password=password)
 
         if admin_key:
             if admin_key != self._settings.ADMIN_KEY:

@@ -21,5 +21,5 @@ class User:
             hashed_password=self.hashed_password,
             is_active=False,
             created_at=self.created_at,
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )

@@ -1,10 +1,16 @@
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from authorization_service.src.domain.entities.user import User
-from authorization_service.src.domain.exceptions import InvalidCredentialsError, UserAlreadyExistsError
-from authorization_service.src.presentations.deps import get_auth_service, get_current_user_id, get_current_token, get_user_service_client
+from authorization_service.src.domain.exceptions import InvalidCredentialsError
 from authorization_service.src.infrastructure.clients.user_service_client import UserServiceClient
+from authorization_service.src.presentations.deps import (
+    get_auth_service,
+    get_current_token,
+    get_current_user_id,
+    get_user_service_client,
+)
 from authorization_service.src.presentations.schemas.auth import (
     AccessTokenResponse,
     ConfirmRequest,
@@ -21,6 +27,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 logger = logging.getLogger("Authorization Service")
 
 router = APIRouter()
+
 
 @router.post("/register", status_code=status.HTTP_202_ACCEPTED)
 async def register(
@@ -82,6 +89,7 @@ async def confirm_email(
         created_at=created.created_at,
     )
 
+
 @router.post("/login", response_model=TokenResponse)
 async def login(
     payload: LoginRequest,
@@ -100,6 +108,7 @@ async def login(
         logger.warning("Login failed for %s: %s", payload.login, exc)
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
+
 @router.post("/refresh", response_model=AccessTokenResponse)
 async def refresh(
     payload: RefreshRequest,
@@ -111,6 +120,7 @@ async def refresh(
         logger.warning("Refresh failed: %s", exc)
         raise HTTPException(status_code=401, detail=str(exc)) from exc
     return AccessTokenResponse(**token_data)
+
 
 @router.post("/users/me/deactivate", status_code=200)
 async def deactivate_me(
@@ -134,8 +144,9 @@ async def deactivate_me(
 async def get_current_user():
     logger.warning("/me endpoint called — stub implementation")
     return UserOut(
-        id="00000000-0000-0000-0000-000000000000",
+        id=UUID(int=0),
+        username="stub",
         email="stub@example.com",
         is_active=True,
-        created_at="1970-01-01T00:00:00Z",
+        created_at=datetime.now(),
     )

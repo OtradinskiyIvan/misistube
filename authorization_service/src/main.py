@@ -15,10 +15,9 @@ from .presentations.routers.auth import router as auth_router
 from .presentations.routers.health import router as health_router
 
 load_dotenv()
-settings = AuthSettings()
+settings = AuthSettings()  # type: ignore[call-arg]
 log_file = Path(__file__).resolve().parents[2] / "logs" / "authorization_service.log"
 logger = get_logger_with_file(settings.APP_NAME, settings.LOG_LEVEL, log_file)
-
 
 
 @asynccontextmanager
@@ -35,11 +34,8 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Authorization Service...")
 
 
-app = FastAPI(
-    title=settings.APP_NAME,
-    version="0.1.0",
-    lifespan=lifespan
-)
+app = FastAPI(title=settings.APP_NAME, version="0.1.0", lifespan=lifespan)
+
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -52,6 +48,7 @@ async def log_requests(request: Request, call_next):
     logger.info(f"← {request.method} {request.url.path} - {response.status_code} ({duration:.3f}s)")
 
     return response
+
 
 app.add_middleware(
     CORSMiddleware,

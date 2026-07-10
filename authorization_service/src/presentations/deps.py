@@ -8,21 +8,21 @@ from shared.database.session import get_async_session
 from shared.security import decode_jwt_token
 
 from ..core.settings import AuthSettings
+from ..infrastructure.clients.user_service_client import UserServiceClient
 from ..infrastructure.repositories import UserRepository
 from ..services.auth import AuthService
-from ..infrastructure.clients.user_service_client import UserServiceClient
 
 
 def get_settings() -> AuthSettings:
-    return AuthSettings()
+    return AuthSettings()  # type: ignore[call-arg]
 
-def get_user_service_client(
-    settings: AuthSettings = Depends(get_settings)
-) -> UserServiceClient:
+
+def get_user_service_client(settings: AuthSettings = Depends(get_settings)) -> UserServiceClient:
     return UserServiceClient(
         base_url=settings.USER_SERVICE_URL,
         internal_api_key=settings.INTERNAL_API_KEY,
     )
+
 
 async def get_current_token(
     authorization: str = Header(..., alias="Authorization"),
@@ -33,7 +33,7 @@ async def get_current_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authorization header",
         )
-    return authorization[len(prefix):]
+    return authorization[len(prefix) :]
 
 
 async def get_current_user_id(
@@ -41,30 +41,30 @@ async def get_current_user_id(
 ) -> UUID:
     from ..core.settings import AuthSettings as S
 
-    settings = S()
+    settings = S()  # type: ignore[call-arg]
     prefix = "Bearer "
     if not authorization.startswith(prefix):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authorization header",
         )
-    token = authorization[len(prefix):]
+    token = authorization[len(prefix) :]
     try:
         payload = decode_jwt_token(
             token,
             secret=settings.JWT_SECRET.get_secret_value(),
             algorithm=settings.JWT_ALGORITHM,
         )
-    except ExpiredSignatureError:
+    except ExpiredSignatureError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
-        )
-    except InvalidTokenError:
+        ) from err
+    except InvalidTokenError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
-        )
+        ) from err
 
     user_id = payload.get("sub")
     if not user_id:
@@ -74,11 +74,11 @@ async def get_current_user_id(
         )
     try:
         return UUID(user_id)
-    except ValueError:
+    except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user ID in token",
-        )
+        ) from err
 
 
 def get_auth_service(

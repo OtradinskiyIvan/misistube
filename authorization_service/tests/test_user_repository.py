@@ -29,7 +29,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
             hashed_password="hashed",
             is_active=True,
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
 
         mock_result = AsyncMock()
@@ -41,6 +41,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
 
         # Assert
         self.assertIsInstance(result, User)
+        assert result is not None
         self.assertEqual(result.id, user_id)
         self.assertEqual(result.email, "test@example.com")
 
@@ -68,7 +69,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
             hashed_password="hashed",
             is_active=True,
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
 
         mock_result = AsyncMock()
@@ -80,16 +81,13 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
 
         # Assert
         self.assertIsInstance(result, User)
+        assert result is not None
         self.assertEqual(result.email, email)
 
     async def test_save_success(self):
         # Arrange
         user = User(
-            id=uuid4(),
-            username="testuser",
-            email="test@example.com",
-            hashed_password="hashed_password",
-            is_active=True
+            id=uuid4(), username="testuser", email="test@example.com", hashed_password="hashed_password", is_active=True
         )
 
         # Mock the model creation and database operations
@@ -100,7 +98,7 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
             hashed_password=user.hashed_password,
             is_active=user.is_active,
             created_at=datetime.now(),
-            updated_at=datetime.now()
+            updated_at=datetime.now(),
         )
 
         self.mock_session.add = MagicMock()
@@ -149,6 +147,126 @@ class TestUserRepository(unittest.IsolatedAsyncioTestCase):
 
         # Assert
         self.assertFalse(result)
+
+    async def test_get_by_username_success(self):
+        username = "testuser"
+        user_id = uuid4()
+        model = UserModel(
+            id=user_id,
+            username=username,
+            email="test@example.com",
+            hashed_password="hashed",
+            is_active=True,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+
+        mock_result = AsyncMock()
+        mock_result.scalar_one_or_none.return_value = model
+        self.mock_session.execute = AsyncMock(return_value=mock_result)
+
+        result = await self.repo.get_by_username(username)
+
+        self.assertIsInstance(result, User)
+        assert result is not None
+        self.assertEqual(result.username, username)
+
+    async def test_get_by_username_not_found(self):
+        username = "nonexistent"
+        mock_result = AsyncMock()
+        mock_result.scalar_one_or_none.return_value = None
+        self.mock_session.execute = AsyncMock(return_value=mock_result)
+
+        result = await self.repo.get_by_username(username)
+
+        self.assertIsNone(result)
+
+    async def test_exists_by_username_true(self):
+        username = "existinguser"
+        mock_result = AsyncMock()
+        mock_result.scalar_one_or_none.return_value = uuid4()
+        self.mock_session.execute = AsyncMock(return_value=mock_result)
+
+        result = await self.repo.exists_by_username(username)
+
+        self.assertTrue(result)
+
+    async def test_exists_by_username_false(self):
+        username = "nonexistent"
+        mock_result = AsyncMock()
+        mock_result.scalar_one_or_none.return_value = None
+        self.mock_session.execute = AsyncMock(return_value=mock_result)
+
+        result = await self.repo.exists_by_username(username)
+
+        self.assertFalse(result)
+
+    async def test_deactivate_user_success(self):
+        user_id = uuid4()
+        model = UserModel(
+            id=user_id,
+            username="testuser",
+            email="test@example.com",
+            hashed_password="hashed",
+            is_active=True,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+
+        mock_result = AsyncMock()
+        mock_result.scalar_one_or_none.return_value = model
+        self.mock_session.execute = AsyncMock(return_value=mock_result)
+
+        result = await self.repo.deactivate_user(user_id)
+
+        self.assertIsInstance(result, User)
+        assert result is not None
+        self.assertFalse(result.is_active)
+        self.assertIn("_deleted_", result.username)
+        self.assertIn("@deleted.local", result.email)
+        self.mock_session.flush.assert_called_once()
+        self.mock_session.refresh.assert_called_once()
+
+    async def test_deactivate_user_not_found(self):
+        user_id = uuid4()
+        mock_result = AsyncMock()
+        mock_result.scalar_one_or_none.return_value = None
+        self.mock_session.execute = AsyncMock(return_value=mock_result)
+
+        result = await self.repo.deactivate_user(user_id)
+
+        self.assertIsNone(result)
+
+    async def test_activate_user_by_email(self):
+        email = "test@example.com"
+        model = UserModel(
+            id=uuid4(),
+            username="testuser",
+            email=email,
+            hashed_password="hashed",
+            is_active=False,
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+
+        mock_result = AsyncMock()
+        mock_result.scalar_one_or_none.return_value = model
+        self.mock_session.execute = AsyncMock(return_value=mock_result)
+
+        await self.repo.activate_user_by_email(email)
+
+        self.assertTrue(model.is_active)
+        self.mock_session.flush.assert_called_once()
+
+    async def test_activate_user_by_email_not_found(self):
+        email = "nonexistent@example.com"
+        mock_result = AsyncMock()
+        mock_result.scalar_one_or_none.return_value = None
+        self.mock_session.execute = AsyncMock(return_value=mock_result)
+
+        await self.repo.activate_user_by_email(email)
+
+        self.mock_session.flush.assert_not_called()
 
 
 if __name__ == "__main__":
