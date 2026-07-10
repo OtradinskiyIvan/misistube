@@ -1,4 +1,6 @@
 import uuid
+from datetime import datetime
+from typing import cast
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,31 +17,29 @@ class SQLAlchemyVideoRepository(SearchPort):
         self.session = session
 
     async def search(
-        self,
-        query: str | None,
-        tags: list[str] | None = None,
-        offset: int = 0,
-        limit: int = 20
+        self, query: str | None, tags: list[str] | None = None, offset: int = 0, limit: int = 20
     ) -> tuple[list[VideoResult], int]:
         """
         Поиск видео с фильтрацией по тексту и тегам.
         """
-        stmt = select(Video).where(Video.status == VideoStatus.READY)
+        base_conditions = [Video.status == VideoStatus.READY]
 
         if query:
-            stmt = stmt.where(
-                or_(
-                    Video.title.ilike(f"%{query}%"),
-                    Video.description.ilike(f"%{query}%")
-                )
+            base_conditions.append(
+                or_(Video.title.ilike(f"%{query}%"), Video.description.ilike(f"%{query}%"))
             )
 
-
-        count_stmt = select(func.count()).select_from(stmt.order_by(None))
+        count_stmt = select(func.count()).select_from(Video).where(*base_conditions)
         total_result = await self.session.execute(count_stmt)
         total = total_result.scalar() or 0
 
-        data_stmt = stmt.order_by(Video.created_at.desc()).offset(offset).limit(limit)
+        data_stmt = (
+            select(Video)
+            .where(*base_conditions)
+            .order_by(Video.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
         result = await self.session.execute(data_stmt)
         videos = result.scalars().all()
 
@@ -47,21 +47,19 @@ class SQLAlchemyVideoRepository(SearchPort):
         items = [
             VideoResult(
                 id=str(v.id),
-                title=v.title,
-                description=v.description,
-                storage_key=v.storage_key,
-                status=v.status.value if hasattr(v.status, 'value') else str(v.status),
-                duration_seconds=v.duration_seconds,
-                created_at=v.created_at.isoformat() if v.created_at else None,
-                updated_at=v.updated_at.isoformat() if v.updated_at else None,
-                thumbnail_key=v.thumbnail_key,
-                
+                title=cast(str, v.title),
+                description=cast(str | None, v.description),
+                storage_key=cast(str, v.storage_key),
+                status=str(cast(VideoStatus, v.status)),
+                duration_seconds=cast(int, v.duration_seconds),
+                created_at=cast(datetime, v.created_at).isoformat() if v.created_at else None,
+                updated_at=cast(datetime, v.updated_at).isoformat() if v.updated_at else None,
+                thumbnail_key=cast(str | None, v.thumbnail_key),
                 user_id=str(v.user_id),
                 username=str(v.user_id),
-
                 # Безопасное получение отсутствующих полей
-                tags=getattr(v, 'tags', None),
-                thumbnail_url=getattr(v, 'thumbnail_url', None)
+                tags=getattr(v, "tags", None),
+                thumbnail_url=getattr(v, "thumbnail_url", None),
             )
             for v in videos
         ]

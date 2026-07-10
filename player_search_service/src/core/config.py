@@ -1,4 +1,4 @@
-from pydantic import SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import SettingsConfigDict
 from shared.config import SharedBaseSettings as BaseSettings
 
@@ -28,7 +28,7 @@ class PlayerSearchSettings(BaseSettings):
     S3_BUCKET_THUMBNAILS: str = "thumbnails"
     S3_PRESIGNED_URL_EXPIRES: int = 900
 
-    CORS_ALLOW_ORIGINS: list[str] = ["*"]
+    CORS_ALLOW_ORIGINS: list[str] = Field(default_factory=lambda: ["*"])
 
     USER_SERVICE_URL: str = "http://localhost:8000"
 
@@ -45,9 +45,8 @@ class PlayerSearchSettings(BaseSettings):
         В development с allow_origins=["*"] отключаем credentials.
         В production с конкретными origins — включаем.
         """
-        if self.APP_ENV == "development" and self.CORS_ALLOW_ORIGINS == ["*"]:
-            return False
-        return True
+        return not (self.APP_ENV == "development" and self.CORS_ALLOW_ORIGINS == ["*"])
+
 
 def get_settings() -> PlayerSearchSettings:
     """Возвращает экземпляр PlayerSearchSettings с валидацией"""

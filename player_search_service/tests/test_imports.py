@@ -11,6 +11,7 @@ MODULES = [
     "src.api.routers.playback",
 ]
 
+
 @pytest.mark.parametrize("module_name", MODULES)
 def test_import_module(module_name):
     importlib.import_module(module_name)

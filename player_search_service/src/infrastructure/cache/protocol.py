@@ -4,6 +4,7 @@ from typing import Any, Protocol
 
 class CachePort(Protocol):
     """Интерфейс кеш-хранилища"""
+
     @abstractmethod
     async def get(self, key: str) -> Any | None:
         pass

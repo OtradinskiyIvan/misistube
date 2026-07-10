@@ -1,16 +1,16 @@
-from unittest.mock import AsyncMock
+import uuid
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import pytest_asyncio
 from shared.database.session import Base
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
-import uuid
 
 from src.api.schemas import SearchQuery
+from src.infrastructure.database.models import Video, VideoStatus
 from src.infrastructure.search.repository import SQLAlchemyVideoRepository
 from src.usecases.search import SearchVideoUseCase
-from src.infrastructure.database.models import Video, VideoStatus
 
 
 @pytest.fixture(scope="module")
@@ -45,16 +45,25 @@ async def test_search_with_db_port(db_session: AsyncSession):
         storage_key="videos/test/master.m3u8",
         status=VideoStatus.READY,
         duration_seconds=120,
-        user_id=user_id 
+        user_id=user_id,
     )
     db_session.add(video)
     await db_session.commit()
 
     repo = SQLAlchemyVideoRepository(session=db_session)
     mock_cache = AsyncMock()
-    mock_cache.get.return_value = None
+    mock_cache.get = AsyncMock(return_value=None)
 
-    uc = SearchVideoUseCase(cache=mock_cache, search_port=repo)
+    mock_user_cache = MagicMock()
+    mock_user_cache.get.return_value = None
+
+    uc = SearchVideoUseCase(
+        cache=mock_cache,
+        search_port=repo,
+        storage=AsyncMock(),
+        user_service_client=AsyncMock(),
+        user_cache=mock_user_cache,
+    )
     query = SearchQuery(q="Test", offset=0, limit=10)
 
     result = await uc.execute(query)

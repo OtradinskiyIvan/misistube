@@ -1,0 +1,61 @@
+name: PLAYER&SEARCH SERVICE CI
+
+on:
+  push:
+    branches: ['feature/**', 'dev', 'main']
+    paths:
+      - 'player_search_service/**'
+      - 'shared/**'
+  pull_request:
+    branches: ['feature/**', 'dev', 'main']
+    paths:
+      - 'player_search_service/**'
+      - 'shared/**'
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./player_search_service
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: player_search_service/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -d "../shared" ]; then
+            python -m pip install -e ../shared
+            echo "PYTHONPATH=$(pwd)/../shared:$PYTHONPATH" >> $GITHUB_ENV
+          fi
+          python -m pip install -e ".[dev]"
+
+      - name: Ruff check (lint)
+        run: ruff check
+
+      - name: Ruff format check (форматирование)
+        run: ruff format --check
+
+      - name: MyPy (type checking)
+        run: mypy --config-file pyproject.toml ../player_search_service/src/ ../player_search_service/tests/
+        
+      - name: Run tests with coverage
+        env:
+          PYTHONPATH: ../shared:${PYTHONPATH}
+        run: pytest --cov --cov-report=xml --cov-fail-under=75
+
+      - name: Upload coverage report
+        if: success() && env.ACTIONS_RUNTIME_TOKEN != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-player_search-service
+          path: player_search_service/coverage.xml
+          retention-days: 7

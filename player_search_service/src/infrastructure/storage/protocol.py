@@ -8,10 +8,7 @@ class StoragePort(Protocol):
 
     @abstractmethod
     async def generate_presigned_url(
-        self,
-        object_key: str,
-        bucket: str,
-        expires_in: int = 900
+        self, object_key: str, bucket: str, expires_in: int = 900
     ) -> tuple[str, datetime]:
         """
         Генерирует presigned URL для доступа к объекту
@@ -25,12 +22,24 @@ class StoragePort(Protocol):
         pass
 
     @abstractmethod
+    async def generate_thumbnail_url(
+        self, thumbnail_key: str, expires_in: int = 3600
+    ) -> str | None:
+        """Генерирует presigned URL для превью"""
+        ...
+
+    @abstractmethod
+    async def close(self) -> None:
+        """Закрыть соединение с хранилищем"""
+        ...
+
+    @abstractmethod
     async def upload_file(
         self,
         file_bytes: bytes,
         object_key: str,
         bucket: str,
-        content_type: str = "application/octet-stream"
+        content_type: str = "application/octet-stream",
     ) -> None:
         """Загрузить файл в хранилище"""
         pass

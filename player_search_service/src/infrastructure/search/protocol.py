@@ -8,15 +8,11 @@ class SearchPort(Protocol):
     """Контракт поиска видео. UseCase зависит только от него."""
 
     async def search(
-        self,
-        query: str,
-        tags: list[str] | None = None,
-        offset: int = 0,
-        limit: int = 20
+        self, query: str | None, tags: list[str] | None = None, offset: int = 0, limit: int = 20
     ) -> tuple[list[VideoResult], int]:
         """Возвращает (список результатов, общее количество)"""
         ...
 
     async def get_by_id(self, video_id: str) -> Video | None:
         """Получить видео по ID"""
-        ...  # 🔹 Только сигнатура, без реализации
+        ...

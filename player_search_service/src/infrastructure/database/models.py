@@ -1,5 +1,5 @@
 import sys
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 
 from sqlalchemy import Column, DateTime, Integer, String, Text, text
@@ -10,15 +10,16 @@ ROOT_DIRECTORY = Path(__file__).resolve().parents[2]
 if str(ROOT_DIRECTORY) not in sys.path:
     sys.path.insert(0, str(ROOT_DIRECTORY))
 
-from shared.database.session import Base
+from shared.database.session import Base  # noqa:E402
 
 
-class VideoStatus(str, Enum):
+class VideoStatus(StrEnum, Enum):
     UPLOADING = "uploading"
     PROCESSING = "processing"
     READY = "ready"
     FAILED = "failed"
     DELETED = "deleted"
+
 
 class Video(Base):
     __tablename__ = "videos"
@@ -28,16 +29,16 @@ class Video(Base):
     description = Column(Text, nullable=True)
     storage_key = Column(String(500), nullable=False)
 
-    status = Column(
+    status: Column = Column(
         SQLEnum(
             VideoStatus,
             name="video_status",
             native_enum=True,
             values_callable=lambda x: [e.value for e in x],
-            create_type=False
+            create_type=False,
         ),
         nullable=False,
-        server_default=text("'uploading'::video_status")
+        server_default=text("'uploading'::video_status"),
     )
     duration_seconds = Column(Integer, nullable=True, server_default=text("0"))
     thumbnail_key = Column(String(500), nullable=True)
