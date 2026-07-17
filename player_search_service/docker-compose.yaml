@@ -1,6 +1,3 @@
-# Использовать из корня проекта: docker compose -f player_search_service/docker-compose.yaml up
-# Порты параметризованы через .env в корне проекта
-
 services:
   redis:
     image: redis:7-alpine
@@ -18,67 +15,6 @@ services:
     networks:
       - misistube-network
     restart: unless-stopped
-
-  postgres:
-    image: postgres:15-alpine
-    container_name: misistube-postgres-test
-    profiles: ["testing"]
-    environment:
-      POSTGRES_USER: player
-      POSTGRES_PASSWORD: player_pass
-      POSTGRES_DB: player_db
-    ports:
-      - "${POSTGRES_HOST_PORT:-5433}:${POSTGRES_CONTAINER_PORT:-5432}"
-    volumes:
-      - postgres_test_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U player -d player_db"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - misistube-network
-    restart: unless-stopped
-
-  minio:
-    image: minio/minio:latest
-    container_name: misistube-minio-test
-    profiles: ["testing"]
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data --console-address ":${MINIO_CONSOLE_CONTAINER_PORT:-9001}"
-    ports:
-      - "${MINIO_API_HOST_PORT:-9002}:${MINIO_API_CONTAINER_PORT:-9000}"
-      - "${MINIO_CONSOLE_HOST_PORT:-9003}:${MINIO_CONSOLE_CONTAINER_PORT:-9001}"
-    volumes:
-      - minio_test_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${MINIO_API_CONTAINER_PORT:-9000}/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    networks:
-      - misistube-network
-    restart: unless-stopped
-
-  create-buckets:
-    image: minio/mc:latest
-    container_name: misistube-minio-init
-    profiles: ["testing"]
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set myminio http://minio:${MINIO_API_CONTAINER_PORT:-9000} minioadmin minioadmin;
-      mc mb --ignore-existing myminio/videos;
-      mc anonymous set download myminio/videos;
-      echo 'Bucket videos created';
-      exit 0;
-      "
-    networks:
-      - misistube-network
 
   player_search_service:
     build:
@@ -123,8 +59,6 @@ services:
 
 volumes:
   redis_data:
-  postgres_test_data:
-  minio_test_data:
 
 networks:
   misistube-network:
