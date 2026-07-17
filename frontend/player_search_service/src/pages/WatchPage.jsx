@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import AuthorCard from '../components/AuthorCard'
+import { apiClient } from '../api/client'
 import { userService } from '../services/userService'
 import { commentsService } from '../services/commentsService'
 import { likeService } from '../services/likeService'
@@ -75,23 +76,20 @@ export default function WatchPage() {
         setLoading(true)
                 
         const [playbackResult, videoResult, commentsResult] = await Promise.allSettled([
-          fetch(`/api/v1/playback/${id}`),
-          fetch(`/api/v1/videos/${id}/details`),
+          apiClient.getPlaybackUrl(id),
+          apiClient.getVideoDetails(id),
           commentsService.getVideoComments(id)
         ])
         
-        if (playbackResult.status === 'rejected' || !playbackResult.value.ok) {
-          const errorMsg = playbackResult.status === 'rejected' 
-            ? 'Не удалось загрузить видео'
-            : 'Видео не найдено'
-          throw new Error(errorMsg)
+        if (playbackResult.status === 'rejected') {
+          throw new Error('Не удалось загрузить видео')
         }
         
-        const playbackData = await playbackResult.value.json()
+        const playbackData = playbackResult.value
         setVideoUrl(playbackData.hls_master_url)
         
-        if (videoResult.status === 'fulfilled' && videoResult.value.ok) {
-          const videoData = await videoResult.value.json()
+        if (videoResult.status === 'fulfilled') {
+          const videoData = videoResult.value
           setVideo(videoData)
 
           if (videoData.user_id) {
@@ -99,13 +97,13 @@ export default function WatchPage() {
               user_id: videoData.user_id,
               username: videoData.username,
               avatar_url: videoData.avatar_url,
-              channelUrl: `/user/users/${videoData.user_id}`
+              channelUrl: `${window.location.origin}/user/users/${videoData.user_id}`
             })
           }
         } else {
           console.warn(
             'Failed to load video details:',
-            videoResult.status === 'rejected' ? videoResult.reason : videoResult.value?.statusText
+            videoResult.status === 'rejected' ? videoResult.reason : 'no details'
           )
         }
 
@@ -149,7 +147,7 @@ export default function WatchPage() {
   const handleToggleLike = async () => {
     const authUser = (() => { try { return JSON.parse(token) } catch { return null } })();
     if (!authUser) {
-      window.location.href = '/auth/';
+      window.location.href = window.location.origin + '/auth/';
       return;
     }
     if (likeLoading) return;
@@ -356,7 +354,7 @@ export default function WatchPage() {
           </div>
         ) : (
           <p style={{ color: 'var(--misis-gray-300)', marginBottom: '1rem' }}>
-            <a href="/auth/">Войдите</a>, чтобы оставить комментарий
+            <a href={window.location.origin + '/auth/'}>Войдите</a>, чтобы оставить комментарий
           </p>
         )}
 

@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import SearchForm from '../components/SearchForm'
 import VideoCard from '../components/VideoCard'
+import { apiClient } from '../api/client'
 
 export default function SearchPage() {
   const [results, setResults] = useState([])
@@ -14,14 +15,7 @@ export default function SearchPage() {
 
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (q) params.append('q', q)
-      params.append('limit', '50')
-
-      const response = await fetch(`/api/v1/search?${params.toString()}`, {
-        signal: abortControllerRef.current.signal
-      })
-      const data = await response.json()
+      const data = await apiClient.searchVideos(q || '', 0, 50);
       setResults(data.items || [])
       setHasSearched(true)
     } catch (error) {
