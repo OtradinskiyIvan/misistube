@@ -7,7 +7,7 @@ export default function Header() {
         <Link to="/" className="logo">MISIS Tube</Link>
         <nav className="nav">
           <Link to="/" className="nav-link">Поиск</Link>
-          <a href="/user/profile" className="nav-link">Профиль</a>
+          <a href={window.location.origin + '/user/profile'} className="nav-link">Профиль</a>
         </nav>
       </div>
     </header>

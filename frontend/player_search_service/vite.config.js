@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import React from '@vitejs/plugin-react'
+import path from 'path'
 
 const PLAYER_API_TARGET = process.env.VITE_PLAYER_API_TARGET || `http://localhost:8004`
 const USER_API_TARGET = process.env.VITE_USER_API_TARGET || `http://localhost:8000`
@@ -9,6 +10,11 @@ const AUTH_API_TARGET = process.env.VITE_AUTH_API_TARGET || 'http://localhost:80
 export default defineConfig({
   plugins: [React()],
   base: '/player/',
+  resolve: {
+    alias: {
+      '@shared': path.resolve(__dirname, '../../shared'),
+    },
+  },
   server: {
     port: 5173,
     proxy: {

@@ -12,7 +12,7 @@ const VideoCard = memo(function VideoCard({ video }) {
       : `${m}:${String(s).padStart(2, '0')}`
   }
   const channelUrl = video.user_id 
-    ? `/user/users/${video.user_id}`
+    ? `${window.location.origin}/user/users/${video.user_id}`
     : null
 
   return (
